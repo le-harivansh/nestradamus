@@ -1,0 +1,14 @@
+# compiled output
+/dist
+/node_modules
+
+# IDE - VSCode
+.vscode
+
+# Yarn Berry
+.yarn
+.pnp.*
+yarn.lock
+
+# Husky
+.husky

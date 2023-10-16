@@ -2,6 +2,22 @@
 /dist
 /node_modules
 
+# Environment variables
+.env
+.env.test
+
+# Prettier
+.prettier.cache
+
+# Yarn
+.yarn/*
+!.yarn/cache
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
 # Logs
 logs
 *.log
