@@ -11,7 +11,7 @@ const applicationConfigurationValidationSchema = z.object({
       z.literal('production'),
     ])
     .default('development'),
-  port: z.coerce.number().positive().default(3000),
+  port: z.coerce.number().int().positive().max(65535).default(3000),
 });
 
 export type ApplicationConfiguration = z.infer<
