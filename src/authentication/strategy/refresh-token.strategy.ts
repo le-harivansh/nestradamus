@@ -1,0 +1,36 @@
+import { Injectable } from '@nestjs/common';
+import { PassportStrategy } from '@nestjs/passport';
+import { ExtractJwt, Strategy } from 'passport-jwt';
+
+import { RequestUser } from '../../user/schema/user.schema';
+import { UserService } from '../../user/service/user.service';
+import { Guard, JwtType, TokenHttpHeader } from '../helpers';
+import { TokenService } from '../token/token.service';
+
+@Injectable()
+export class RefreshTokenStrategy extends PassportStrategy(
+  Strategy,
+  Guard.REFRESH_TOKEN,
+) {
+  constructor(
+    tokenService: TokenService,
+    private readonly userService: UserService,
+  ) {
+    super({
+      secretOrKey: tokenService.getSecret(JwtType.REFRESH_TOKEN),
+      jwtFromRequest: ExtractJwt.fromHeader(TokenHttpHeader.REFRESH_TOKEN),
+      issuer: tokenService.JWT_ISSUER,
+      audience: tokenService.JWT_AUDIENCE,
+      algorithms: [tokenService.JWT_ALGORITHM],
+      jsonWebTokenOptions: {
+        subject: JwtType.REFRESH_TOKEN,
+      },
+    });
+  }
+
+  async validate({ userId }: { userId: string }): Promise<RequestUser> {
+    const { username } = await this.userService.findById(userId);
+
+    return { id: userId, username };
+  }
+}

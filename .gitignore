@@ -1,12 +1,13 @@
-# compiled output
+# Compiled output
 /dist
 /node_modules
 
 # Environment variables
 .env
 
-# Prettier
-.prettier.cache
+# Cache files
+.eslintcache
+.prettiercache
 
 # Yarn
 .yarn/*

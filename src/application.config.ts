@@ -11,6 +11,7 @@ const applicationConfigurationValidationSchema = z.object({
       z.literal('production'),
     ])
     .default('development'),
+  name: z.string().default('Super-App'),
   port: z.coerce.number().int().positive().max(65535).default(3000),
 });
 
@@ -21,6 +22,7 @@ export type ApplicationConfiguration = z.infer<
 export default registerAs(CONFIGURATION_NAMESPACE, () =>
   applicationConfigurationValidationSchema.parse({
     environment: process.env.NODE_ENV,
-    port: process.env.APPLICATION_PORT,
-  }),
+    name: process.env.APPLICATION_NAME,
+    port: parseInt(process.env.APPLICATION_PORT),
+  } as ApplicationConfiguration),
 );

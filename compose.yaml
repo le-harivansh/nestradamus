@@ -7,9 +7,9 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${DATABASE_PASSWORD}
       MONGO_INITDB_DATABASE: ${DATABASE_NAME}
     ports:
-      - "${DATABASE_PORT}:27017"
+      - '${DATABASE_PORT}:27017'
     volumes:
       - database:/data/db
-    
+
 volumes:
   database:
