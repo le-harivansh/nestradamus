@@ -3,9 +3,9 @@ import { JwtSignOptions } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 
-import { User } from '../../user/schema/user.schema';
-import { UserService } from '../../user/service/user.service';
-import { TokenService } from '../token/token.service';
+import { User } from '../../_user/schema/user.schema';
+import { UserService } from '../../_user/service/user.service';
+import { TokenService } from '../_token/service/token.service';
 import { RefreshTokenStrategy } from './refresh-token.strategy';
 
 describe(RefreshTokenStrategy.name, () => {

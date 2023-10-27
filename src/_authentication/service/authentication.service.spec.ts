@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { argon2id, hash } from 'argon2';
 
-import { UserService } from '../../user/service/user.service';
+import { UserService } from '../../_user/service/user.service';
 import { AuthenticationService } from './authentication.service';
 
 describe(AuthenticationService.name, () => {

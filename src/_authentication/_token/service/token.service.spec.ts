@@ -5,8 +5,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 import ms from 'ms';
 
-import { RequestUser } from '../../user/schema/user.schema';
-import { JwtType } from '../helpers';
+import { RequestUser } from '../../../_user/schema/user.schema';
+import { JwtType } from '../../helpers';
 import { TokenService } from './token.service';
 
 describe(TokenService.name, () => {

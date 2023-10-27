@@ -6,11 +6,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
-import { User } from '../../user/decorator/user.decorator';
-import { RequestUser } from '../../user/schema/user.schema';
-import { RequiresAccessToken } from '../guard/requires-access-token.guard';
-import { RequiresRefreshToken } from '../guard/requires-refresh-token.guard';
-import { TokenService } from './token.service';
+import { User } from '../../../_user/decorator/user.decorator';
+import { RequestUser } from '../../../_user/schema/user.schema';
+import { RequiresAccessToken } from '../../guard/requires-access-token.guard';
+import { RequiresRefreshToken } from '../../guard/requires-refresh-token.guard';
+import { TokenService } from '../service/token.service';
 
 @Controller('token/refresh')
 export class RefreshController {

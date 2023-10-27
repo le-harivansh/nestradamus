@@ -5,8 +5,8 @@ import { useContainer } from 'class-validator';
 import { Connection } from 'mongoose';
 import request from 'supertest';
 
+import { AuthenticationController } from '../src/_authentication/controller/authentication.controller';
 import { ApplicationModule } from '../src/application.module';
-import { AuthenticationController } from '../src/authentication/controller/authentication.controller';
 
 describe(`${AuthenticationController.name} (e2e)`, () => {
   let application: INestApplication;

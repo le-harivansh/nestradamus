@@ -11,7 +11,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 
-import { RequiresAccessToken } from '../../authentication/guard/requires-access-token.guard';
+import { RequiresAccessToken } from '../../_authentication/guard/requires-access-token.guard';
 import { User } from '../decorator/user.decorator';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { RequestUser } from '../schema/user.schema';

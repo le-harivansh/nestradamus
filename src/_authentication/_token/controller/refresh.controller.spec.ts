@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 
-import { RequestUser } from '../../user/schema/user.schema';
+import { RequestUser } from '../../../_user/schema/user.schema';
+import { TokenService } from '../service/token.service';
 import { RefreshController } from './refresh.controller';
-import { TokenService } from './token.service';
 
 describe(RefreshController.name, () => {
   const authenticatedUser: RequestUser = {

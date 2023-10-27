@@ -5,9 +5,9 @@ import { useContainer } from 'class-validator';
 import { Connection } from 'mongoose';
 import request from 'supertest';
 
+import { RegisterUserDto } from '../src/_registration/dto/registration.dto';
+import { RegistrationController } from '../src/_registration/registration.controller';
 import { ApplicationModule } from '../src/application.module';
-import { RegisterUserDto } from '../src/registration/dto/registration.dto';
-import { RegistrationController } from '../src/registration/registration.controller';
 
 describe(`${RegistrationController.name} (e2e)`, () => {
   let application: INestApplication;

@@ -2,7 +2,7 @@ import { UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 
-import { UserService } from '../../user/service/user.service';
+import { UserService } from '../../_user/service/user.service';
 import { AuthenticationService } from '../service/authentication.service';
 import { LocalStrategy } from './local.strategy';
 

@@ -2,9 +2,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 
-import { RefreshController } from './refresh.controller';
+import { RefreshController } from './controller/refresh.controller';
+import { TokenService } from './service/token.service';
 import tokenConfiguration from './token.config';
-import { TokenService } from './token.service';
 
 @Module({
   imports: [

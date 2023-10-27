@@ -3,10 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import ms from 'ms';
 
-import { ApplicationConfiguration } from '../../application.config';
-import { RequestUser } from '../../user/schema/user.schema';
-import { JwtType } from '../helpers';
-import { AuthenticationTokensConfiguration } from './token.config';
+import { RequestUser } from '../../../_user/schema/user.schema';
+import { ApplicationConfiguration } from '../../../application.config';
+import { JwtType } from '../../helpers';
+import { AuthenticationTokensConfiguration } from '../token.config';
 
 @Injectable()
 export class TokenService {

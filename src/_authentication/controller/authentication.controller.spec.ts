@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 
-import { RequestUser } from '../../user/schema/user.schema';
-import { TokenService } from '../token/token.service';
+import { RequestUser } from '../../_user/schema/user.schema';
+import { TokenService } from '../_token/service/token.service';
 import { AuthenticationController } from './authentication.controller';
 
 describe(AuthenticationController.name, () => {

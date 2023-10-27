@@ -5,9 +5,9 @@ import { useContainer } from 'class-validator';
 import { Connection } from 'mongoose';
 import request from 'supertest';
 
+import { RefreshController } from '../src/_authentication/_token/controller/refresh.controller';
+import { TokenHttpHeader } from '../src/_authentication/helpers';
 import { ApplicationModule } from '../src/application.module';
-import { TokenHttpHeader } from '../src/authentication/helpers';
-import { RefreshController } from '../src/authentication/token/refresh.controller';
 
 describe(`${RefreshController.name} (e2e)`, () => {
   const userData = {
