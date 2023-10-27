@@ -1,3 +1,3 @@
-# Super-App
+# Base NestJs Application with JWT Authentication
 
-The server of the **Super-App** project.
+A base NestJs application with JWT authentication.

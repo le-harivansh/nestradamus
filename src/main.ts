@@ -10,9 +10,6 @@ async function bootstrap() {
 
   const configService = application.get(ConfigService);
 
-  // @todo: Enable CORS.
-  // @todo: Setup helm.
-
   useContainer(application.select(ApplicationModule), {
     fallbackOnErrors: true,
   });

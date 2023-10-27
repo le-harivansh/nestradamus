@@ -17,7 +17,8 @@ export enum Guard {
 
 /**
  * Note: The HTTP headers are automatically converted to lowercase on the
- *       server.
+ *       server. It is therefore recommended to use lowercase characters in
+ *       Header names.
  */
 export enum TokenHttpHeader {
   ACCESS_TOKEN = 'access-token',

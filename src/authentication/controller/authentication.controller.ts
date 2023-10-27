@@ -8,7 +8,7 @@ import {
 
 import { User } from '../../user/decorator/user.decorator';
 import { RequestUser } from '../../user/schema/user.schema';
-import { RequiresCredentials } from '../guard/local.guard';
+import { RequiresCredentials } from '../guard/requires-credentials.guard';
 import { TokenService } from '../token/token.service';
 
 @Controller()

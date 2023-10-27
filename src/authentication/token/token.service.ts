@@ -116,12 +116,10 @@ export class TokenService {
       algorithm: this.JWT_ALGORITHM,
       expiresIn: durationSeconds,
       notBefore: 0,
-      audience: this.JWT_ISSUER,
+      audience: this.JWT_AUDIENCE,
       issuer: this.JWT_ISSUER,
       subject: type,
       secret: secret,
     });
   }
-
-  // @todo: add tests for new methods.
 }

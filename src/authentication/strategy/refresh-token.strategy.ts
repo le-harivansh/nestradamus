@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
@@ -29,8 +29,12 @@ export class RefreshTokenStrategy extends PassportStrategy(
   }
 
   async validate({ userId }: { userId: string }): Promise<RequestUser> {
-    const { username } = await this.userService.findById(userId);
+    const retrievedUser = await this.userService.findById(userId);
 
-    return { id: userId, username };
+    if (!retrievedUser) {
+      throw new UnauthorizedException('The requested user no longer exists.');
+    }
+
+    return { id: userId, username: retrievedUser.username };
   }
 }

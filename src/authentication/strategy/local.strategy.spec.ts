@@ -1,6 +1,6 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ObjectId } from 'mongodb';
+import { Types } from 'mongoose';
 
 import { UserService } from '../../user/service/user.service';
 import { AuthenticationService } from '../service/authentication.service';
@@ -8,7 +8,7 @@ import { LocalStrategy } from './local.strategy';
 
 describe(LocalStrategy.name, () => {
   const userData = {
-    id: new ObjectId(),
+    id: new Types.ObjectId(),
     username: 'le-user',
     password: 'le-password',
   };

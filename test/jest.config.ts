@@ -6,6 +6,7 @@ const configuration: Config = {
   rootDir: '.',
   testEnvironment: 'node',
   testRegex: '.*\\.test\\.ts$',
+  testSequencer: './jest.sequencer.js',
   transform: {
     '^.+\\.(t|j)s$': 'ts-jest',
   },

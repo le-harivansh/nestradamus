@@ -5,7 +5,6 @@ import { MS_DURATION_PATTERN } from '../helpers';
 
 const CONFIGURATION_NAMESPACE = 'authentication.jwt';
 
-// @todo: implement a script to generate the jwt secrets (in the .env file) - similar to laravel
 const authenticationTokensConfigurationValidationSchema = z.object({
   accessToken: z.object({
     duration: z.string().regex(MS_DURATION_PATTERN).default('15 minutes'),

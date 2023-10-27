@@ -3,7 +3,7 @@ import {
   ExecutionContext,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { ObjectId } from 'mongodb';
+import { Types } from 'mongoose';
 
 import { RequestUser } from '../schema/user.schema';
 import { getUserFromRequest } from './user.decorator';
@@ -15,7 +15,7 @@ describe(getUserFromRequest.name, () => {
     }) as unknown as ExecutionContext;
 
   const user: RequestUser = {
-    id: new ObjectId().toString(),
+    id: new Types.ObjectId().toString(),
     username: 'zero',
   };
 

@@ -1,7 +1,7 @@
 {
-  "name": "super-app-server",
-  "version": "0.0.1",
-  "description": "The server of the Super-App project.",
+  "name": "application",
+  "version": "0.1.0",
+  "description": "Base NestJs application with JWT authentication.",
   "author": "Harivansh",
   "private": true,
   "license": "UNLICENSED",
@@ -17,7 +17,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest.config.ts",
+    "test:e2e": "jest --config ./test/jest.config.ts --runInBand",
     "postinstall": "husky install"
   },
   "dependencies": {
@@ -42,6 +42,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@jest/test-sequencer": "^29.7.0",
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",

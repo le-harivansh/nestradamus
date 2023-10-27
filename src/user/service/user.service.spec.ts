@@ -2,8 +2,8 @@ import { INestApplication } from '@nestjs/common';
 import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { verify } from 'argon2';
-import { ObjectId } from 'mongodb';
 import { MongoMemoryServer } from 'mongodb-memory-server';
+import { Types } from 'mongoose';
 import { Model } from 'mongoose';
 
 import { User, UserSchema } from '../schema/user.schema';
@@ -86,11 +86,13 @@ describe(UserService.name, () => {
       await userModel.create(userData);
     });
 
-    // @todo: fix
-    it.skip('returns the corresponding user from the database', async () => {
-      expect(
-        userService.findByUsername(userData.username),
-      ).resolves.toMatchObject(userData);
+    it('returns the corresponding user from the database', async () => {
+      const retrievedUser = await userService.findByUsername(userData.username);
+
+      expect(retrievedUser.toObject()).toMatchObject({
+        ...userData,
+        password: expect.any(String), // the user's password is hashed before it is saved to the database.
+      });
     });
 
     it('returns undefined if the user could not be found in the database', async () => {
@@ -111,14 +113,18 @@ describe(UserService.name, () => {
       userId = (await userModel.create(userData))._id.toString();
     });
 
-    // @todo: fix
-    it.skip('returns the corresponding user from the database', async () => {
-      expect(await userService.findById(userId)).toMatchObject(userData);
+    it('returns the corresponding user from the database', async () => {
+      const retrievedUser = await userService.findById(userId);
+
+      expect(retrievedUser.toObject()).toMatchObject({
+        ...userData,
+        password: expect.any(String), // the user's password is hashed before it is saved to the database.
+      });
     });
 
     it('returns null if the user could not be found in the database', async () => {
       expect(
-        userService.findById(new ObjectId().toString()),
+        userService.findById(new Types.ObjectId().toString()),
       ).resolves.toBeNull();
     });
   });
@@ -135,7 +141,7 @@ describe(UserService.name, () => {
       userId = (await userModel.create(userData))._id.toString();
     });
 
-    it("updates the specified user's data using the provided payload [no-password]", async () => {
+    it("updates the specified user's data using the provided payload [without-password]", async () => {
       const newUsername = 'username-1111';
 
       expect(
@@ -175,7 +181,7 @@ describe(UserService.name, () => {
       ).resolves.toBeTruthy();
     });
 
-    it("updates the specified user's data using the provided payload [password]", async () => {
+    it("updates the specified user's data using the provided payload [with-password]", async () => {
       const newUserData = {
         username: 'username-xxxx',
         password: 'password-xxxx',

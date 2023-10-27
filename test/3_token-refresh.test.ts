@@ -1,0 +1,159 @@
+import { HttpStatus, INestApplication } from '@nestjs/common';
+import { getConnectionToken } from '@nestjs/mongoose';
+import { Test, TestingModule } from '@nestjs/testing';
+import { useContainer } from 'class-validator';
+import { Connection } from 'mongoose';
+import request from 'supertest';
+
+import { ApplicationModule } from '../src/application.module';
+import { TokenHttpHeader } from '../src/authentication/helpers';
+import { RefreshController } from '../src/authentication/token/refresh.controller';
+
+describe(`${RefreshController.name} (e2e)`, () => {
+  const userData = {
+    username: 'user-one',
+    password: 'password-one',
+  };
+
+  let application: INestApplication;
+  let databaseConnection: Connection;
+
+  let authenticationTokensData: {
+    accessToken: { token: string; expiresAt: number };
+    refreshToken: { token: string; expiresAt: number };
+  };
+
+  beforeAll(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [ApplicationModule],
+    }).compile();
+
+    application = moduleFixture.createNestApplication();
+
+    databaseConnection = moduleFixture.get(getConnectionToken());
+
+    useContainer(application.select(ApplicationModule), {
+      fallbackOnErrors: true,
+    });
+
+    await application.init();
+
+    /**
+     * Create user & get authentication tokens
+     */
+
+    await request(application.getHttpServer()).post('/register').send(userData);
+
+    const { body: authenticationTokens } = await request(
+      application.getHttpServer(),
+    )
+      .post('/login')
+      .send(userData);
+
+    authenticationTokensData = authenticationTokens;
+  });
+
+  afterAll(async () => {
+    await databaseConnection.db.dropDatabase();
+
+    await application.close();
+  });
+
+  describe('/token/refresh/access-token (GET)', () => {
+    describe('[succeeds because]', () => {
+      it('responds with a HTTP:OK status & the `access-token` when a correct `refresh-token` is provided', async () => {
+        const { status, body } = await request(application.getHttpServer())
+          .get('/token/refresh/access-token')
+          .set(
+            TokenHttpHeader.REFRESH_TOKEN,
+            authenticationTokensData.refreshToken.token,
+          );
+
+        expect(status).toBe(HttpStatus.OK);
+        expect(body).toStrictEqual({
+          token: expect.any(String),
+          expiresAt: expect.any(Number),
+        });
+      });
+    });
+
+    describe('[fails because]', () => {
+      /**
+       * We assign a method to `value` because we want
+       * `authenticationTokensData.refreshToken.token` to be evaluated
+       * when the tests run; not when the test-runner is parsing the test file.
+       *
+       * If we pass `authenticationTokensData.refreshToken.token` to `value`, it
+       * will be evaluated when the test-runner parses the file - before any hook
+       * is run - which will result in `authenticationTokensData` being evaluated
+       * as `undefined` (its starting value), and as a consequence, `value` will
+       * be `undefined`.
+       */
+      it.each([
+        { header: TokenHttpHeader.REFRESH_TOKEN, value: () => '' },
+        {
+          header: TokenHttpHeader.REFRESH_TOKEN,
+          value: () => 'wrong-refresh-token',
+        },
+        {
+          header: 'wrong-token-header',
+          value: () => authenticationTokensData.refreshToken.token,
+        },
+      ])(
+        "responds with a HTTP:UNAUTHORIZED status when an incorrect `refresh-token` is provided [header: '$header', value: '$value']",
+        async ({ header, value }) => {
+          const { status } = await request(application.getHttpServer())
+            .get('/token/refresh/access-token')
+            .set(header, value());
+
+          expect(status).toBe(HttpStatus.UNAUTHORIZED);
+        },
+      );
+    });
+  });
+
+  describe('/token/refresh/refresh-token (GET)', () => {
+    describe('[succeeds because]', () => {
+      it('responds with a HTTP:OK status & the `refresh-token` when a correct `access-token` is provided', async () => {
+        const { status, body } = await request(application.getHttpServer())
+          .get('/token/refresh/refresh-token')
+          .set(
+            TokenHttpHeader.ACCESS_TOKEN,
+            authenticationTokensData.accessToken.token,
+          );
+
+        expect(status).toBe(HttpStatus.OK);
+        expect(body).toStrictEqual({
+          token: expect.any(String),
+          expiresAt: expect.any(Number),
+        });
+      });
+    });
+
+    describe('[fails because]', () => {
+      /**
+       * See line 81 - 91 about why `value` is assigned a function.
+       */
+      it.each([
+        { header: TokenHttpHeader.ACCESS_TOKEN, value: () => '' },
+        {
+          header: TokenHttpHeader.ACCESS_TOKEN,
+          value: () => 'wrong-access-token',
+        },
+        {
+          header: 'wrong-token-header',
+          value: () => authenticationTokensData.accessToken.token,
+        },
+      ])(
+        "responds with a HTTP:UNAUTHORIZED status when an incorrect `access-token` is provided [header: '$header', value: '$value']",
+        async ({ header, value }) => {
+          const { status } = await request(application.getHttpServer())
+            .get('/token/refresh/refresh-token')
+            .set(header, value());
+
+          expect(status).toBe(HttpStatus.UNAUTHORIZED);
+        },
+      );
+    });
+  });
+});

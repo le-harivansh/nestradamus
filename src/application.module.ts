@@ -9,7 +9,10 @@ import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ cache: process.env.NODE_ENV === 'production' }),
+    ConfigModule.forRoot({
+      envFilePath: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
+      cache: process.env.NODE_ENV === 'production',
+    }),
     ConfigModule.forFeature(applicationConfiguration),
 
     DatabaseModule,

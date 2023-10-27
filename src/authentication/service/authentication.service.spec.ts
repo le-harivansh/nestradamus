@@ -1,39 +1,34 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { argon2id, hash } from 'argon2';
-import { ObjectId } from 'mongodb';
 
-import { RequestUser } from '../../user/schema/user.schema';
 import { UserService } from '../../user/service/user.service';
 import { AuthenticationService } from './authentication.service';
 
 describe(AuthenticationService.name, () => {
-  const requestUser: RequestUser = {
-    id: new ObjectId().toString(),
-    username: 'OneTwo',
+  const plainUserPassword = 'one-two-password';
+  const userCredentials = {
+    username: 'one-two',
+    password: '', // `plainUserPassword` is hashed and the result is assigned to this in `beforeAll`
   };
-  const userPassword = 'onetwo';
+
+  const userService = {
+    findByUsername: jest.fn((username: string) =>
+      username === userCredentials.username ? userCredentials : undefined,
+    ),
+  };
 
   let authenticationService: AuthenticationService;
 
   beforeAll(async () => {
+    userCredentials.password = await hash(plainUserPassword, {
+      type: argon2id,
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         {
           provide: UserService,
-          useValue: {
-            async findByUsername(username: string) {
-              switch (username) {
-                case requestUser.username:
-                  return {
-                    username: requestUser.username,
-                    password: await hash(userPassword, { type: argon2id }),
-                  };
-
-                default:
-                  return undefined;
-              }
-            },
-          },
+          useValue: userService,
         },
         AuthenticationService,
       ],
@@ -42,12 +37,28 @@ describe(AuthenticationService.name, () => {
     authenticationService = module.get(AuthenticationService);
   });
 
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   describe('credentialsAreValid', () => {
+    it('calls `UserService::findByUsername` with the provided username', async () => {
+      await authenticationService.credentialsAreValid(
+        userCredentials.username,
+        plainUserPassword,
+      );
+
+      expect(userService.findByUsername).toHaveBeenCalledTimes(1);
+      expect(userService.findByUsername).toHaveBeenCalledWith(
+        userCredentials.username,
+      );
+    });
+
     it('returns true if correct user-credentials are passed', async () => {
       expect(
         authenticationService.credentialsAreValid(
-          requestUser.username,
-          userPassword,
+          userCredentials.username,
+          plainUserPassword,
         ),
       ).resolves.toBe(true);
     });
@@ -55,8 +66,8 @@ describe(AuthenticationService.name, () => {
     it('returns false if an incorrect username is passed', async () => {
       expect(
         authenticationService.credentialsAreValid(
-          'invalid-username',
-          userPassword,
+          'incorrect-username',
+          plainUserPassword,
         ),
       ).resolves.toBe(false);
     });
@@ -64,8 +75,8 @@ describe(AuthenticationService.name, () => {
     it('returns false if an incorrect password is passed', async () => {
       expect(
         authenticationService.credentialsAreValid(
-          requestUser.username,
-          'wrong-password',
+          userCredentials.username,
+          'incorrect-password',
         ),
       ).resolves.toBe(false);
     });

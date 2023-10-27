@@ -18,8 +18,4 @@ UserSchema.pre('save', async function () {
   }
 });
 
-/**
- * @todo: Instead of using the following, use the `User` class.
- * Check if `_id` can be added to the class.
- */
 export type RequestUser = Omit<User, 'password'> & { id: string };

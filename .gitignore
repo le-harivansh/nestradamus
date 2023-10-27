@@ -4,6 +4,7 @@
 
 # Environment variables
 .env
+.env.test
 
 # Cache files
 .eslintcache

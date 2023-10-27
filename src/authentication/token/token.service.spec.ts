@@ -1,7 +1,8 @@
+import { InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ObjectId } from 'mongodb';
+import { Types } from 'mongoose';
 import ms from 'ms';
 
 import { RequestUser } from '../../user/schema/user.schema';
@@ -10,13 +11,13 @@ import { TokenService } from './token.service';
 
 describe(TokenService.name, () => {
   const user: RequestUser = {
-    id: new ObjectId().toString(),
+    id: new Types.ObjectId().toString(),
     username: 'OneTwo',
   };
 
-  const jsonWebToken = 'GENERATED-TOKEN';
+  const generatedJsonWebToken = 'GENERATED-TOKEN';
   const jwtService = {
-    sign: jest.fn(() => jsonWebToken),
+    sign: jest.fn(() => generatedJsonWebToken),
   };
 
   const configuration = {
@@ -59,108 +60,108 @@ describe(TokenService.name, () => {
   });
 
   describe('generateJsonWebToken', () => {
-    const payload = { userId: user.id };
-    const tokenType = JwtType.ACCESS_TOKEN;
-    const durationSeconds = 60;
-    const secret = configuration['authentication.jwt.accessToken.secret'];
+    const payload = { userId: new Types.ObjectId().toString() };
+    const tokenOptions = {
+      type: JwtType.ACCESS_TOKEN,
+      durationSeconds: 15 * 60,
+      secret: 'JWT_SECRET',
+    };
 
-    let token: string;
+    let generatedToken: string = '';
 
     beforeEach(() => {
-      token = tokenService['generateJsonWebToken'](payload, {
-        type: tokenType,
-        durationSeconds,
-        secret,
-      });
+      generatedToken = tokenService['generateJsonWebToken'](
+        payload,
+        tokenOptions,
+      );
     });
 
-    it('calls the resolved `JwtService` with the correct arguments', async () => {
-      const applicationName = configuration['application.name'].toLowerCase();
-
+    it('calls TokenService::generateJsonWebToken with the appropriate arguments', () => {
       expect(jwtService.sign).toHaveBeenCalledTimes(1);
-
-      expect((jwtService.sign.mock.calls[0] as unknown[])[0]).toStrictEqual(
-        payload,
-      );
-      expect((jwtService.sign.mock.calls[0] as unknown[])[1]).toStrictEqual({
-        algorithm: 'ES512',
-        expiresIn: durationSeconds,
+      expect(jwtService.sign).toHaveBeenCalledWith(payload, {
+        algorithm: tokenService.JWT_ALGORITHM,
+        expiresIn: tokenOptions.durationSeconds,
         notBefore: 0,
-        audience: applicationName,
-        issuer: applicationName,
-        subject: tokenType,
-        secret: configuration['authentication.jwt.accessToken.secret'],
+        audience: tokenService.JWT_AUDIENCE,
+        issuer: tokenService.JWT_ISSUER,
+        subject: tokenOptions.type,
+        secret: tokenOptions.secret,
       });
     });
 
     it('returns the generated token', () => {
-      expect(token).toBe(jsonWebToken);
+      expect(generatedToken).toBe(generatedJsonWebToken);
     });
   });
 
-  describe('generateAccessTokenFor', () => {
-    const tokenType = JwtType.ACCESS_TOKEN;
-    const duration = ms(
-      configuration['authentication.jwt.accessToken.duration'],
-    );
-    const secret = configuration['authentication.jwt.accessToken.secret'];
-
-    let tokenWithExpiry: object;
-
-    beforeEach(() => {
-      tokenWithExpiry = tokenService.generateAccessTokenFor(user);
+  describe('getSecret', () => {
+    it('returns the secret of `access-tokens`', () => {
+      expect(tokenService.getSecret(JwtType.ACCESS_TOKEN)).toBe(
+        configuration['authentication.jwt.accessToken.secret'],
+      );
     });
 
-    it('calls the JWT service with the correct payload & options', () => {
-      expect((jwtService.sign.mock.calls[0] as unknown[])[0]).toStrictEqual({
-        userId: user.id,
-      });
-
-      expect((jwtService.sign.mock.calls[0] as unknown[])[1]).toMatchObject({
-        expiresIn: Math.floor(duration / 1000),
-        subject: tokenType,
-        secret,
-      });
+    it('returns the secret of `refresh-tokens`', () => {
+      expect(tokenService.getSecret(JwtType.REFRESH_TOKEN)).toBe(
+        configuration['authentication.jwt.refreshToken.secret'],
+      );
     });
 
-    it('returns the access-token with its expiry timestamp', () => {
-      expect(tokenWithExpiry).toStrictEqual({
-        token: jsonWebToken,
-        expiresAt: Date.now() + duration,
-      });
+    it('throws an error if an invalid `tokenType` is provided', () => {
+      expect(() =>
+        tokenService.getSecret('invalid-token' as unknown as JwtType),
+      ).toThrow(InternalServerErrorException);
     });
   });
 
-  describe('generateRefreshTokenFor', () => {
-    const tokenType = JwtType.REFRESH_TOKEN;
-    const duration = ms(
-      configuration['authentication.jwt.refreshToken.duration'],
-    );
-    const secret = configuration['authentication.jwt.refreshToken.secret'];
+  describe.each([
+    {
+      tokenType: JwtType.ACCESS_TOKEN,
+      serviceMethod: 'generateAccessTokenFor',
+      configurationDiscriminationKey: 'accessToken',
+    } as const,
+    {
+      tokenType: JwtType.REFRESH_TOKEN,
+      serviceMethod: 'generateRefreshTokenFor',
+      configurationDiscriminationKey: 'refreshToken',
+    } as const,
+  ])(
+    '$serviceMethod',
+    ({ tokenType, serviceMethod, configurationDiscriminationKey }) => {
+      const duration = ms(
+        configuration[
+          `authentication.jwt.${configurationDiscriminationKey}.duration`
+        ],
+      );
+      const secret =
+        configuration[
+          `authentication.jwt.${configurationDiscriminationKey}.secret`
+        ];
 
-    let tokenWithExpiry: object;
+      let tokenWithExpiry: object;
 
-    beforeEach(() => {
-      tokenWithExpiry = tokenService.generateRefreshTokenFor(user);
-    });
-
-    it('calls the JWT service with the correct payload & options', () => {
-      expect((jwtService.sign.mock.calls[0] as unknown[])[0]).toStrictEqual({
-        userId: user.id,
+      beforeEach(() => {
+        tokenWithExpiry = tokenService[serviceMethod](user);
       });
 
-      expect((jwtService.sign.mock.calls[0] as unknown[])[1]).toMatchObject({
-        expiresIn: Math.floor(duration / 1000),
-        subject: tokenType,
-        secret,
-      });
-    });
+      it('calls the JWT service with the correct payload & options', () => {
+        expect((jwtService.sign.mock.calls[0] as unknown[])[0]).toStrictEqual({
+          userId: user.id,
+        });
 
-    it('returns the refresh-token with its expiry timestamp', () => {
-      expect(tokenWithExpiry).toStrictEqual({
-        token: jsonWebToken,
-        expiresAt: Date.now() + duration,
+        expect((jwtService.sign.mock.calls[0] as unknown[])[1]).toMatchObject({
+          expiresIn: Math.floor(duration / 1000),
+          subject: tokenType,
+          secret,
+        });
       });
-    });
-  });
+
+      it('returns the token with its expiry timestamp', () => {
+        expect(tokenWithExpiry).toStrictEqual({
+          token: generatedJsonWebToken,
+          expiresAt: Date.now() + duration,
+        });
+      });
+    },
+  );
 });
