@@ -55,6 +55,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["eslint", "npm:8.51.0"],\
             ["eslint-config-prettier", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:9.0.0"],\
             ["eslint-plugin-prettier", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:5.0.1"],\
+            ["express-list-routes", "npm:1.1.9"],\
             ["husky", "npm:8.0.3"],\
             ["jest", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:29.7.0"],\
             ["lint-staged", "npm:15.0.1"],\
@@ -3228,6 +3229,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["eslint", "npm:8.51.0"],\
             ["eslint-config-prettier", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:9.0.0"],\
             ["eslint-plugin-prettier", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:5.0.1"],\
+            ["express-list-routes", "npm:1.1.9"],\
             ["husky", "npm:8.0.3"],\
             ["jest", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:29.7.0"],\
             ["lint-staged", "npm:15.0.1"],\
@@ -5123,6 +5125,15 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["type-is", "npm:1.6.18"],\
             ["utils-merge", "npm:1.0.1"],\
             ["vary", "npm:1.1.2"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["express-list-routes", [\
+        ["npm:1.1.9", {\
+          "packageLocation": "./.yarn/cache/express-list-routes-npm-1.1.9-080da718dd-8567a40386.zip/node_modules/express-list-routes/",\
+          "packageDependencies": [\
+            ["express-list-routes", "npm:1.1.9"]\
           ],\
           "linkType": "HARD"\
         }]\

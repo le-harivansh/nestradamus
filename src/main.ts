@@ -1,12 +1,14 @@
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { useContainer } from 'class-validator';
 
 import type { ApplicationConfiguration } from './application.config';
 import { ApplicationModule } from './application.module';
 
-async function bootstrap() {
-  const application = await NestFactory.create(ApplicationModule);
+(async () => {
+  const application =
+    await NestFactory.create<NestExpressApplication>(ApplicationModule);
 
   const configService = application.get(ConfigService);
 
@@ -20,6 +22,4 @@ async function bootstrap() {
     );
 
   await application.listen(port);
-}
-
-bootstrap();
+})();

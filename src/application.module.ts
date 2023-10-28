@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
 import { AuthenticationModule } from './_authentication/authentication.module';
+import { CommandModule } from './_command/command.module';
 import { DatabaseModule } from './_database/database.module';
 import { RegistrationModule } from './_registration/registration.module';
 import { UserModule } from './_user/user.module';
@@ -20,6 +21,7 @@ import applicationConfiguration from './application.config';
     RegistrationModule,
     AuthenticationModule,
     UserModule,
+    CommandModule,
   ],
 })
 export class ApplicationModule {}

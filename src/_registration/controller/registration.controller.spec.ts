@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 
-import { UserService } from '../_user/service/user.service';
-import { RegisterUserDto } from './dto/registration.dto';
+import { UserService } from '../../_user/service/user.service';
+import { RegisterUserDto } from '../dto/registration.dto';
 import { RegistrationController } from './registration.controller';
 
 describe(RegistrationController.name, () => {

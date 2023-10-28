@@ -18,6 +18,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest.config.ts --runInBand",
+    "route:list": "yarn ts-node ./src/_command/script/route.script.ts",
     "postinstall": "husky install"
   },
   "dependencies": {
@@ -59,6 +60,7 @@
     "eslint": "^8.42.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
+    "express-list-routes": "^1.1.9",
     "husky": "^8.0.0",
     "jest": "^29.7.0",
     "lint-staged": "^15.0.1",

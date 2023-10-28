@@ -138,7 +138,7 @@ describe(TokenService.name, () => {
           `authentication.jwt.${configurationDiscriminationKey}.secret`
         ];
 
-      let tokenWithExpiry: object;
+      let tokenWithExpiry: { token: string; expiresAt: number };
 
       beforeEach(() => {
         tokenWithExpiry = tokenService[serviceMethod](user);
@@ -157,10 +157,11 @@ describe(TokenService.name, () => {
       });
 
       it('returns the token with its expiry timestamp', () => {
-        expect(tokenWithExpiry).toStrictEqual({
-          token: generatedJsonWebToken,
-          expiresAt: Date.now() + duration,
-        });
+        expect(tokenWithExpiry.token).toBe(generatedJsonWebToken);
+        expect(tokenWithExpiry.expiresAt / 1000).toBeCloseTo(
+          (Date.now() + duration) / 1000,
+          3,
+        );
       });
     },
   );

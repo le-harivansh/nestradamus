@@ -1,7 +1,6 @@
 # Todo
 
 - [ ] Create a script to seed the database.
-- [ ] Create a script to _pretty-print_ the application's routes.
 
 - [ ] Create a script to generate the `access-token` secret in the `.env` file and/or in the application (shell) environment.
 - [ ] Create a script to generate the `refresh-token` secret in the `.env` file and/or in the application (shell) environment.
@@ -18,4 +17,4 @@
 
 - [ ] Implement [rate-limiting](https://docs.nestjs.com/security/rate-limiting) into the API.
 
-- [ ]
+- [ ] Extract application bootstrapping & tear-down - IN E2E TESTS - into re-usable functions.

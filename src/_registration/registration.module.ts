@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { UserModule } from '../_user/user.module';
-import { RegistrationController } from './registration.controller';
+import { RegistrationController } from './controller/registration.controller';
 
 @Module({
   imports: [UserModule],
