@@ -1,10 +1,4 @@
-import {
-  Body,
-  Controller,
-  Post,
-  UsePipes,
-  ValidationPipe,
-} from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 
 import { RequestUser } from '../../_user/schema/user.schema';
 import { UserService } from '../../_user/service/user.service';
@@ -15,7 +9,6 @@ export class RegistrationController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
-  @UsePipes(ValidationPipe)
   async register(
     @Body() registerUserDto: RegisterUserDto,
   ): Promise<RequestUser> {

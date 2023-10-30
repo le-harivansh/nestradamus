@@ -7,8 +7,6 @@ import {
   HttpStatus,
   Patch,
   UseGuards,
-  UsePipes,
-  ValidationPipe,
 } from '@nestjs/common';
 
 import { RequiresAccessToken } from '../../_authentication/guard/requires-access-token.guard';
@@ -29,7 +27,6 @@ export class UserController {
 
   @Patch()
   @UseGuards(RequiresAccessToken)
-  @UsePipes(ValidationPipe)
   async update(
     @User('id') userId: string,
     @Body() updateUserDto: UpdateUserDto,

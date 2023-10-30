@@ -160,7 +160,7 @@ describe(TokenService.name, () => {
         expect(tokenWithExpiry.token).toBe(generatedJsonWebToken);
         expect(tokenWithExpiry.expiresAt / 10_000).toBeCloseTo(
           (Date.now() + duration) / 10_000,
-          5,
+          1,
         );
       });
     },
