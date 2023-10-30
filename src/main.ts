@@ -14,6 +14,8 @@ import { ApplicationModule } from './application.module';
   application.enableCors();
   application.use(helmet());
 
+  application.enableShutdownHooks();
+
   useContainer(application.select(ApplicationModule), {
     fallbackOnErrors: true,
   });

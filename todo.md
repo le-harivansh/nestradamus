@@ -7,8 +7,6 @@
 - [ ] Architect the application to use an event-based system.
 - [ ] Add application-level logging.
 
-- [ ] Implement healthchecks for the application (using [terminus](https://docs.nestjs.com/recipes/terminus)?).
-
 - [ ] Implement [rate-limiting](https://docs.nestjs.com/security/rate-limiting) into the API.
 
 - [ ] Extract application bootstrapping & tear-down - IN E2E TESTS - into re-usable functions.
