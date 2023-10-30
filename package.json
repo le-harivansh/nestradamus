@@ -20,7 +20,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest.config.ts --runInBand",
     "route:list": "yarn run ts-node ./cli/script/route.script.ts",
-    "key:generate": "yarn run ts-node ./cli/script/generate-keys.script.ts --length 64 --env-file .env --env-keys JWT_ACCESS_TOKEN_SECRET JWT_REFRESH_TOKEN_SECRET",
+    "key:generate": "yarn run ts-node ./cli/script/generate-keys.script.ts --length 64 --env-file .env --env-vars JWT_ACCESS_TOKEN_SECRET JWT_REFRESH_TOKEN_SECRET",
     "postinstall": "husky install"
   },
   "dependencies": {

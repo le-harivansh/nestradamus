@@ -35,7 +35,7 @@ describe('generate-keys.script', () => {
         const returnedValue = main({
           length: KEY_LENGTH,
           envFile: undefined,
-          envKeys: undefined,
+          envVars: undefined,
         });
 
         expect(returnedValue).toStrictEqual({
@@ -49,7 +49,7 @@ describe('generate-keys.script', () => {
           main({
             length: KEY_LENGTH,
             envFile: ENV_FILE,
-            envKeys: ENV_KEYS,
+            envVars: ENV_KEYS,
           }),
         ).toStrictEqual({
           message: expect.any(String),
@@ -63,19 +63,19 @@ describe('generate-keys.script', () => {
           main({
             length: KEY_LENGTH,
             envFile: 'non-existent-env-file',
-            envKeys: undefined,
+            envVars: undefined,
           }),
         ).toThrow();
       });
 
-      it.each([{ envKeys: undefined }, { envKeys: [] }])(
+      it.each([{ envVars: undefined }, { envVars: [] }])(
         'throws an error if no environment keys are passed to it [envKeys: $envKeys]',
-        ({ envKeys }) => {
+        ({ envVars }) => {
           expect(() =>
             main({
               length: KEY_LENGTH,
               envFile: ENV_FILE,
-              envKeys,
+              envVars,
             }),
           ).toThrow();
         },
@@ -86,7 +86,7 @@ describe('generate-keys.script', () => {
           main({
             length: KEY_LENGTH,
             envFile: ENV_FILE,
-            envKeys: ['NON_EXISTENT_ENIRONMENT_KEY'],
+            envVars: ['NON_EXISTENT_ENIRONMENT_KEY'],
           }),
         ).toThrow();
       });

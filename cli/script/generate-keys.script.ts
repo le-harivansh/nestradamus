@@ -16,7 +16,7 @@ export function scriptArgumentsParser(rawArguments: string[]) {
           'The name of the environment file into which to insert the generated keys.',
         string: true,
       },
-      envKeys: {
+      envVars: {
         description:
           'The name of the environment variables present inside the environment file - into which to insert the generated keys.',
         string: true,
@@ -24,8 +24,8 @@ export function scriptArgumentsParser(rawArguments: string[]) {
       },
     })
     .number('length')
-    .implies('envFile', 'envKeys')
-    .implies('envKeys', 'envFile')
+    .implies('envFile', 'envVars')
+    .implies('envVars', 'envFile')
     .strict()
     .parseSync(rawArguments);
 }
@@ -37,11 +37,11 @@ export function generateKey(length: number) {
 export function main({
   length,
   envFile,
-  envKeys,
+  envVars,
 }: {
   length: number;
   envFile: string;
-  envKeys: string[];
+  envVars: string[];
 }) {
   if (!envFile) {
     return {
@@ -55,7 +55,7 @@ export function main({
     );
   }
 
-  if (envKeys.length === 0) {
+  if (envVars.length === 0) {
     throw new Error(
       'At least one environment variable key should be provided.',
     );
@@ -63,18 +63,18 @@ export function main({
 
   let envFileContent = readFileSync(envFile, 'utf-8');
 
-  for (const envKey of envKeys) {
-    const envKeyRegExp = new RegExp(`${envKey}=(.*)\n`);
+  for (const envVar of envVars) {
+    const envKeyRegExp = new RegExp(`${envVar}=(.*)\n`);
 
     if (!envKeyRegExp.test(envFileContent)) {
       throw new Error(
-        `The '${envKey}' key does not exist in the environment file '${envFile}'.`,
+        `The '${envVar}' key does not exist in the environment file '${envFile}'.`,
       );
     }
 
     envFileContent = envFileContent.replace(
       envKeyRegExp,
-      `${envKey}="${generateKey(length)}"\n`,
+      `${envVar}="${generateKey(length)}"\n`,
     );
   }
 
@@ -82,9 +82,9 @@ export function main({
 
   return {
     message: `Successfully generated keys for the environment variables: ${(
-      envKeys as string[]
+      envVars as string[]
     )
-      .map((key) => `"${key}"`)
+      .map((envVar) => `"${envVar}"`)
       .join(', ')} - in the file '${envFile}'.`,
   };
 }

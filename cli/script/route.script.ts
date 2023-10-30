@@ -5,10 +5,10 @@
  * Note that the application's outside dependencies - such as the database -
  * need to be available to be able to start the script.
  *
- * @todo Find a way to mock out the non-essential modules to be able to start
+ * // @todo Find a way to mock out the non-essential modules to be able to start
  * the script without them.
  *
- * @todo Find a way to parse and get the application routes without
+ * // @todo Find a way to parse and get the application routes without
  * scaffolding the entire application.
  */
 import { NestFactory } from '@nestjs/core';
