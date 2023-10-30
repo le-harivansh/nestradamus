@@ -58,6 +58,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["eslint-config-prettier", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:9.0.0"],\
             ["eslint-plugin-prettier", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:5.0.1"],\
             ["express-list-routes", "npm:1.1.9"],\
+            ["helmet", "npm:7.0.0"],\
             ["husky", "npm:8.0.3"],\
             ["jest", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:29.7.0"],\
             ["lint-staged", "npm:15.0.1"],\
@@ -3243,6 +3244,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["eslint-config-prettier", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:9.0.0"],\
             ["eslint-plugin-prettier", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:5.0.1"],\
             ["express-list-routes", "npm:1.1.9"],\
+            ["helmet", "npm:7.0.0"],\
             ["husky", "npm:8.0.3"],\
             ["jest", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:29.7.0"],\
             ["lint-staged", "npm:15.0.1"],\
@@ -5811,6 +5813,15 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./.yarn/cache/has-unicode-npm-2.0.1-893adb4747-1eab07a743.zip/node_modules/has-unicode/",\
           "packageDependencies": [\
             ["has-unicode", "npm:2.0.1"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["helmet", [\
+        ["npm:7.0.0", {\
+          "packageLocation": "./.yarn/cache/helmet-npm-7.0.0-13c1e96edf-3622b8b68b.zip/node_modules/helmet/",\
+          "packageDependencies": [\
+            ["helmet", "npm:7.0.0"]\
           ],\
           "linkType": "HARD"\
         }]\

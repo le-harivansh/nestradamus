@@ -9,9 +9,6 @@
 
 - [ ] Implement healthchecks for the application (using [terminus](https://docs.nestjs.com/recipes/terminus)?).
 
-- [ ] Add CORS to the application.
-- [ ] Look into [helmet](https://github.com/helmetjs/helmet), and if it suits the application, setup [helm](https://docs.nestjs.com/security/helmet).
-
 - [ ] Implement [rate-limiting](https://docs.nestjs.com/security/rate-limiting) into the API.
 
 - [ ] Extract application bootstrapping & tear-down - IN E2E TESTS - into re-usable functions.

@@ -2256,6 +2256,7 @@ __metadata:
     eslint-config-prettier: ^9.0.0
     eslint-plugin-prettier: ^5.0.0
     express-list-routes: ^1.1.9
+    helmet: ^7.0.0
     husky: ^8.0.0
     jest: ^29.7.0
     lint-staged: ^15.0.1
@@ -4431,6 +4432,13 @@ __metadata:
   version: 1.0.4
   resolution: "has@npm:1.0.4"
   checksum: 8a11ba062e0627c9578a1d08285401e39f1d071a9692ddf793199070edb5648b21c774dd733e2a181edd635bf6862731885f476f4ccf67c998d7a5ff7cef2550
+  languageName: node
+  linkType: hard
+
+"helmet@npm:^7.0.0":
+  version: 7.0.0
+  resolution: "helmet@npm:7.0.0"
+  checksum: 3622b8b68b7ac4736369fe7717adb5b87ddcdcda7c11c13277d79fb5670acab032e8c971835565b1d2144d234f3e0dbcd327a44249b9e61f0f64c0c753faf1bc
   languageName: node
   linkType: hard
 
