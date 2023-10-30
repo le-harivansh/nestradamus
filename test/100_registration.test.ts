@@ -1,38 +1,30 @@
 import { HttpStatus, INestApplication } from '@nestjs/common';
-import { getConnectionToken } from '@nestjs/mongoose';
-import { Test, TestingModule } from '@nestjs/testing';
-import { useContainer } from 'class-validator';
 import { Connection } from 'mongoose';
 import request from 'supertest';
 
 import { RegistrationController } from '../src/_registration/controller/registration.controller';
 import { RegisterUserDto } from '../src/_registration/dto/registration.dto';
-import { ApplicationModule } from '../src/application.module';
+import { setupTestApplication, teardownTestApplication } from './helper';
 
 describe(`${RegistrationController.name} (e2e)`, () => {
   let application: INestApplication;
   let databaseConnection: Connection;
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [ApplicationModule],
-    }).compile();
+    const {
+      application: testApplication,
+      databaseConnection: testDatabaseConnection,
+    } = await setupTestApplication();
 
-    application = moduleFixture.createNestApplication();
-
-    databaseConnection = moduleFixture.get(getConnectionToken());
-
-    useContainer(application.select(ApplicationModule), {
-      fallbackOnErrors: true,
-    });
-
-    await application.init();
+    application = testApplication;
+    databaseConnection = testDatabaseConnection;
   });
 
   afterAll(async () => {
-    await databaseConnection.db.dropDatabase();
-
-    await application.close();
+    await teardownTestApplication({
+      application,
+      databaseConnection,
+    });
   });
 
   describe('/register (POST)', () => {

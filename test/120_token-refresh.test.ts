@@ -1,13 +1,10 @@
 import { HttpStatus, INestApplication } from '@nestjs/common';
-import { getConnectionToken } from '@nestjs/mongoose';
-import { Test, TestingModule } from '@nestjs/testing';
-import { useContainer } from 'class-validator';
 import { Connection } from 'mongoose';
 import request from 'supertest';
 
 import { RefreshController } from '../src/_authentication/_token/controller/refresh.controller';
 import { TokenHttpHeader } from '../src/_authentication/helpers';
-import { ApplicationModule } from '../src/application.module';
+import { setupTestApplication, teardownTestApplication } from './helper';
 
 describe(`${RefreshController.name} (e2e)`, () => {
   const userData = {
@@ -24,22 +21,16 @@ describe(`${RefreshController.name} (e2e)`, () => {
   };
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [ApplicationModule],
-    }).compile();
+    const {
+      application: testApplication,
+      databaseConnection: testDatabaseConnection,
+    } = await setupTestApplication();
 
-    application = moduleFixture.createNestApplication();
-
-    databaseConnection = moduleFixture.get(getConnectionToken());
-
-    useContainer(application.select(ApplicationModule), {
-      fallbackOnErrors: true,
-    });
-
-    await application.init();
+    application = testApplication;
+    databaseConnection = testDatabaseConnection;
 
     /**
-     * Create user & get authentication tokens
+     * Create user & get user authentication tokens
      */
 
     await request(application.getHttpServer()).post('/register').send(userData);
@@ -54,9 +45,10 @@ describe(`${RefreshController.name} (e2e)`, () => {
   });
 
   afterAll(async () => {
-    await databaseConnection.db.dropDatabase();
-
-    await application.close();
+    await teardownTestApplication({
+      application,
+      databaseConnection,
+    });
   });
 
   describe('/token/refresh/access-token (GET)', () => {

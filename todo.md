@@ -6,5 +6,3 @@
 
 - [ ] Architect the application to use an event-based system.
 - [ ] Add application-level logging.
-
-- [ ] Extract application bootstrapping & tear-down - IN E2E TESTS - into re-usable functions.
