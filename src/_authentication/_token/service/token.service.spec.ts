@@ -158,9 +158,9 @@ describe(TokenService.name, () => {
 
       it('returns the token with its expiry timestamp', () => {
         expect(tokenWithExpiry.token).toBe(generatedJsonWebToken);
-        expect(tokenWithExpiry.expiresAt / 1000).toBeCloseTo(
-          (Date.now() + duration) / 1000,
-          3,
+        expect(tokenWithExpiry.expiresAt / 10_000).toBeCloseTo(
+          (Date.now() + duration) / 10_000,
+          5,
         );
       });
     },

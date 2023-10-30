@@ -47,9 +47,11 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/passport-jwt", "npm:3.0.10"],\
             ["@types/passport-local", "npm:1.0.36"],\
             ["@types/supertest", "npm:2.0.14"],\
+            ["@types/yargs", "npm:17.0.29"],\
             ["@typescript-eslint/eslint-plugin", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:6.7.5"],\
             ["@typescript-eslint/parser", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:6.7.5"],\
             ["argon2", "npm:0.31.1"],\
+            ["chalk", "npm:4.1.2"],\
             ["class-transformer", "npm:0.5.1"],\
             ["class-validator", "npm:0.14.0"],\
             ["eslint", "npm:8.51.0"],\
@@ -76,6 +78,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["ts-node", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:10.9.1"],\
             ["tsconfig-paths", "npm:4.2.0"],\
             ["typescript", "patch:typescript@npm%3A5.2.2#~builtin<compat/typescript>::version=5.2.2&hash=f3b441"],\
+            ["yargs", "npm:17.7.2"],\
             ["zod", "npm:3.22.4"]\
           ],\
           "linkType": "SOFT"\
@@ -2502,6 +2505,14 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/yargs-parser", "npm:21.0.1"]\
           ],\
           "linkType": "HARD"\
+        }],\
+        ["npm:17.0.29", {\
+          "packageLocation": "./.yarn/cache/@types-yargs-npm-17.0.29-6860504025-8bbc0edd57.zip/node_modules/@types/yargs/",\
+          "packageDependencies": [\
+            ["@types/yargs", "npm:17.0.29"],\
+            ["@types/yargs-parser", "npm:21.0.1"]\
+          ],\
+          "linkType": "HARD"\
         }]\
       ]],\
       ["@types/yargs-parser", [\
@@ -3221,9 +3232,11 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/passport-jwt", "npm:3.0.10"],\
             ["@types/passport-local", "npm:1.0.36"],\
             ["@types/supertest", "npm:2.0.14"],\
+            ["@types/yargs", "npm:17.0.29"],\
             ["@typescript-eslint/eslint-plugin", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:6.7.5"],\
             ["@typescript-eslint/parser", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:6.7.5"],\
             ["argon2", "npm:0.31.1"],\
+            ["chalk", "npm:4.1.2"],\
             ["class-transformer", "npm:0.5.1"],\
             ["class-validator", "npm:0.14.0"],\
             ["eslint", "npm:8.51.0"],\
@@ -3250,6 +3263,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["ts-node", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:10.9.1"],\
             ["tsconfig-paths", "npm:4.2.0"],\
             ["typescript", "patch:typescript@npm%3A5.2.2#~builtin<compat/typescript>::version=5.2.2&hash=f3b441"],\
+            ["yargs", "npm:17.7.2"],\
             ["zod", "npm:3.22.4"]\
           ],\
           "linkType": "SOFT"\
