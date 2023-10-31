@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConditionalModule, ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 
+import { SeederModule } from './_seeder/seeder.module';
 import databaseConfiguration, {
   DatabaseConfiguration,
 } from './database.config';
@@ -47,6 +48,11 @@ import databaseConfiguration, {
         };
       },
     }),
+
+    ConditionalModule.registerWhen(
+      SeederModule,
+      (env) => env['NODE_ENV'] === 'development',
+    ),
   ],
 })
 export class DatabaseModule {}
