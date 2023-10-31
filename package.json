@@ -12,15 +12,15 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
+    "start:prod": "yarn node dist/main",
     "test:unit": "jest",
     "test:cli:unit": "jest --config ./cli/jest.config.ts",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:debug": "yarn node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest.config.ts --runInBand",
-    "route:list": "yarn run ts-node ./cli/script/route.script.ts",
     "key:generate": "yarn run ts-node ./cli/script/generate-keys.script.ts --length 64 --env-file .env --env-vars JWT_ACCESS_TOKEN_SECRET JWT_REFRESH_TOKEN_SECRET",
+    "db:seed": "yarn run ts-node ./cli/script/seed.script.ts",
     "postinstall": "husky install"
   },
   "dependencies": {
