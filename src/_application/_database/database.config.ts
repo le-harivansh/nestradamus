@@ -18,7 +18,7 @@ export type DatabaseConfiguration = z.infer<
 export default registerAs(CONFIGURATION_NAMESPACE, () =>
   databaseConfigurationValidationSchema.parse({
     host: process.env.DATABASE_HOST,
-    port: parseInt(process.env.DATABASE_PORT),
+    port: process.env.DATABASE_PORT as unknown as number,
     username: process.env.DATABASE_USERNAME,
     password: process.env.DATABASE_PASSWORD,
     name: process.env.DATABASE_NAME,

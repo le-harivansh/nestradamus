@@ -15,11 +15,11 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import expressListRoutes from 'express-list-routes';
 
-import { ApplicationModule } from '../../src/application.module';
+import { MainModule } from '../../src/main.module';
 
 (async () => {
   const application = await NestFactory.create<NestExpressApplication>(
-    ApplicationModule,
+    MainModule,
     {
       logger: false,
     },

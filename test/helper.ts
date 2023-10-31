@@ -4,11 +4,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { useContainer } from 'class-validator';
 import { Connection } from 'mongoose';
 
-import { ApplicationModule } from '../src/application.module';
+import { MainModule } from '../src/main.module';
 
 export async function setupTestApplication() {
   const moduleFixture: TestingModule = await Test.createTestingModule({
-    imports: [ApplicationModule],
+    imports: [MainModule],
   }).compile();
 
   const application = moduleFixture.createNestApplication();
@@ -17,7 +17,7 @@ export async function setupTestApplication() {
     getConnectionToken(),
   );
 
-  useContainer(application.select(ApplicationModule), {
+  useContainer(application.select(MainModule), {
     fallbackOnErrors: true,
   });
 

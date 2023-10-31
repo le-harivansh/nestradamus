@@ -2,13 +2,10 @@ import { Module, ValidationPipe } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { seconds } from '@nestjs/throttler';
+import ms from 'ms';
 
-import { AuthenticationModule } from './_authentication/authentication.module';
 import { DatabaseModule } from './_database/database.module';
 import { HealthModule } from './_health/health.module';
-import { RegistrationModule } from './_registration/registration.module';
-import { UserModule } from './_user/user.module';
 import applicationConfiguration, {
   ApplicationConfiguration,
 } from './application.config';
@@ -22,12 +19,13 @@ import applicationConfiguration, {
     ConfigModule.forFeature(applicationConfiguration),
 
     DatabaseModule,
+
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => [
         {
-          ttl: seconds(
+          ttl: ms(
             configService.getOrThrow<
               ApplicationConfiguration['rate-limiter']['ttl']
             >('application.rate-limiter.ttl'),
@@ -40,10 +38,6 @@ import applicationConfiguration, {
     }),
 
     HealthModule,
-
-    RegistrationModule,
-    AuthenticationModule,
-    UserModule,
   ],
   providers: [
     {

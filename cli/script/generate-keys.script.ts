@@ -90,9 +90,9 @@ export function main({
 }
 
 /**
- * Run the script if it is not part of a jest test.
+ * Run the script only if it is being run (through a transpiler).
  */
-if (process.env.NODE_ENV !== 'test') {
+if (process.argv[1] === __filename) {
   (() => {
     try {
       const result = main(scriptArgumentsParser(process.argv.slice(2)));
@@ -101,7 +101,7 @@ if (process.env.NODE_ENV !== 'test') {
     } catch (error) {
       console.error(`${chalk.red((error as Error).message)}`);
 
-      process.exit();
+      process.exit(1);
     }
   })();
 }

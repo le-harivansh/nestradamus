@@ -4,19 +4,19 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { useContainer } from 'class-validator';
 import helmet from 'helmet';
 
-import type { ApplicationConfiguration } from './application.config';
-import { ApplicationModule } from './application.module';
+import type { ApplicationConfiguration } from './_application/application.config';
+import { MainModule } from './main.module';
 
 (async () => {
   const application =
-    await NestFactory.create<NestExpressApplication>(ApplicationModule);
+    await NestFactory.create<NestExpressApplication>(MainModule);
 
   application.enableCors();
   application.use(helmet());
 
   application.enableShutdownHooks();
 
-  useContainer(application.select(ApplicationModule), {
+  useContainer(application.select(MainModule), {
     fallbackOnErrors: true,
   });
 
