@@ -1,9 +1,8 @@
 /**
  * This script is used to seed data into the application.
- *
- * // @todo: log seeding status (e.g.: seeding completed, etc...)
  */
 import { NestFactory } from '@nestjs/core';
+import chalk from 'chalk';
 
 import { DatabaseSeeder } from '../../src/_application/_database/_seeder/seeder/database.seeder';
 import { MainModule } from '../../src/main.module';
@@ -16,7 +15,11 @@ import { MainModule } from '../../src/main.module';
 
   await application.init();
 
+  console.log('\n' + chalk.cyan('Seeding the database...'));
+
   await databaseSeeder.run();
+
+  console.log(chalk.green('Database seeding completed!'));
 
   await application.close();
 })();
