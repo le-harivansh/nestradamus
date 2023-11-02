@@ -1,6 +1,3 @@
-/**
- * This script is used to seed data into the application.
- */
 import { NestFactory } from '@nestjs/core';
 import chalk from 'chalk';
 
@@ -15,7 +12,7 @@ import { MainModule } from '../../src/main.module';
 
   await application.init();
 
-  console.log('\n' + chalk.cyan('Seeding the database...'));
+  console.log(`\n${chalk.cyan('Seeding the database...')}`);
 
   await databaseSeeder.run();
 
