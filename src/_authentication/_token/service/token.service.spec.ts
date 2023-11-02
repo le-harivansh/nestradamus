@@ -6,7 +6,7 @@ import { Types } from 'mongoose';
 import ms from 'ms';
 
 import { RequestUser } from '../../../_user/schema/user.schema';
-import { JwtType } from '../../helpers';
+import { JwtType } from '../../helper';
 import { TokenService } from './token.service';
 
 describe(TokenService.name, () => {

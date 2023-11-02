@@ -4,7 +4,7 @@ import { Strategy } from 'passport-local';
 
 import { RequestUser } from '../../_user/schema/user.schema';
 import { UserService } from '../../_user/service/user.service';
-import { Guard } from '../helpers';
+import { Guard } from '../helper';
 import { AuthenticationService } from '../service/authentication.service';
 
 @Injectable()

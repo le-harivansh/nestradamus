@@ -5,7 +5,7 @@ import ms from 'ms';
 
 import { ApplicationConfiguration } from '../../../_application/application.config';
 import { RequestUser } from '../../../_user/schema/user.schema';
-import { JwtType } from '../../helpers';
+import { JwtType } from '../../helper';
 import { AuthenticationTokensConfiguration } from '../token.config';
 
 @Injectable()

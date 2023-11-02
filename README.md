@@ -14,13 +14,13 @@ cp .env.example .env
 
 ### Test configuration
 
-The test configuration are expected to be in a `.env.test` file. You create a new `.env.test` file by copying the `.env.example` file, and changing any environment variable as needed.
+The test configuration is expected to be in a `.env.test` file. You create a new `.env.test` file by copying the `.env.example` file, and changing any environment variable as needed.
 
 ```shell
 cp .env.example .env.test
 ```
 
-**Note**: When running tests, the environment variables from `.env.test` should be used to configure the _docker containers_ if the environment variables for the containers differ between the environment files. As a consequence, the containers need to be started using:
+**Note**: When running tests, the environment variables from `.env.test` should be used to configure the _docker containers_ if the environment variables for the containers differ between the environment files. As a consequence when testing the application, the containers need to be started using:
 
 ```shell
 docker compose up --env-file .env.test
@@ -48,10 +48,10 @@ The scripts related to the application are stored in: `cli/script`, and are also
 
 The following scripts are available:
 
-| Script                  | `package.json` command | Description                  |
-| ----------------------- | ---------------------- | ---------------------------- |
-| seed.script.ts          | `db:seed`              | Seeds the database           |
-| generate-keys.script.ts | `key:generate`         | Generate environment secrets |
+| Script                  | `package.json` script | Description                  |
+| ----------------------- | --------------------- | ---------------------------- |
+| seed.script.ts          | `db:seed`             | Seeds the database           |
+| generate-keys.script.ts | `key:generate`        | Generate environment secrets |
 
 ## Model factories & Database seeds
 
@@ -76,13 +76,17 @@ The application has the following test suites:
 | `yarn run test:cli:unit` | Unit test | Run unit tests for the cli         |
 | `yarn run test:e2e`      | E2E test  | Run e2e tests for the application  |
 
-**Note**: The application E2E tests are ordered/sequenced according to the file-name. They should therefore start with the number which describes their running order.
+**Note**: The application E2E tests are ordered/sequenced according to their filenames. They should therefore start with the number which describes their running order.
 
 ## Development environment
 
 The project uses yarn berry for package management; husky for git-hooks; lint-staged for linting staged files; eslint for code linting; and prettier for code prettifying.
 
 A `compose.yaml` file is provided, and contains the application container dependencies' definitions.
+
+## Logging
+
+Logging in the application is done using [winston](https://github.com/winstonjs/winston) through the `src/_application/_logger` module.
 
 ## General conventions
 

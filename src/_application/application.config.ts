@@ -1,7 +1,7 @@
 import { registerAs } from '@nestjs/config';
 import { z } from 'zod';
 
-import { MS_DURATION_PATTERN } from '../_authentication/helpers';
+import { MS_DURATION_PATTERN } from '../_authentication/helper';
 
 const CONFIGURATION_NAMESPACE = 'application';
 

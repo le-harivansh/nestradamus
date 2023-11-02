@@ -6,6 +6,7 @@ import ms from 'ms';
 
 import { DatabaseModule } from './_database/database.module';
 import { HealthModule } from './_health/health.module';
+import { LoggerModule } from './_logger/logger.module';
 import applicationConfiguration, {
   ApplicationConfiguration,
 } from './application.config';
@@ -17,6 +18,8 @@ import applicationConfiguration, {
       cache: process.env.NODE_ENV === 'production',
     }),
     ConfigModule.forFeature(applicationConfiguration),
+
+    LoggerModule,
 
     DatabaseModule,
 

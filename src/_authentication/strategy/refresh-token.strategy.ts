@@ -5,7 +5,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { RequestUser } from '../../_user/schema/user.schema';
 import { UserService } from '../../_user/service/user.service';
 import { TokenService } from '../_token/service/token.service';
-import { Guard, JwtType, TokenHttpHeader } from '../helpers';
+import { Guard, JwtType, TokenHttpHeader } from '../helper';
 
 @Injectable()
 export class RefreshTokenStrategy extends PassportStrategy(

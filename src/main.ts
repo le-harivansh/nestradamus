@@ -4,12 +4,16 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { useContainer } from 'class-validator';
 import helmet from 'helmet';
 
+import { WinstonLoggerService } from './_application/_logger/service/winston-logger.service';
 import type { ApplicationConfiguration } from './_application/application.config';
 import { MainModule } from './main.module';
 
 (async () => {
-  const application =
-    await NestFactory.create<NestExpressApplication>(MainModule);
+  const application = await NestFactory.create<NestExpressApplication>(
+    MainModule,
+    { bufferLogs: true },
+  );
+  application.useLogger(await application.resolve(WinstonLoggerService));
 
   application.enableCors();
   application.use(helmet());

@@ -3,7 +3,7 @@ import { Connection } from 'mongoose';
 import request from 'supertest';
 
 import { RefreshController } from '../src/_authentication/_token/controller/refresh.controller';
-import { TokenHttpHeader } from '../src/_authentication/helpers';
+import { TokenHttpHeader } from '../src/_authentication/helper';
 import { setupTestApplication, teardownTestApplication } from './helper';
 
 describe(`${RefreshController.name} (e2e)`, () => {
