@@ -6,9 +6,9 @@ const CONFIGURATION_NAMESPACE = 'database';
 const databaseConfigurationValidationSchema = z.object({
   host: z.string().default('localhost'),
   port: z.coerce.number().int().positive().max(65535).default(27017),
-  username: z.string().default('superapp'),
-  password: z.string().default('superapp'),
-  name: z.string().default('superapp'),
+  username: z.string().default('application'),
+  password: z.string().default('application'),
+  name: z.string().default('application'),
 });
 
 export type DatabaseConfiguration = z.infer<
