@@ -62,7 +62,10 @@ describe(`${AuthenticationController.name} (e2e)`, () => {
     });
 
     describe('[fails because]', () => {
-      it.each([
+      it.each<{
+        username: string;
+        password: string;
+      }>([
         { username: '', password: '' },
         { username: userData.username, password: '' },
         { username: '', password: userData.password },

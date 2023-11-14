@@ -86,14 +86,17 @@ describe(`${RefreshController.name} (e2e)`, () => {
        * as `undefined` (its starting value), and as a consequence, `value` will
        * be `undefined`.
        */
-      it.each([
+      it.each<{
+        header: TokenHttpHeader;
+        value: () => string;
+      }>([
         { header: TokenHttpHeader.REFRESH_TOKEN, value: () => '' },
         {
           header: TokenHttpHeader.REFRESH_TOKEN,
           value: () => 'wrong-refresh-token',
         },
         {
-          header: 'wrong-token-header',
+          header: 'wrong-token-header' as TokenHttpHeader,
           value: () => authenticationTokensData.refreshToken.token,
         },
       ])(
@@ -129,16 +132,19 @@ describe(`${RefreshController.name} (e2e)`, () => {
 
     describe('[fails because]', () => {
       /**
-       * See line 81 - 91 about why `value` is assigned a function.
+       * See line 78 - 88 about why `value` is assigned a function.
        */
-      it.each([
+      it.each<{
+        header: TokenHttpHeader;
+        value: () => string;
+      }>([
         { header: TokenHttpHeader.ACCESS_TOKEN, value: () => '' },
         {
           header: TokenHttpHeader.ACCESS_TOKEN,
           value: () => 'wrong-access-token',
         },
         {
-          header: 'wrong-token-header',
+          header: 'wrong-token-header' as TokenHttpHeader,
           value: () => authenticationTokensData.accessToken.token,
         },
       ])(

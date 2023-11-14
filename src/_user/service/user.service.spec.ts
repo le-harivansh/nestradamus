@@ -6,6 +6,8 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import { Types } from 'mongoose';
 import { Model } from 'mongoose';
 
+import { ModelWithId } from '@/_library/helper';
+
 import { User, UserSchema } from '../schema/user.schema';
 import { UserService } from './user.service';
 
@@ -90,7 +92,10 @@ describe(UserService.name, () => {
       userId = (await userModel.create(userData))._id.toString();
     });
 
-    it.each([
+    it.each<{
+      property: keyof ModelWithId<User>;
+      value: () => ModelWithId<User>[keyof ModelWithId<User>];
+    }>([
       { property: '_id', value: () => userId },
       { property: 'username', value: () => userData.username },
     ] as const)(

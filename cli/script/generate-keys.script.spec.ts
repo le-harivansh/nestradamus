@@ -68,7 +68,10 @@ describe('generate-keys.script', () => {
         ).toThrow();
       });
 
-      it.each([{ envVars: undefined }, { envVars: [] }])(
+      it.each<{ envVars: string[] | undefined }>([
+        { envVars: undefined },
+        { envVars: [] },
+      ])(
         'throws an error if no environment keys are passed to it [envKeys: $envKeys]',
         ({ envVars }) => {
           expect(() =>

@@ -107,3 +107,12 @@ Model factories should live in the module where their schemas are found. They sh
 - Module names start with an underscore (e.g.: `_authentication`).
 - Time related environment variables should conform to, and be parsed with `ms`.
 - Application E2E test files should start with a number.
+
+## Branches
+
+The project has the following branches:
+
+- `main`: The stable branch.
+- `development`: The branch where development occurs.
+- (wip)`feat/user-with-email`: In this branch, the `User` model has an `email` field instead of a `username` field.
+- (next) `feat/administration`: An administration section for the application - with authN, (authZ?), ...
