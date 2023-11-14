@@ -13,9 +13,9 @@ import { RefreshTokenStrategy } from './refresh-token.strategy';
 describe(RefreshTokenStrategy.name, () => {
   let refreshTokenStrategy: RefreshTokenStrategy;
 
-  const userData: Pick<User, 'username'> & { _id: Types.ObjectId } = {
+  const userData: Pick<ModelWithId<User>, '_id' | 'email'> = {
     _id: new Types.ObjectId(),
-    username: 'le-username',
+    email: 'user@email.com',
   };
 
   const userService: MockOf<UserService, 'findOneBy'> = {
@@ -23,7 +23,7 @@ describe(RefreshTokenStrategy.name, () => {
       property === '_id' && userId === userData._id.toString()
         ? {
             id: userId,
-            username: userData.username,
+            email: userData.email,
           }
         : null,
     ),
@@ -75,7 +75,7 @@ describe(RefreshTokenStrategy.name, () => {
         refreshTokenStrategy.validate({ userId: userData._id.toString() }),
       ).resolves.toStrictEqual({
         id: userData._id.toString(),
-        username: userData.username,
+        email: userData.email,
       });
     });
 

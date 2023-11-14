@@ -13,12 +13,11 @@ export class RegistrationController {
   async register(
     @Body() registerUserDto: RegisterUserDto,
   ): Promise<RequestUser> {
-    const { _id: id, username } =
-      await this.userService.create(registerUserDto);
+    const { _id: id, email } = await this.userService.create(registerUserDto);
 
     return {
       id: id.toString(),
-      username,
+      email,
     };
   }
 }

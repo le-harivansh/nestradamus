@@ -36,6 +36,6 @@ export class AccessTokenStrategy extends PassportStrategy(
       throw new UnauthorizedException('The requested user no longer exists.');
     }
 
-    return { id: userId, username: retrievedUser.username };
+    return { id: userId, email: retrievedUser.email };
   }
 }

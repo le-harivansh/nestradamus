@@ -16,7 +16,7 @@ describe(getUserFromRequest.name, () => {
 
   const user: RequestUser = {
     id: new Types.ObjectId().toString(),
-    username: 'zero',
+    email: 'zero@zero.com',
   };
 
   it('returns the user object attached to the request object', () => {
@@ -26,8 +26,8 @@ describe(getUserFromRequest.name, () => {
   });
 
   it("returns the value of the specified property from the user's object", () => {
-    expect(getUserFromRequest('username', mockExecutionContext(user))).toBe(
-      user.username,
+    expect(getUserFromRequest('email', mockExecutionContext(user))).toBe(
+      user.email,
     );
   });
 
@@ -39,7 +39,10 @@ describe(getUserFromRequest.name, () => {
 
   it('throws a server-error if the queried property does not exist on the user object', () => {
     expect(() =>
-      getUserFromRequest('nope' as unknown as 'id', mockExecutionContext(user)),
+      getUserFromRequest(
+        'nope' as unknown as Parameters<typeof getUserFromRequest>[0],
+        mockExecutionContext(user),
+      ),
     ).toThrow(InternalServerErrorException);
   });
 });

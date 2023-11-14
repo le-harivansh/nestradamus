@@ -10,8 +10,8 @@ import { User } from '@/_user/schema/user.schema';
 import { setupTestApplication, teardownTestApplication } from './helper';
 
 describe(`${RefreshController.name} (e2e)`, () => {
-  const userData: Pick<User, 'username' | 'password'> = {
-    username: 'user-one',
+  const userData: Pick<User, 'email' | 'password'> = {
+    email: 'user@one.com',
     password: 'Le-P@ssw0rd',
   };
 

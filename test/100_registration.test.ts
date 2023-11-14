@@ -30,7 +30,7 @@ describe(`${RegistrationController.name} (e2e)`, () => {
 
   describe('/register (POST)', () => {
     const userData: RegisterUserDto = {
-      username: 'le-user',
+      email: 'user@email.com',
       password: 'Le-P@ssw0rd',
     };
 
@@ -43,28 +43,27 @@ describe(`${RegistrationController.name} (e2e)`, () => {
         expect(status).toBe(HttpStatus.CREATED);
         expect(body).toStrictEqual({
           id: expect.any(String),
-          username: userData.username,
+          email: userData.email,
         });
       });
     });
 
     describe('[fails because]', () => {
       it.each<RegisterUserDto>([
-        { username: '', password: '' },
-        { username: 'ninetyOne', password: '' },
-        { username: '', password: 'P@ssw0rd' },
-        { username: 'one', password: 'P@ssw0rd' },
-        { username: 'user', password: 'p@ssw0rd' },
-        { username: 'user', password: 'P@SSW0RD' },
-        { username: 'user', password: 'Passw0rd' },
-        { username: 'user', password: 'P@ssword' },
-        userData,
+        { email: '', password: '' }, // all empty fields
+        { email: 'user-one@email.com', password: '' }, // empty password field
+        { email: '', password: 'P@ssw0rd' }, // empty email field
+        { email: 'user-one@email.com', password: 'p@ssw0rd' }, // no uppercase character in password
+        { email: 'user-one@email.com', password: 'P@SSW0RD' }, // no lowercase character in password
+        { email: 'user-one@email.com', password: 'Passw0rd' }, // no special character in password
+        { email: 'user-one@email.com', password: 'P@ssword' }, // no number in password
+        userData, // email already exists
       ])(
-        "responds with HTTP:BAD_REQUEST if the provided user-data is invalid [username: '$username', password: '$password']",
-        async ({ username, password }) => {
+        "responds with HTTP:BAD_REQUEST if the provided user-data is invalid [email: '$email', password: '$password']",
+        async ({ email, password }) => {
           const { status } = await request(application.getHttpServer())
             .post('/register')
-            .send({ username, password });
+            .send({ email, password });
 
           expect(status).toBe(HttpStatus.BAD_REQUEST);
         },

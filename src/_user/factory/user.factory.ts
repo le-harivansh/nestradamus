@@ -20,7 +20,7 @@ export class UserFactory {
 
   private getModelData(): User {
     return {
-      username: faker.internet.userName(),
+      email: faker.internet.email(),
       password: 'password',
     };
   }

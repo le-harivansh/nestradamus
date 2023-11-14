@@ -16,14 +16,22 @@ import { Guard } from '../helper';
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy, Guard.LOCAL) {
   constructor(private readonly userService: UserService) {
-    super();
+    /**
+     * This variable's purpose is to "hard-assert" the existence of the key
+     * of the `usernameField` being used for user authentication.
+     */
+    const usernameField: Extract<keyof User, 'email'> = 'email';
+
+    super({
+      usernameField,
+    });
   }
 
-  async validate(username: string, password: string): Promise<RequestUser> {
+  async validate(email: string, password: string): Promise<RequestUser> {
     let retrievedUser: ModelWithId<User> | null = null;
 
     try {
-      retrievedUser = await this.userService.findOneBy('username', username);
+      retrievedUser = await this.userService.findOneBy('email', email);
     } catch (error) {
       /**
        * We want to re-throw any exception that is **NOT** a `NotFoundException`,
@@ -42,7 +50,7 @@ export class LocalStrategy extends PassportStrategy(Strategy, Guard.LOCAL) {
 
     return {
       id: retrievedUser._id.toString(),
-      username,
+      email,
     };
   }
 }

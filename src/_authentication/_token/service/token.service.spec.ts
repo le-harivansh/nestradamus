@@ -17,7 +17,7 @@ import { TokenService } from './token.service';
 describe(TokenService.name, () => {
   const user: RequestUser = {
     id: new Types.ObjectId().toString(),
-    username: 'OneTwo',
+    email: 'one@two.three',
   };
 
   const generatedJsonWebToken = 'GENERATED-TOKEN';
@@ -126,17 +126,24 @@ describe(TokenService.name, () => {
     });
   });
 
-  describe.each([
+  describe.each<{
+    tokenType: JwtType;
+    serviceMethod: Extract<
+      keyof TokenService,
+      'generateAccessTokenFor' | 'generateRefreshTokenFor'
+    >;
+    configurationDiscriminationKey: 'accessToken' | 'refreshToken';
+  }>([
     {
       tokenType: JwtType.ACCESS_TOKEN,
       serviceMethod: 'generateAccessTokenFor',
       configurationDiscriminationKey: 'accessToken',
-    } as const,
+    },
     {
       tokenType: JwtType.REFRESH_TOKEN,
       serviceMethod: 'generateRefreshTokenFor',
       configurationDiscriminationKey: 'refreshToken',
-    } as const,
+    },
   ])(
     '$serviceMethod',
     ({ tokenType, serviceMethod, configurationDiscriminationKey }) => {

@@ -30,8 +30,8 @@ describe(`${AuthenticationController.name} (e2e)`, () => {
   });
 
   describe('/login (POST)', () => {
-    const userData: Pick<User, 'username' | 'password'> = {
-      username: 'user-one',
+    const userData: Pick<User, 'email' | 'password'> = {
+      email: 'user@one.two',
       password: 'Le-P@ssw0rd',
     };
 
@@ -63,20 +63,20 @@ describe(`${AuthenticationController.name} (e2e)`, () => {
 
     describe('[fails because]', () => {
       it.each<{
-        username: string;
+        email: string;
         password: string;
       }>([
-        { username: '', password: '' },
-        { username: userData.username, password: '' },
-        { username: '', password: userData.password },
-        { username: userData.username, password: 'wrong-password' },
-        { username: 'wrong-username', password: userData.password },
+        { email: '', password: '' },
+        { email: userData.email, password: '' },
+        { email: '', password: userData.password },
+        { email: userData.email, password: 'wrong-password' },
+        { email: 'wrong@email.com', password: userData.password },
       ])(
-        "responds with HTTP:UNAUTHORIZED if the provided credentials are wrong [username: '$username', password: '$password']",
-        async ({ username, password }) => {
+        "responds with HTTP:UNAUTHORIZED if the provided credentials are wrong [email: '$email', password: '$password']",
+        async ({ email, password }) => {
           const { status } = await request(application.getHttpServer())
             .post('/login')
-            .send({ username, password });
+            .send({ email, password });
 
           expect(status).toBe(HttpStatus.UNAUTHORIZED);
         },

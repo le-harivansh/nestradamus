@@ -53,7 +53,7 @@ describe(UserService.name, () => {
 
   describe('createUser', () => {
     const userData: User = {
-      username: 'le-user',
+      email: 'user@email.com',
       password: 'nope.jpeg',
     };
 
@@ -61,9 +61,9 @@ describe(UserService.name, () => {
       await userService.create(userData);
 
       expect(
-        userModel.findOne({ username: userData.username }).exec(),
+        userModel.findOne({ email: userData.email }).exec(),
       ).resolves.toMatchObject({
-        username: userData.username,
+        email: userData.email,
       });
     });
 
@@ -71,7 +71,7 @@ describe(UserService.name, () => {
       await userService.create(userData);
 
       const retrievedUser = await userModel
-        .findOne({ username: userData.username })
+        .findOne({ email: userData.email })
         .exec();
 
       expect(
@@ -82,7 +82,7 @@ describe(UserService.name, () => {
 
   describe('findOneBy', () => {
     const userData: User = {
-      username: 'onetwo',
+      email: 'one@two.three',
       password: 'wantoo',
     };
 
@@ -97,7 +97,7 @@ describe(UserService.name, () => {
       value: () => ModelWithId<User>[keyof ModelWithId<User>];
     }>([
       { property: '_id', value: () => userId },
-      { property: 'username', value: () => userData.username },
+      { property: 'email', value: () => userData.email },
     ] as const)(
       'returns the corresponding user from the database ($property: $value)',
       async ({ property, value }) => {
@@ -119,7 +119,7 @@ describe(UserService.name, () => {
 
   describe('update', () => {
     const userData: User = {
-      username: 'username-1000',
+      email: 'user-1000@email.com',
       password: 'password-1000',
     };
 
@@ -130,25 +130,23 @@ describe(UserService.name, () => {
     });
 
     it("updates the specified user's data using the provided payload [without-password]", async () => {
-      const newUsername = 'username-1111';
+      const newEmail = 'new-email@user.com';
 
-      expect(
-        userModel.findOne({ username: newUsername }).exec(),
-      ).resolves.toBeNull();
+      expect(userModel.findOne({ email: newEmail }).exec()).resolves.toBeNull();
 
       await userService.update(userId, {
-        username: newUsername,
+        email: newEmail,
       });
 
       expect(userModel.findById(userId).exec()).resolves.toMatchObject({
-        username: newUsername,
+        email: newEmail,
       });
     });
 
     it('throws a `NotFoundException` if the user to update could not be found in the database', () => {
       expect(
         userService.update(new Types.ObjectId().toString(), {
-          username: 'newUsername',
+          email: 'new-user@email.com',
         }),
       ).rejects.toThrow(NotFoundException);
     });
@@ -165,9 +163,9 @@ describe(UserService.name, () => {
     });
 
     it('will not re-hash the password if it has not been updated', async () => {
-      const newUsername = 'password-1111';
+      const newEmail = 'email-1111@newuser.com';
 
-      await userService.update(userId, { username: newUsername });
+      await userService.update(userId, { email: newEmail });
 
       const savedHashedPassword = (await userModel.findById(userId).exec())!
         .password;
@@ -179,7 +177,7 @@ describe(UserService.name, () => {
 
     it("updates the specified user's data using the provided payload [with-password]", async () => {
       const newUserData: User = {
-        username: 'username-xxxx',
+        email: 'user-xxxx@email.com',
         password: 'password-xxxx',
       };
 
@@ -200,7 +198,7 @@ describe(UserService.name, () => {
 
   describe('delete', () => {
     const userData: User = {
-      username: 'hellooooo',
+      email: 'hello@world.com',
       password: 'nope.jpeg',
     };
 

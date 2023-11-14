@@ -1,8 +1,7 @@
 import {
-  IsString,
+  IsEmail,
   IsStrongPassword,
   IsStrongPasswordOptions,
-  MinLength,
   ValidationArguments,
 } from 'class-validator';
 
@@ -10,13 +9,9 @@ import IsUnique from '@/_library/validator/is-unique.validator';
 import { User } from '@/_user/schema/user.schema';
 
 export class RegisterUserDto {
-  @IsString({ message: 'The username should be a string.' })
-  @MinLength(4, {
-    message: ({ constraints }) =>
-      `The username should be at least ${constraints} characters long.`,
-  })
+  @IsEmail()
   @IsUnique(User.name)
-  readonly username!: string;
+  readonly email!: string;
 
   @IsStrongPassword(
     {

@@ -12,11 +12,9 @@ import { LocalStrategy } from './local.strategy';
 describe(LocalStrategy.name, () => {
   const clearTextPassword = 'le-password';
 
-  const userData: Pick<User, 'username' | 'password'> & {
-    _id: Types.ObjectId;
-  } = {
+  const userData: Pick<ModelWithId<User>, '_id' | 'email' | 'password'> = {
     _id: new Types.ObjectId(),
-    username: 'le-user',
+    email: 'user@email.com',
     password: '',
   };
 
@@ -31,11 +29,8 @@ describe(LocalStrategy.name, () => {
         {
           provide: UserService,
           useValue: {
-            async findOneBy(
-              property: keyof ModelWithId<User>,
-              username: string,
-            ) {
-              return property === 'username' && username === userData.username
+            async findOneBy(property: keyof ModelWithId<User>, value: string) {
+              return property === 'email' && value === userData.email
                 ? userData
                 : null;
             },
@@ -50,22 +45,22 @@ describe(LocalStrategy.name, () => {
   describe('validate', () => {
     it("returns the corresponding user's data when the correct credentials are provided", async () => {
       expect(
-        localStrategy.validate(userData.username, clearTextPassword),
+        localStrategy.validate(userData.email, clearTextPassword),
       ).resolves.toStrictEqual({
         id: userData._id.toString(),
-        username: userData.username,
+        email: userData.email,
       });
     });
 
     it('throws an `UnauthorizedException` if the provided username does not exist in the database', async () => {
       expect(async () =>
-        localStrategy.validate('wrong-username', clearTextPassword),
+        localStrategy.validate('wrong@email.com', clearTextPassword),
       ).rejects.toThrow(UnauthorizedException);
     });
 
     it('throws an `UnauthorizedException` if the wrong password is provided', async () => {
       expect(async () =>
-        localStrategy.validate(userData.username, 'wrong-password'),
+        localStrategy.validate(userData.email, 'wrong-password'),
       ).rejects.toThrow(UnauthorizedException);
     });
   });

@@ -43,7 +43,7 @@ describe(UserController.name, () => {
   describe('get', () => {
     const user: RequestUser = {
       id: new Types.ObjectId().toString(),
-      username: 'le-user',
+      email: 'le@user.com',
     };
 
     it('returns the authenticated user', () => {
@@ -54,7 +54,7 @@ describe(UserController.name, () => {
   describe('update', () => {
     const userId = new Types.ObjectId().toString();
     const updateUserDto: UpdateUserDto = {
-      username: 'a-username',
+      email: 'email-one@email.com',
       password: 'a-password',
     };
     let updateResult: any;

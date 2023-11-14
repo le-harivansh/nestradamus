@@ -13,9 +13,9 @@ import { AccessTokenStrategy } from './access-token.strategy';
 describe(AccessTokenStrategy.name, () => {
   let accessTokenStrategy: AccessTokenStrategy;
 
-  const userData: Pick<User, 'username'> & { _id: Types.ObjectId } = {
+  const userData: Pick<ModelWithId<User>, '_id' | 'email'> = {
     _id: new Types.ObjectId(),
-    username: 'le-username',
+    email: 'user-9099@email.com',
   };
 
   const userService: MockOf<UserService, 'findOneBy'> = {
@@ -23,7 +23,7 @@ describe(AccessTokenStrategy.name, () => {
       property === '_id' && userId === userData._id.toString()
         ? {
             id: userId,
-            username: userData.username,
+            email: userData.email,
           }
         : null,
     ),
@@ -72,7 +72,7 @@ describe(AccessTokenStrategy.name, () => {
         accessTokenStrategy.validate({ userId: userData._id.toString() }),
       ).resolves.toStrictEqual({
         id: userData._id.toString(),
-        username: userData.username,
+        email: userData.email,
       });
     });
 

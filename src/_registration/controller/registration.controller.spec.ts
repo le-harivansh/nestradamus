@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 
-import { MockOf } from '@/_library/helper';
+import { MockOf, ModelWithId } from '@/_library/helper';
 import { User } from '@/_user/schema/user.schema';
 import { UserService } from '@/_user/service/user.service';
 
@@ -9,9 +9,9 @@ import { RegisterUserDto } from '../dto/registration.dto';
 import { RegistrationController } from './registration.controller';
 
 describe(RegistrationController.name, () => {
-  const userData: Pick<User, 'username'> & { _id: Types.ObjectId } = {
+  const userData: Pick<ModelWithId<User>, '_id' | 'email'> = {
     _id: new Types.ObjectId(),
-    username: 'user-name',
+    email: 'user@email.com',
   };
   const userService: MockOf<UserService, 'create'> = {
     create: jest.fn(() => Promise.resolve(userData)),
@@ -43,7 +43,7 @@ describe(RegistrationController.name, () => {
 
   describe('register', () => {
     const registrationDto: RegisterUserDto = {
-      username: 'le-user-name',
+      email: 'le@user.email',
       password: 'le-pass-word',
     };
 
@@ -61,7 +61,7 @@ describe(RegistrationController.name, () => {
     it("returns the created user's data", () => {
       expect(result).toStrictEqual({
         id: userData._id.toString(),
-        username: userData.username,
+        email: userData.email,
       });
     });
   });

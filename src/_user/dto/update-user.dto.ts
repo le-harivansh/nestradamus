@@ -1,7 +1,7 @@
 import {
+  IsEmail,
   IsNotEmpty,
   IsOptional,
-  IsString,
   MinLength,
   ValidateIf,
 } from 'class-validator';
@@ -12,13 +12,9 @@ import { User } from '../schema/user.schema';
 
 export class UpdateUserDto {
   @IsOptional()
-  @IsString({ message: 'The username should be a string.' })
-  @MinLength(4, {
-    message: ({ constraints }) =>
-      `The username should be at least ${constraints} characters long.`,
-  })
+  @IsEmail()
   @IsUnique(User.name)
-  readonly username?: string;
+  readonly email?: string;
 
   @IsOptional()
   @MinLength(8, {
@@ -32,11 +28,9 @@ export class UpdateUserDto {
    * Its only purpose is to throw an error if ALL of the above properties are
    * empty.
    */
-  @ValidateIf(
-    ({ username, password }: UpdateUserDto) => !(username || password),
-  )
+  @ValidateIf(({ email, password }: UpdateUserDto) => !(email || password))
   @IsNotEmpty({
-    message: 'Provide either your username or your password to be updated.',
+    message: 'Provide either an email or a password to be updated.',
   })
   readonly _?: boolean;
 }
