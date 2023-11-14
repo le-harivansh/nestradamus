@@ -1,6 +1,5 @@
 # Compiled output
 /dist
-/node_modules
 
 # Environment variables
 .env
