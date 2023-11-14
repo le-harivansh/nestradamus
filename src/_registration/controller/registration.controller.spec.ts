@@ -1,17 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 
-import { UserService } from '../../_user/service/user.service';
+import { MockOf } from '@/_library/helper';
+import { User } from '@/_user/schema/user.schema';
+import { UserService } from '@/_user/service/user.service';
+
 import { RegisterUserDto } from '../dto/registration.dto';
 import { RegistrationController } from './registration.controller';
 
 describe(RegistrationController.name, () => {
-  const userData = {
+  const userData: Pick<User, 'username'> & { _id: Types.ObjectId } = {
     _id: new Types.ObjectId(),
     username: 'user-name',
   };
-  const userService = {
-    createUser: jest.fn(() => Promise.resolve(userData)),
+  const userService: MockOf<UserService, 'create'> = {
+    create: jest.fn(() => Promise.resolve(userData)),
   };
 
   let registrationController: RegistrationController;
@@ -51,8 +54,8 @@ describe(RegistrationController.name, () => {
     });
 
     it('calls `UserService::createUser` with the appropriate data', () => {
-      expect(userService.createUser).toHaveBeenCalledTimes(1);
-      expect(userService.createUser).toHaveBeenCalledWith(registrationDto);
+      expect(userService.create).toHaveBeenCalledTimes(1);
+      expect(userService.create).toHaveBeenCalledWith(registrationDto);
     });
 
     it("returns the created user's data", () => {

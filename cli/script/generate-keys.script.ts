@@ -40,8 +40,8 @@ export function main({
   envVars,
 }: {
   length: number;
-  envFile: string;
-  envVars: string[];
+  envFile: string | undefined;
+  envVars: string[] | undefined;
 }) {
   if (!envFile) {
     return {
@@ -55,7 +55,7 @@ export function main({
     );
   }
 
-  if (envVars.length === 0) {
+  if (!envVars || envVars.length === 0) {
     throw new Error(
       'At least one environment variable key should be provided.',
     );

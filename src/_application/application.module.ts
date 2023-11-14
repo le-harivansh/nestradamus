@@ -1,41 +1,36 @@
 import { Module, ValidationPipe } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import ms from 'ms';
 
+import { ConfigurationModule } from './_configuration/configuration.module';
+import { ConfigurationService } from './_configuration/service/configuration.service';
 import { DatabaseModule } from './_database/database.module';
 import { HealthModule } from './_health/health.module';
 import { LoggerModule } from './_logger/logger.module';
-import applicationConfiguration, {
-  ApplicationConfiguration,
-} from './application.config';
+import applicationConfiguration from './application.config';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      envFilePath: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
-      cache: process.env.NODE_ENV === 'production',
-    }),
+    ConfigurationModule,
+
     ConfigModule.forFeature(applicationConfiguration),
 
     LoggerModule,
 
-    DatabaseModule,
+    DatabaseModule.forRoot(),
 
     ThrottlerModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => [
+      inject: [ConfigurationService],
+      useFactory: (configurationService: ConfigurationService) => [
         {
           ttl: ms(
-            configService.getOrThrow<
-              ApplicationConfiguration['rate-limiter']['ttl']
-            >('application.rate-limiter.ttl'),
+            configurationService.getOrThrow('application.rate-limiter.ttl'),
           ),
-          limit: configService.getOrThrow<
-            ApplicationConfiguration['rate-limiter']['limit']
-          >('application.rate-limiter.limit'),
+          limit: configurationService.getOrThrow(
+            'application.rate-limiter.limit',
+          ),
         },
       ],
     }),

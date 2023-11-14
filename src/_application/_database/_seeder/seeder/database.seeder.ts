@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { UserFactory } from '../../_factory/factory/user.factory';
+import { UserFactory } from '@/_user/factory/user.factory';
 
 @Injectable()
 export class DatabaseSeeder {

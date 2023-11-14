@@ -6,7 +6,9 @@ import {
   ValidateIf,
 } from 'class-validator';
 
-import UsernameIsUnique from '../validator/username-is-unique.validator';
+import IsUnique from '@/_library/validator/is-unique.validator';
+
+import { User } from '../schema/user.schema';
 
 export class UpdateUserDto {
   @IsOptional()
@@ -15,7 +17,7 @@ export class UpdateUserDto {
     message: ({ constraints }) =>
       `The username should be at least ${constraints} characters long.`,
   })
-  @UsernameIsUnique()
+  @IsUnique(User.name)
   readonly username?: string;
 
   @IsOptional()

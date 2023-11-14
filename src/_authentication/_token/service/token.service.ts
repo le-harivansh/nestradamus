@@ -1,12 +1,10 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import ms from 'ms';
 
-import { ApplicationConfiguration } from '../../../_application/application.config';
-import { RequestUser } from '../../../_user/schema/user.schema';
-import { JwtType } from '../../helper';
-import { AuthenticationTokensConfiguration } from '../token.config';
+import { ConfigurationService } from '@/_application/_configuration/service/configuration.service';
+import { JwtType } from '@/_authentication/helper';
+import { RequestUser } from '@/_user/schema/user.schema';
 
 @Injectable()
 export class TokenService {
@@ -16,10 +14,10 @@ export class TokenService {
 
   constructor(
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
+    private readonly configurationService: ConfigurationService,
   ) {
-    this.JWT_ISSUER = this.configService
-      .getOrThrow<ApplicationConfiguration['name']>('application.name')
+    this.JWT_ISSUER = this.configurationService
+      .getOrThrow('application.name')
       .toLowerCase();
 
     this.JWT_AUDIENCE = this.JWT_ISSUER;
@@ -30,9 +28,9 @@ export class TokenService {
     expiresAt: number;
   } {
     const duration = ms(
-      this.configService.getOrThrow<
-        AuthenticationTokensConfiguration['accessToken']['duration']
-      >('authentication.jwt.accessToken.duration'),
+      this.configurationService.getOrThrow(
+        'authentication.jwt.accessToken.duration',
+      ),
     );
 
     const token = this.generateJsonWebToken(
@@ -55,9 +53,9 @@ export class TokenService {
     expiresAt: number;
   } {
     const duration = ms(
-      this.configService.getOrThrow<
-        AuthenticationTokensConfiguration['refreshToken']['duration']
-      >('authentication.jwt.refreshToken.duration'),
+      this.configurationService.getOrThrow(
+        'authentication.jwt.refreshToken.duration',
+      ),
     );
 
     const token = this.generateJsonWebToken(
@@ -78,14 +76,14 @@ export class TokenService {
   public getSecret(tokenType: JwtType): string {
     switch (tokenType) {
       case JwtType.ACCESS_TOKEN:
-        return this.configService.getOrThrow<
-          AuthenticationTokensConfiguration['accessToken']['secret']
-        >('authentication.jwt.accessToken.secret');
+        return this.configurationService.getOrThrow(
+          'authentication.jwt.accessToken.secret',
+        );
 
       case JwtType.REFRESH_TOKEN:
-        return this.configService.getOrThrow<
-          AuthenticationTokensConfiguration['refreshToken']['secret']
-        >('authentication.jwt.refreshToken.secret');
+        return this.configurationService.getOrThrow(
+          'authentication.jwt.refreshToken.secret',
+        );
 
       default:
         throw new InternalServerErrorException(

@@ -31,7 +31,7 @@ describe('generate-keys.script', () => {
     });
 
     describe('[on success]', () => {
-      it('returns a generated key of the specified length if an environment file is specified', () => {
+      it('returns a generated key of the specified length if an environment file is not specified', () => {
         const returnedValue = main({
           length: KEY_LENGTH,
           envFile: undefined,

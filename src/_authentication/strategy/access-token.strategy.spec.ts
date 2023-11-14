@@ -3,8 +3,10 @@ import { JwtSignOptions } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 
-import { User } from '../../_user/schema/user.schema';
-import { UserService } from '../../_user/service/user.service';
+import { MockOf, ModelWithId } from '@/_library/helper';
+import { User } from '@/_user/schema/user.schema';
+import { UserService } from '@/_user/service/user.service';
+
 import { TokenService } from '../_token/service/token.service';
 import { AccessTokenStrategy } from './access-token.strategy';
 
@@ -16,9 +18,9 @@ describe(AccessTokenStrategy.name, () => {
     username: 'le-username',
   };
 
-  const userService = {
-    findById: jest.fn((userId: string) =>
-      userId === userData._id.toString()
+  const userService: MockOf<UserService, 'findOneBy'> = {
+    findOneBy: jest.fn((property: keyof ModelWithId<User>, userId: string) =>
+      property === '_id' && userId === userData._id.toString()
         ? {
             id: userId,
             username: userData.username,
@@ -55,11 +57,12 @@ describe(AccessTokenStrategy.name, () => {
   });
 
   describe('validate', () => {
-    it('calls `UserService::findById`', async () => {
+    it('calls `UserService::findOneBy`', async () => {
       await accessTokenStrategy.validate({ userId: userData._id.toString() });
 
-      expect(userService.findById).toHaveBeenCalledTimes(1);
-      expect(userService.findById).toHaveBeenCalledWith(
+      expect(userService.findOneBy).toHaveBeenCalledTimes(1);
+      expect(userService.findOneBy).toHaveBeenCalledWith(
+        '_id',
         userData._id.toString(),
       );
     });

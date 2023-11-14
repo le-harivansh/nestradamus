@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { MS_DURATION_PATTERN } from '../helper';
 
-const CONFIGURATION_NAMESPACE = 'authentication.jwt';
+export const CONFIGURATION_NAMESPACE = 'authentication.jwt';
 
 const authenticationTokensConfigurationValidationSchema = z.object({
   accessToken: z.object({

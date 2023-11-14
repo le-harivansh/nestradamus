@@ -1,4 +1,4 @@
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, NotFoundException } from '@nestjs/common';
 import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { verify } from 'argon2';
@@ -56,7 +56,7 @@ describe(UserService.name, () => {
     };
 
     it("saves the provided user's data to the database", async () => {
-      await userService.createUser(userData);
+      await userService.create(userData);
 
       expect(
         userModel.findOne({ username: userData.username }).exec(),
@@ -66,71 +66,54 @@ describe(UserService.name, () => {
     });
 
     it("hashes the user's password before saving it to the database", async () => {
-      await userService.createUser(userData);
+      await userService.create(userData);
 
-      const { password: hashedPassword } = await userModel
+      const retrievedUser = await userModel
         .findOne({ username: userData.username })
         .exec();
 
-      expect(verify(hashedPassword, userData.password)).resolves.toBeTruthy();
+      expect(
+        verify(retrievedUser!.password, userData.password),
+      ).resolves.toBeTruthy();
     });
   });
 
-  describe('findByUsername', () => {
+  describe('findOneBy', () => {
     const userData: User = {
       username: 'onetwo',
       password: 'wantoo',
     };
 
-    beforeAll(async () => {
-      await userModel.create(userData);
-    });
-
-    it('returns the corresponding user from the database', async () => {
-      const retrievedUser = await userService.findByUsername(userData.username);
-
-      expect(retrievedUser.toObject()).toMatchObject({
-        ...userData,
-        password: expect.any(String), // the user's password is hashed before it is saved to the database.
-      });
-    });
-
-    it('returns undefined if the user could not be found in the database', async () => {
-      expect(userService.findByUsername('non-existant-user')).resolves
-        .toBeUndefined;
-    });
-  });
-
-  describe('findById', () => {
-    const userData: User = {
-      username: 'threefour',
-      password: 'sureefoar',
-    };
-
     let userId: string;
 
-    beforeAll(async () => {
+    beforeEach(async () => {
       userId = (await userModel.create(userData))._id.toString();
     });
 
-    it('returns the corresponding user from the database', async () => {
-      const retrievedUser = await userService.findById(userId);
+    it.each([
+      { property: '_id', value: () => userId },
+      { property: 'username', value: () => userData.username },
+    ] as const)(
+      'returns the corresponding user from the database ($property: $value)',
+      async ({ property, value }) => {
+        const retrievedUser = await userService.findOneBy(property, value());
 
-      expect(retrievedUser.toObject()).toMatchObject({
-        ...userData,
-        password: expect.any(String), // the user's password is hashed before it is saved to the database.
-      });
-    });
+        expect(retrievedUser).toMatchObject({
+          ...userData,
+          password: expect.any(String), // the user's password is hashed before it is saved to the database.
+        });
+      },
+    );
 
-    it('returns null if the user could not be found in the database', async () => {
+    it('throws a `NotFoundException` if the user could not be found in the database', () => {
       expect(
-        userService.findById(new Types.ObjectId().toString()),
-      ).resolves.toBeNull();
+        userService.findOneBy('_id', new Types.ObjectId().toString()),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
-  describe('updateUserWithId', () => {
-    const userData = {
+  describe('update', () => {
+    const userData: User = {
       username: 'username-1000',
       password: 'password-1000',
     };
@@ -148,7 +131,7 @@ describe(UserService.name, () => {
         userModel.findOne({ username: newUsername }).exec(),
       ).resolves.toBeNull();
 
-      await userService.updateUserWithId(userId, {
+      await userService.update(userId, {
         username: newUsername,
       });
 
@@ -157,12 +140,20 @@ describe(UserService.name, () => {
       });
     });
 
+    it('throws a `NotFoundException` if the user to update could not be found in the database', () => {
+      expect(
+        userService.update(new Types.ObjectId().toString(), {
+          username: 'newUsername',
+        }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
     it('hashes any provided user-password before updating it', async () => {
       const newPassword = 'password-1111';
 
-      await userService.updateUserWithId(userId, { password: newPassword });
+      await userService.update(userId, { password: newPassword });
 
-      const savedHashedPassword = (await userModel.findById(userId).exec())
+      const savedHashedPassword = (await userModel.findById(userId).exec())!
         .password;
 
       expect(verify(savedHashedPassword, newPassword)).resolves.toBeTruthy();
@@ -171,9 +162,9 @@ describe(UserService.name, () => {
     it('will not re-hash the password if it has not been updated', async () => {
       const newUsername = 'password-1111';
 
-      await userService.updateUserWithId(userId, { username: newUsername });
+      await userService.update(userId, { username: newUsername });
 
-      const savedHashedPassword = (await userModel.findById(userId).exec())
+      const savedHashedPassword = (await userModel.findById(userId).exec())!
         .password;
 
       expect(
@@ -182,26 +173,27 @@ describe(UserService.name, () => {
     });
 
     it("updates the specified user's data using the provided payload [with-password]", async () => {
-      const newUserData = {
+      const newUserData: User = {
         username: 'username-xxxx',
         password: 'password-xxxx',
       };
 
-      await userService.updateUserWithId(userId, newUserData);
+      await userService.update(userId, newUserData);
 
-      const updatedUser = await userModel.findById(userId).exec();
+      const updatedUser = (await userModel.findById(userId).exec())?.toObject();
+
+      expect(updatedUser).toMatchObject({
+        ...newUserData,
+        password: expect.any(String),
+      });
 
       expect(
-        verify(updatedUser.password, newUserData.password),
+        verify(updatedUser!.password, newUserData.password),
       ).resolves.toBeTruthy();
-
-      expect(userModel.findById(userId).exec()).resolves.toMatchObject({
-        username: newUserData.username,
-      });
     });
   });
 
-  describe('deleteUserWithId', () => {
+  describe('delete', () => {
     const userData: User = {
       username: 'hellooooo',
       password: 'nope.jpeg',
@@ -214,9 +206,17 @@ describe(UserService.name, () => {
     });
 
     it("removes the specified user's data from the database", async () => {
-      await userService.deleteById(userId);
+      await userService.delete(userId);
 
-      expect(userModel.findById(userId).exec()).resolves.toBeNull();
+      const nonExistentUser = await userModel.findById(userId).exec();
+
+      expect(nonExistentUser).toBeNull();
+    });
+
+    it('throws a `NotFoundException` if the specified user could not be deleted.', () => {
+      expect(
+        userService.delete(new Types.ObjectId().toString()),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

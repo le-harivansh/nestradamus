@@ -6,8 +6,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
-import { User } from '../../_user/decorator/user.decorator';
-import { RequestUser } from '../../_user/schema/user.schema';
+import { User } from '@/_user/decorator/user.decorator';
+import { RequestUser } from '@/_user/schema/user.schema';
+
 import { TokenService } from '../_token/service/token.service';
 import { RequiresCredentials } from '../guard/requires-credentials.guard';
 

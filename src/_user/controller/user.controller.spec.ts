@@ -1,21 +1,21 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 
+import { MockOf } from '@/_library/helper';
+
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { RequestUser } from '../schema/user.schema';
 import { UserService } from '../service/user.service';
 import { UserController } from './user.controller';
 
 describe(UserController.name, () => {
+  const UPDATED_USER_DATA = Symbol('updated-user-data');
+
   let userController: UserController;
 
-  const userService = {
-    UPDATED_USER_DATA: Symbol('updated-user-data'),
-
-    updateUserWithId: jest.fn(function () {
-      return Promise.resolve(this.UPDATED_USER_DATA);
-    }),
-    deleteById: jest.fn(() => Promise.resolve()),
+  const userService: MockOf<UserService, 'update' | 'delete'> = {
+    update: jest.fn(() => Promise.resolve(UPDATED_USER_DATA)),
+    delete: jest.fn(() => Promise.resolve()),
   };
 
   beforeAll(async () => {
@@ -63,16 +63,13 @@ describe(UserController.name, () => {
       updateResult = await userController.update(userId, updateUserDto);
     });
 
-    it('calls `UserService::updateUserWithId`', () => {
-      expect(userService.updateUserWithId).toHaveBeenCalledTimes(1);
-      expect(userService.updateUserWithId).toHaveBeenCalledWith(
-        userId,
-        updateUserDto,
-      );
+    it('calls `UserService::update`', () => {
+      expect(userService.update).toHaveBeenCalledTimes(1);
+      expect(userService.update).toHaveBeenCalledWith(userId, updateUserDto);
     });
 
-    it('returns the result of `UserService::updateUserWithId`', () => {
-      expect(updateResult).toBe(userService.UPDATED_USER_DATA);
+    it('returns the result of `UserService::update`', () => {
+      expect(updateResult).toBe(UPDATED_USER_DATA);
     });
   });
 
@@ -83,9 +80,9 @@ describe(UserController.name, () => {
       await userController.delete(userId);
     });
 
-    it('calls `UserService::deleteById`', () => {
-      expect(userService.deleteById).toHaveBeenCalledTimes(1);
-      expect(userService.deleteById).toHaveBeenCalledWith(userId);
+    it('calls `UserService::delete`', () => {
+      expect(userService.delete).toHaveBeenCalledTimes(1);
+      expect(userService.delete).toHaveBeenCalledWith(userId);
     });
   });
 });

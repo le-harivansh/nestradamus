@@ -2,8 +2,9 @@ import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Connection } from 'mongoose';
 import request from 'supertest';
 
-import { RegistrationController } from '../src/_registration/controller/registration.controller';
-import { RegisterUserDto } from '../src/_registration/dto/registration.dto';
+import { RegistrationController } from '@/_registration/controller/registration.controller';
+import { RegisterUserDto } from '@/_registration/dto/registration.dto';
+
 import { setupTestApplication, teardownTestApplication } from './helper';
 
 describe(`${RegistrationController.name} (e2e)`, () => {
@@ -30,7 +31,7 @@ describe(`${RegistrationController.name} (e2e)`, () => {
   describe('/register (POST)', () => {
     const userData: RegisterUserDto = {
       username: 'le-user',
-      password: 'le-password',
+      password: 'Le-P@ssw0rd',
     };
 
     describe('[succeeds because]', () => {
@@ -48,12 +49,15 @@ describe(`${RegistrationController.name} (e2e)`, () => {
     });
 
     describe('[fails because]', () => {
-      it.each([
+      it.each<RegisterUserDto>([
         { username: '', password: '' },
         { username: 'ninetyOne', password: '' },
-        { username: '', password: 'password' },
-        { username: 'one', password: 'password' },
-        { username: 'userino', password: 'pass' },
+        { username: '', password: 'P@ssw0rd' },
+        { username: 'one', password: 'P@ssw0rd' },
+        { username: 'user', password: 'p@ssw0rd' },
+        { username: 'user', password: 'P@SSW0RD' },
+        { username: 'user', password: 'Passw0rd' },
+        { username: 'user', password: 'P@ssword' },
         userData,
       ])(
         "responds with HTTP:BAD_REQUEST if the provided user-data is invalid [username: '$username', password: '$password']",

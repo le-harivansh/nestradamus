@@ -12,7 +12,7 @@ import { HealthController } from './health.controller';
 describe(HealthController.name, () => {
   let controller: HealthController;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [HealthController],
       providers: [

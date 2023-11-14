@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { MS_DURATION_PATTERN } from '../_authentication/helper';
 
-const CONFIGURATION_NAMESPACE = 'application';
+export const CONFIGURATION_NAMESPACE = 'application';
 
 const applicationConfigurationValidationSchema = z.object({
   environment: z
@@ -13,7 +13,7 @@ const applicationConfigurationValidationSchema = z.object({
       z.literal('production'),
     ])
     .default('development'),
-  name: z.string().default('Super-App'),
+  name: z.string().default('Application'),
   port: z.coerce.number().int().positive().max(65535).default(3000),
   'rate-limiter': z.object({
     ttl: z.string().regex(MS_DURATION_PATTERN).default('1 minute'),
@@ -29,11 +29,10 @@ export default registerAs(CONFIGURATION_NAMESPACE, () =>
   applicationConfigurationValidationSchema.parse({
     environment: process.env.NODE_ENV,
     name: process.env.APPLICATION_NAME,
-    port: process.env.APPLICATION_PORT as unknown as number,
+    port: process.env.APPLICATION_PORT,
     'rate-limiter': {
       ttl: process.env.APPLICATION_THROTTLER_TTL,
-      limit: process.env
-        .APPLICATION_THROTTLER_REQUEST_LIMIT as unknown as number,
+      limit: process.env.APPLICATION_THROTTLER_REQUEST_LIMIT,
     },
   } as ApplicationConfiguration),
 );

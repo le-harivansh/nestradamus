@@ -8,7 +8,7 @@ import {
 import type { RequestUser } from '../schema/user.schema';
 
 export function getUserFromRequest(
-  property: keyof RequestUser,
+  property: keyof RequestUser | undefined,
   context: ExecutionContext,
 ): string | RequestUser {
   const user = context.switchToHttp().getRequest().user as RequestUser;

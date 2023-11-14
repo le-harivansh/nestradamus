@@ -2,8 +2,9 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
-import { RequestUser } from '../../_user/schema/user.schema';
-import { UserService } from '../../_user/service/user.service';
+import { RequestUser } from '@/_user/schema/user.schema';
+import { UserService } from '@/_user/service/user.service';
+
 import { TokenService } from '../_token/service/token.service';
 import { Guard, JwtType, TokenHttpHeader } from '../helper';
 
@@ -29,7 +30,7 @@ export class AccessTokenStrategy extends PassportStrategy(
   }
 
   async validate({ userId }: { userId: string }): Promise<RequestUser> {
-    const retrievedUser = await this.userService.findById(userId);
+    const retrievedUser = await this.userService.findOneBy('_id', userId);
 
     if (!retrievedUser) {
       throw new UnauthorizedException('The requested user no longer exists.');

@@ -4,7 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { useContainer } from 'class-validator';
 import { Connection } from 'mongoose';
 
-import { MainModule } from '../src/main.module';
+import { MainModule } from '@/main.module';
 
 export async function setupTestApplication() {
   const moduleFixture: TestingModule = await Test.createTestingModule({

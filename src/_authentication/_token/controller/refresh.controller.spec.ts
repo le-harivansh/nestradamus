@@ -1,7 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 
-import { RequestUser } from '../../../_user/schema/user.schema';
+import { MockOf } from '@/_library/helper';
+import { RequestUser } from '@/_user/schema/user.schema';
+
 import { TokenService } from '../service/token.service';
 import { RefreshController } from './refresh.controller';
 
@@ -15,7 +17,10 @@ describe(RefreshController.name, () => {
     token: 'the-generated-token',
     expiresAt: Date.now(),
   };
-  const tokenService = {
+  const tokenService: MockOf<
+    TokenService,
+    'generateAccessTokenFor' | 'generateRefreshTokenFor'
+  > = {
     generateAccessTokenFor: jest.fn(() => generatedTokenData),
     generateRefreshTokenFor: jest.fn(() => generatedTokenData),
   };
@@ -53,7 +58,7 @@ describe(RefreshController.name, () => {
       controllerMethod: 'regenerateRefreshToken',
       serviceMethod: 'generateRefreshTokenFor',
     },
-  ])('$controllerMethod', ({ controllerMethod, serviceMethod }) => {
+  ] as const)('$controllerMethod', ({ controllerMethod, serviceMethod }) => {
     let response: unknown;
 
     beforeEach(() => {

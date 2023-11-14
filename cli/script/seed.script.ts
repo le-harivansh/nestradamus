@@ -1,8 +1,8 @@
 import { NestFactory } from '@nestjs/core';
 import chalk from 'chalk';
 
-import { DatabaseSeeder } from '../../src/_application/_database/_seeder/seeder/database.seeder';
-import { MainModule } from '../../src/main.module';
+import { DatabaseSeeder } from '@/_application/_database/_seeder/seeder/database.seeder';
+import { MainModule } from '@/main.module';
 
 (async () => {
   const application = await NestFactory.createApplicationContext(MainModule, {

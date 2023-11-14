@@ -2,14 +2,17 @@ import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Connection } from 'mongoose';
 import request from 'supertest';
 
-import { RefreshController } from '../src/_authentication/_token/controller/refresh.controller';
-import { TokenHttpHeader } from '../src/_authentication/helper';
+import { RefreshController } from '@/_authentication/_token/controller/refresh.controller';
+import { TokenHttpHeader } from '@/_authentication/helper';
+import { RegisterUserDto } from '@/_registration/dto/registration.dto';
+import { User } from '@/_user/schema/user.schema';
+
 import { setupTestApplication, teardownTestApplication } from './helper';
 
 describe(`${RefreshController.name} (e2e)`, () => {
-  const userData = {
+  const userData: Pick<User, 'username' | 'password'> = {
     username: 'user-one',
-    password: 'password-one',
+    password: 'Le-P@ssw0rd',
   };
 
   let application: INestApplication;
@@ -33,7 +36,9 @@ describe(`${RefreshController.name} (e2e)`, () => {
      * Create user & get user authentication tokens
      */
 
-    await request(application.getHttpServer()).post('/register').send(userData);
+    await request(application.getHttpServer())
+      .post('/register')
+      .send(userData as RegisterUserDto);
 
     const { body: authenticationTokens } = await request(
       application.getHttpServer(),

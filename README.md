@@ -12,6 +12,15 @@ You can just copy the `.env.example` file, and change any environment variable a
 cp .env.example .env
 ```
 
+### Configuration registration
+
+To add new configuration values to the application, the following need be done in order:
+
+1. Add the relevant environment variables & values to the `.env` file.
+2. Create a new `<module-name>.config.ts` file to validate the new environment variable values pulled from the `.env` file.
+3. Register the default export of the `<module-name>.config.ts` file in the module via `ConfigModule::forFeature`.
+4. Add the relevant namespace & configuration type to the `NamespacedConfigurationType` in the `ConfigurationService` (which - in turn - is in `ConfigurationModule`).
+
 ### Test configuration
 
 The test configuration is expected to be in a `.env.test` file. You create a new `.env.test` file by copying the `.env.example` file, and changing any environment variable as needed.
@@ -87,6 +96,10 @@ A `compose.yaml` file is provided, and contains the application container depend
 ## Logging
 
 Logging in the application is done using [winston](https://github.com/winstonjs/winston) through the `src/_application/_logger` module.
+
+## Model factories & database seeding
+
+Model factories should live in the module where their schemas are found. They should however be **registered** in the `factory` module - located at: `src/_application/_database/_factory`.
 
 ## General conventions
 

@@ -1,12 +1,17 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 import ms from 'ms';
 
-import { RequestUser } from '../../../_user/schema/user.schema';
-import { JwtType } from '../../helper';
+import {
+  ConfigurationService,
+  NamespacedConfiguration,
+} from '@/_application/_configuration/service/configuration.service';
+import { JwtType } from '@/_authentication/helper';
+import { MockOf } from '@/_library/helper';
+import { RequestUser } from '@/_user/schema/user.schema';
+
 import { TokenService } from './token.service';
 
 describe(TokenService.name, () => {
@@ -16,12 +21,19 @@ describe(TokenService.name, () => {
   };
 
   const generatedJsonWebToken = 'GENERATED-TOKEN';
-  const jwtService = {
+  const jwtService: MockOf<JwtService, 'sign'> = {
     sign: jest.fn(() => generatedJsonWebToken),
   };
 
-  const configuration = {
-    'application.name': 'Super-App',
+  const configuration: Pick<
+    NamespacedConfiguration,
+    | 'application.name'
+    | 'authentication.jwt.accessToken.secret'
+    | 'authentication.jwt.accessToken.duration'
+    | 'authentication.jwt.refreshToken.secret'
+    | 'authentication.jwt.refreshToken.duration'
+  > = {
+    'application.name': 'Application',
 
     'authentication.jwt.accessToken.secret': 'access-token-secret',
     'authentication.jwt.accessToken.duration': '15 minutes',
@@ -29,7 +41,7 @@ describe(TokenService.name, () => {
     'authentication.jwt.refreshToken.secret': 'refresh-token-secret',
     'authentication.jwt.refreshToken.duration': '1 week',
   };
-  const configService = {
+  const configurationService: MockOf<ConfigurationService, 'getOrThrow'> = {
     getOrThrow: jest.fn(
       (key: keyof typeof configuration) => configuration[key],
     ),
@@ -45,8 +57,8 @@ describe(TokenService.name, () => {
           useValue: jwtService,
         },
         {
-          provide: ConfigService,
-          useValue: configService,
+          provide: ConfigurationService,
+          useValue: configurationService,
         },
         TokenService,
       ],

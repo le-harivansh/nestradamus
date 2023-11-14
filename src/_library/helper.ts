@@ -1,0 +1,8 @@
+import { Types } from 'mongoose';
+
+export type ModelWithId<T extends object> = T & { _id: Types.ObjectId };
+
+export type MockOf<T, P extends keyof T> = {
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  [K in P]: T[K] extends Function ? jest.Mock<unknown> : T[P];
+};

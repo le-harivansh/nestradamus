@@ -2,7 +2,10 @@ import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Connection } from 'mongoose';
 import request from 'supertest';
 
-import { AuthenticationController } from '../src/_authentication/controller/authentication.controller';
+import { AuthenticationController } from '@/_authentication/controller/authentication.controller';
+import { RegisterUserDto } from '@/_registration/dto/registration.dto';
+import { User } from '@/_user/schema/user.schema';
+
 import { setupTestApplication, teardownTestApplication } from './helper';
 
 describe(`${AuthenticationController.name} (e2e)`, () => {
@@ -27,15 +30,15 @@ describe(`${AuthenticationController.name} (e2e)`, () => {
   });
 
   describe('/login (POST)', () => {
-    const userData = {
+    const userData: Pick<User, 'username' | 'password'> = {
       username: 'user-one',
-      password: 'password-one',
+      password: 'Le-P@ssw0rd',
     };
 
     beforeAll(async () => {
       await request(application.getHttpServer())
         .post('/register')
-        .send(userData);
+        .send(userData as RegisterUserDto);
     });
 
     describe('[succeeds because]', () => {

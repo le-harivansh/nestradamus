@@ -6,7 +6,6 @@ import { UserModule } from '../_user/user.module';
 import authenticationConfiguration from './_token/token.config';
 import { TokenModule } from './_token/token.module';
 import { AuthenticationController } from './controller/authentication.controller';
-import { AuthenticationService } from './service/authentication.service';
 import { AccessTokenStrategy } from './strategy/access-token.strategy';
 import { LocalStrategy } from './strategy/local.strategy';
 import { RefreshTokenStrategy } from './strategy/refresh-token.strategy';
@@ -18,12 +17,7 @@ import { RefreshTokenStrategy } from './strategy/refresh-token.strategy';
     ConfigModule.forFeature(authenticationConfiguration),
     TokenModule,
   ],
-  providers: [
-    AuthenticationService,
-    LocalStrategy,
-    AccessTokenStrategy,
-    RefreshTokenStrategy,
-  ],
+  providers: [LocalStrategy, AccessTokenStrategy, RefreshTokenStrategy],
   controllers: [AuthenticationController],
 })
 export class AuthenticationModule {}

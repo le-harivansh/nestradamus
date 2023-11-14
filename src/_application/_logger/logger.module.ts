@@ -1,23 +1,19 @@
 import { Global, Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { createLogger, format, transports } from 'winston';
 
-import { ApplicationConfiguration } from '../application.config';
+import { ConfigurationService } from '../_configuration/service/configuration.service';
 import { LOG_COLORS, LOG_LEVELS } from './helper';
 import { WinstonLoggerService } from './service/winston-logger.service';
 
 @Global()
 @Module({
-  imports: [ConfigModule],
   providers: [
     {
       provide: WinstonLoggerService,
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
+      inject: [ConfigurationService],
+      useFactory: (configurationService: ConfigurationService) => {
         const applicationName =
-          configService.getOrThrow<ApplicationConfiguration['name']>(
-            'application.name',
-          );
+          configurationService.getOrThrow('application.name');
 
         const winstonLogger = createLogger({
           levels: LOG_LEVELS,
@@ -43,9 +39,9 @@ import { WinstonLoggerService } from './service/winston-logger.service';
           ],
         });
 
-        const applicationEnvironment = configService.get<
-          ApplicationConfiguration['environment']
-        >('application.environment');
+        const applicationEnvironment = configurationService.getOrThrow(
+          'application.environment',
+        );
 
         if (applicationEnvironment === 'development') {
           winstonLogger.add(

@@ -9,7 +9,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
-import { RequiresAccessToken } from '../../_authentication/guard/requires-access-token.guard';
+import { RequiresAccessToken } from '@/_authentication/guard/requires-access-token.guard';
+
 import { User } from '../decorator/user.decorator';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { RequestUser } from '../schema/user.schema';
@@ -31,13 +32,13 @@ export class UserController {
     @User('id') userId: string,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    return this.userService.updateUserWithId(userId, updateUserDto);
+    return this.userService.update(userId, updateUserDto);
   }
 
   @Delete()
   @UseGuards(RequiresAccessToken)
   @HttpCode(HttpStatus.NO_CONTENT)
   async delete(@User('id') userId: string) {
-    await this.userService.deleteById(userId);
+    await this.userService.delete(userId);
   }
 }

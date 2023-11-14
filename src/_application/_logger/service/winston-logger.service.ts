@@ -33,7 +33,7 @@ export class WinstonLoggerService implements LoggerService {
     this.logMessage('verbose', message, ...optionalParams);
   }
 
-  setContext(context: string) {
+  setContext(context?: string) {
     this.context = context;
   }
 
