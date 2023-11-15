@@ -54,7 +54,7 @@ describe(UserService.name, () => {
   describe('createUser', () => {
     const userData: User = {
       email: 'user@email.com',
-      password: 'nope.jpeg',
+      password: 'P@ssw0rd',
     };
 
     it("saves the provided user's data to the database", async () => {
@@ -82,8 +82,8 @@ describe(UserService.name, () => {
 
   describe('findOneBy', () => {
     const userData: User = {
-      email: 'one@two.three',
-      password: 'wantoo',
+      email: 'user@email.com',
+      password: 'P@ssw0rd',
     };
 
     let userId: string;
@@ -119,8 +119,8 @@ describe(UserService.name, () => {
 
   describe('update', () => {
     const userData: User = {
-      email: 'user-1000@email.com',
-      password: 'password-1000',
+      email: 'user@email.com',
+      password: 'P@ssw0rd',
     };
 
     let userId: string;
@@ -163,7 +163,7 @@ describe(UserService.name, () => {
     });
 
     it('will not re-hash the password if it has not been updated', async () => {
-      const newEmail = 'email-1111@newuser.com';
+      const newEmail = 'new-user@email.com';
 
       await userService.update(userId, { email: newEmail });
 
@@ -177,8 +177,8 @@ describe(UserService.name, () => {
 
     it("updates the specified user's data using the provided payload [with-password]", async () => {
       const newUserData: User = {
-        email: 'user-xxxx@email.com',
-        password: 'password-xxxx',
+        email: 'new-user@email.com',
+        password: 'new-P@ssw0rd',
       };
 
       await userService.update(userId, newUserData);
@@ -198,8 +198,8 @@ describe(UserService.name, () => {
 
   describe('delete', () => {
     const userData: User = {
-      email: 'hello@world.com',
-      password: 'nope.jpeg',
+      email: 'user@email.com',
+      password: 'P@ssw0rd',
     };
 
     let userId: string;

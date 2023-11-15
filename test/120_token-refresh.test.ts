@@ -11,8 +11,8 @@ import { setupTestApplication, teardownTestApplication } from './helper';
 
 describe(`${RefreshController.name} (e2e)`, () => {
   const userData: Pick<User, 'email' | 'password'> = {
-    email: 'user@one.com',
-    password: 'Le-P@ssw0rd',
+    email: 'user@email.com',
+    password: 'P@ssw0rd',
   };
 
   let application: INestApplication;

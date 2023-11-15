@@ -15,7 +15,7 @@ describe(AccessTokenStrategy.name, () => {
 
   const userData: Pick<ModelWithId<User>, '_id' | 'email'> = {
     _id: new Types.ObjectId(),
-    email: 'user-9099@email.com',
+    email: 'user@email.com',
   };
 
   const userService: MockOf<UserService, 'findOneBy'> = {

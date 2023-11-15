@@ -16,7 +16,7 @@ describe(getUserFromRequest.name, () => {
 
   const user: RequestUser = {
     id: new Types.ObjectId().toString(),
-    email: 'zero@zero.com',
+    email: 'user@email.com',
   };
 
   it('returns the user object attached to the request object', () => {

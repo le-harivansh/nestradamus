@@ -17,7 +17,7 @@ import { TokenService } from './token.service';
 describe(TokenService.name, () => {
   const user: RequestUser = {
     id: new Types.ObjectId().toString(),
-    email: 'one@two.three',
+    email: 'user@email.com',
   };
 
   const generatedJsonWebToken = 'GENERATED-TOKEN';

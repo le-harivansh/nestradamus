@@ -10,7 +10,7 @@ import { RefreshController } from './refresh.controller';
 describe(RefreshController.name, () => {
   const authenticatedUser: RequestUser = {
     id: new Types.ObjectId().toString(),
-    email: 'user-1001@email.com',
+    email: 'user@email.com',
   };
 
   const generatedTokenData = {

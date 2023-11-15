@@ -31,7 +31,7 @@ describe(`${RegistrationController.name} (e2e)`, () => {
   describe('/register (POST)', () => {
     const userData: RegisterUserDto = {
       email: 'user@email.com',
-      password: 'Le-P@ssw0rd',
+      password: 'P@ssw0rd',
     };
 
     describe('[succeeds because]', () => {
@@ -51,12 +51,12 @@ describe(`${RegistrationController.name} (e2e)`, () => {
     describe('[fails because]', () => {
       it.each<RegisterUserDto>([
         { email: '', password: '' }, // all empty fields
-        { email: 'user-one@email.com', password: '' }, // empty password field
+        { email: 'another-user@email.com', password: '' }, // empty password field
         { email: '', password: 'P@ssw0rd' }, // empty email field
-        { email: 'user-one@email.com', password: 'p@ssw0rd' }, // no uppercase character in password
-        { email: 'user-one@email.com', password: 'P@SSW0RD' }, // no lowercase character in password
-        { email: 'user-one@email.com', password: 'Passw0rd' }, // no special character in password
-        { email: 'user-one@email.com', password: 'P@ssword' }, // no number in password
+        { email: 'another-user@email.com', password: 'p@ssw0rd' }, // no uppercase character in password
+        { email: 'another-user@email.com', password: 'P@SSW0RD' }, // no lowercase character in password
+        { email: 'another-user@email.com', password: 'Passw0rd' }, // no special character in password
+        { email: 'another-user@email.com', password: 'P@ssword' }, // no number in password
         userData, // email already exists
       ])(
         "responds with HTTP:BAD_REQUEST if the provided user-data is invalid [email: '$email', password: '$password']",

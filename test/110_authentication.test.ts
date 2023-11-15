@@ -31,8 +31,8 @@ describe(`${AuthenticationController.name} (e2e)`, () => {
 
   describe('/login (POST)', () => {
     const userData: Pick<User, 'email' | 'password'> = {
-      email: 'user@one.two',
-      password: 'Le-P@ssw0rd',
+      email: 'user@email.com',
+      password: 'P@ssw0rd',
     };
 
     beforeAll(async () => {
@@ -66,11 +66,11 @@ describe(`${AuthenticationController.name} (e2e)`, () => {
         email: string;
         password: string;
       }>([
-        { email: '', password: '' },
-        { email: userData.email, password: '' },
-        { email: '', password: userData.password },
-        { email: userData.email, password: 'wrong-password' },
-        { email: 'wrong@email.com', password: userData.password },
+        { email: '', password: '' }, // all empty fields
+        { email: userData.email, password: '' }, // empty password field
+        { email: '', password: userData.password }, // empty email field
+        { email: userData.email, password: 'wrong-password' }, // wrong password
+        { email: 'wrong@email.com', password: userData.password }, // wrong email
       ])(
         "responds with HTTP:UNAUTHORIZED if the provided credentials are wrong [email: '$email', password: '$password']",
         async ({ email, password }) => {

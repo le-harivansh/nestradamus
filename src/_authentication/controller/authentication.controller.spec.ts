@@ -51,7 +51,7 @@ describe(AuthenticationController.name, () => {
   describe('login', () => {
     const authenticatedUserData: RequestUser = {
       id: new Types.ObjectId().toString(),
-      email: 'user@one.com',
+      email: 'user@email.com',
     };
     let result: unknown;
 

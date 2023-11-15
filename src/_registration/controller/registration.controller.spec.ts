@@ -9,6 +9,7 @@ import { RegisterUserDto } from '../dto/registration.dto';
 import { RegistrationController } from './registration.controller';
 
 describe(RegistrationController.name, () => {
+  const password = 'P@ssw0rd';
   const userData: Pick<ModelWithId<User>, '_id' | 'email'> = {
     _id: new Types.ObjectId(),
     email: 'user@email.com',
@@ -43,8 +44,8 @@ describe(RegistrationController.name, () => {
 
   describe('register', () => {
     const registrationDto: RegisterUserDto = {
-      email: 'le@user.email',
-      password: 'le-pass-word',
+      email: userData.email,
+      password,
     };
 
     let result: unknown;
