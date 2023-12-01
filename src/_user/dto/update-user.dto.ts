@@ -1,6 +1,6 @@
 import {
+  Equals,
   IsEmail,
-  IsNotEmpty,
   IsOptional,
   MinLength,
   ValidateIf,
@@ -12,8 +12,8 @@ import { User } from '../schema/user.schema';
 
 export class UpdateUserDto {
   @IsOptional()
-  @IsEmail()
-  @IsUnique(User.name)
+  @IsEmail(undefined, { message: 'A valid email address should be provided.' })
+  @IsUnique(User)
   readonly email?: string;
 
   @IsOptional()
@@ -24,13 +24,13 @@ export class UpdateUserDto {
   readonly password?: string;
 
   /**
-   * This property should not be processed in the DTO.
+   * This property should not be processed by the controller.
    * Its only purpose is to throw an error if ALL of the above properties are
    * empty.
    */
   @ValidateIf(({ email, password }: UpdateUserDto) => !(email || password))
-  @IsNotEmpty({
+  @Equals(Symbol('This value should not be filled'), {
     message: 'Provide either an email or a password to be updated.',
   })
-  readonly _?: boolean;
+  readonly _?: unknown;
 }

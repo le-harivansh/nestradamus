@@ -1,103 +1,103 @@
-import { InternalServerErrorException } from '@nestjs/common';
+import { INestApplication, InternalServerErrorException } from '@nestjs/common';
+import { MongooseModule, getModelToken } from '@nestjs/mongoose';
+import { Test, TestingModule } from '@nestjs/testing';
 import { ValidationArguments } from 'class-validator';
-import { Connection } from 'mongoose';
+import { MongoMemoryServer } from 'mongodb-memory-server';
+import { Model } from 'mongoose';
 
-import { ConnectionName } from '@/_application/_database/helper';
+import { ConnectionName } from '@/_application/_database/constant';
+import { User, UserSchema } from '@/_user/schema/user.schema';
 
 import { IsUniqueValidatorConstraint } from './is-unique.validator';
 
 describe(IsUniqueValidatorConstraint.name, () => {
-  const valueToFind = "value-to-compare-existing-documents' field with";
-  const [modelName, fieldUnderValidation, connectionName] = [
-    'model-name',
-    'field-under-validation',
-    ConnectionName.DEFAULT,
-  ];
+  let application: INestApplication;
+  let mongoMemoryServer: MongoMemoryServer;
 
-  const defaultConnection = {
-    _count: 0,
+  let validatorConstraint: IsUniqueValidatorConstraint<typeof User>;
 
-    model: jest.fn(function () {
-      return this;
-    }),
-    find: jest.fn(function (constraints: Record<string, unknown>) {
-      if (
-        fieldUnderValidation in constraints &&
-        constraints[fieldUnderValidation] === valueToFind
-      ) {
-        this._count = 1;
-      }
+  let userModel: Model<User>;
 
-      return this;
-    }),
-    count: jest.fn(function () {
-      return this;
-    }),
-    exec: jest.fn(async function () {
-      return this._count;
-    }),
-  };
+  beforeAll(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [
+        MongooseModule.forRootAsync({
+          async useFactory() {
+            mongoMemoryServer = await MongoMemoryServer.create();
 
-  const validator = new IsUniqueValidatorConstraint(
-    defaultConnection as unknown as Connection,
-  );
+            return { uri: mongoMemoryServer.getUri() };
+          },
+        }),
+        MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+      ],
+      providers: [IsUniqueValidatorConstraint],
+    }).compile();
 
-  afterEach(() => {
-    defaultConnection._count = 0;
-    jest.clearAllMocks();
+    application = moduleFixture.createNestApplication();
+    validatorConstraint = application.get(IsUniqueValidatorConstraint);
+
+    userModel = application.get<Model<User>>(getModelToken(User.name));
+
+    await application.init();
+  });
+
+  afterAll(async () => {
+    await application.close();
+    await mongoMemoryServer.stop();
+  });
+
+  it('should be defined', () => {
+    expect(validatorConstraint).toBeDefined();
   });
 
   it('has only 1 connection in the `connections` map', () => {
-    expect(validator['connections'].size).toBe(1);
+    expect(validatorConstraint['connections'].size).toBe(1);
   });
 
   describe('validate', () => {
-    it('throws an `InternalServerErrorException` if the specified connection could not be retrieved', async () => {
+    const userData = [
+      { email: 'user-1@email.com', password: 'Passw0rd' },
+      { email: 'user-2@email.com', password: 'Passw0rd' },
+    ] as const;
+
+    beforeAll(async () => {
+      await userModel.create(userData);
+    });
+
+    afterAll(async () => {
+      await userModel.deleteMany();
+    });
+
+    it('throws an `InternalServerErrorException` if the specified connection could not be retrieved', () => {
       expect(
-        validator.validate(valueToFind, {
-          constraints: [
-            modelName,
-            fieldUnderValidation,
-            'WRONG_CONNECTION_NAME',
-          ],
+        validatorConstraint.validate(userData[0].email, {
+          constraints: [User, 'email', 'WRONG_CONNECTION_NAME'],
         } as unknown as ValidationArguments),
       ).rejects.toThrow(InternalServerErrorException);
     });
 
-    it('calls the appropriate methods with the correct arguments on the `Connection` object', async () => {
-      await validator.validate(valueToFind, {
-        constraints: [modelName, fieldUnderValidation, connectionName],
-      } as unknown as ValidationArguments);
-
-      expect(defaultConnection.model).toHaveBeenCalledTimes(1);
-      expect(defaultConnection.model).toHaveBeenCalledWith(modelName);
-
-      expect(defaultConnection.find).toHaveBeenCalledTimes(1);
+    it('throws an `InternalServerErrorException` if the `fieldUnderValidation` does not exist on the schema', () => {
       expect(
-        (defaultConnection.find.mock.calls[0] as unknown[])[0],
-      ).toStrictEqual({
-        [fieldUnderValidation]: valueToFind,
-      });
-
-      expect(defaultConnection.count).toHaveBeenCalledTimes(1);
-
-      expect(defaultConnection.exec).toHaveBeenCalledTimes(1);
+        validatorConstraint.validate(userData[0].email, {
+          constraints: [User, 'nonExistentFieldName', ConnectionName.DEFAULT],
+        } as unknown as ValidationArguments),
+      ).rejects.toThrow(InternalServerErrorException);
     });
 
-    it('returns `false` if the document-count returned is not `0`', async () => {
-      const isUnique = await validator.validate(valueToFind, {
-        constraints: [modelName, fieldUnderValidation, connectionName],
-      } as unknown as ValidationArguments);
-
-      expect(isUnique).toBe(false);
+    it('returns `false` if a document matching the specified criteria exists (hence - not unique)', () => {
+      expect(
+        validatorConstraint.validate(userData[0].email, {
+          constraints: [User, 'email', ConnectionName.DEFAULT],
+        } as unknown as ValidationArguments),
+      ).resolves.toBe(false);
     });
 
-    it('returns `true` if the document-count returned is `0`', async () => {
-      const isUnique = await validator.validate('another-value', {
-        constraints: [modelName, fieldUnderValidation, connectionName],
-      } as unknown as ValidationArguments);
-
-      expect(isUnique).toBe(true);
+    it('returns `true` if no document matching the specified criteria exists (hence - unique)', () => {
+      expect(
+        validatorConstraint.validate('non-existent-user@email.com', {
+          constraints: [User, 'email', ConnectionName.DEFAULT],
+        } as unknown as ValidationArguments),
+      ).resolves.toBe(true);
     });
   });
 });

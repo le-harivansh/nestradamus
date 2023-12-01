@@ -3,14 +3,21 @@ import { Connection } from 'mongoose';
 import request from 'supertest';
 
 import { AuthenticationController } from '@/_authentication/controller/authentication.controller';
-import { RegisterUserDto } from '@/_registration/dto/registration.dto';
 import { User } from '@/_user/schema/user.schema';
 
-import { setupTestApplication, teardownTestApplication } from './helper';
+import {
+  setupTestApplication,
+  teardownTestApplication,
+} from './helper/bootstrap';
+import { Mailhog } from './helper/mailhog';
+import { registerUser } from './helper/user';
 
 describe(`${AuthenticationController.name} (e2e)`, () => {
+  const start = new Date();
+
   let application: INestApplication;
   let databaseConnection: Connection;
+  let mailhog: Mailhog;
 
   beforeAll(async () => {
     const {
@@ -20,9 +27,17 @@ describe(`${AuthenticationController.name} (e2e)`, () => {
 
     application = testApplication;
     databaseConnection = testDatabaseConnection;
+
+    /**
+     * It is assumed that the mailhog service is being served from
+     * the default host & port (`localhost:8025`)
+     */
+    mailhog = new Mailhog();
   });
 
   afterAll(async () => {
+    await mailhog.deleteEmailsSentBetween(start, new Date());
+
     await teardownTestApplication({
       application,
       databaseConnection,
@@ -36,9 +51,10 @@ describe(`${AuthenticationController.name} (e2e)`, () => {
     };
 
     beforeAll(async () => {
-      await request(application.getHttpServer())
-        .post('/register')
-        .send(userData as RegisterUserDto);
+      await registerUser(userData, {
+        httpServer: application.getHttpServer(),
+        mailhog,
+      });
     });
 
     describe('[succeeds because]', () => {

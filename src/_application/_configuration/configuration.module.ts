@@ -7,6 +7,7 @@ import { ConfigurationService } from './service/configuration.service';
 @Module({
   imports: [
     ConfigModule.forRoot({
+      expandVariables: true,
       envFilePath: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
       cache: process.env.NODE_ENV === 'production',
     }),

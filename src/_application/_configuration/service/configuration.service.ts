@@ -6,6 +6,14 @@ import {
   CONFIGURATION_NAMESPACE as databaseConfigurationNamespace,
 } from '@/_application/_database/database.config';
 import {
+  MailConfiguration,
+  CONFIGURATION_NAMESPACE as mailConfigurationNamespace,
+} from '@/_application/_mail/mail.config';
+import {
+  QueueConfiguration,
+  CONFIGURATION_NAMESPACE as queueConfigurationNamespace,
+} from '@/_application/_queue/queue.config';
+import {
   ApplicationConfiguration,
   CONFIGURATION_NAMESPACE as applicationConfigurationNamespace,
 } from '@/_application/application.config';
@@ -31,10 +39,20 @@ export type NamespacedConfiguration =
       typeof databaseConfigurationNamespace,
       DatabaseConfiguration
     > &
+    // Queue
+    FlattenedPrefixedConfiguration<
+      typeof queueConfigurationNamespace,
+      QueueConfiguration
+    > &
     // Authentication (jwt)
     FlattenedPrefixedConfiguration<
       typeof authenticationTokensConfigurationNamespace,
       AuthenticationTokensConfiguration
+    > &
+    // Mail
+    FlattenedPrefixedConfiguration<
+      typeof mailConfigurationNamespace,
+      MailConfiguration
     >;
 
 @Injectable()

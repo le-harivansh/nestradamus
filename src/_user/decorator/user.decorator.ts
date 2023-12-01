@@ -1,31 +1,33 @@
 import {
-  BadRequestException,
   ExecutionContext,
   InternalServerErrorException,
+  UnauthorizedException,
   createParamDecorator,
 } from '@nestjs/common';
 
-import type { RequestUser } from '../schema/user.schema';
+import { ModelWithId } from '@/_library/helper';
+
+import type { UserDocument, User as UserModel } from '../schema/user.schema';
 
 export function getUserFromRequest(
-  property: keyof RequestUser | undefined,
+  property: keyof ModelWithId<UserModel> | undefined,
   context: ExecutionContext,
-): string | RequestUser {
-  const user = context.switchToHttp().getRequest().user as RequestUser;
+): UserDocument | ModelWithId<UserModel>[keyof ModelWithId<UserModel>] {
+  const userDocument = context.switchToHttp().getRequest().user as UserDocument;
 
-  if (!user) {
-    throw new BadRequestException(
-      'Could not retrieve the user from the request object.',
+  if (!userDocument) {
+    throw new UnauthorizedException(
+      'Could not retrieve the user from the request.',
     );
   }
 
-  if (property && !Object.hasOwn(user, property)) {
+  if (property && !Object.hasOwn(userDocument.toObject(), property)) {
     throw new InternalServerErrorException(
-      `Property '${property}' does not exist on the user property in the request object.`,
+      `Property '${property}' does not exist on the (authenticated) user in the current request.`,
     );
   }
 
-  return property ? user[property] : user;
+  return property ? userDocument.get(property) : userDocument;
 }
 
 export const User = createParamDecorator(getUserFromRequest);

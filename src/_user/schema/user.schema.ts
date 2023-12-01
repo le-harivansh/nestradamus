@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { argon2id, hash } from 'argon2';
+import { HydratedDocument } from 'mongoose';
 
 @Schema()
 export class User {
@@ -12,14 +13,10 @@ export class User {
 
 export const UserSchema = SchemaFactory.createForClass(User);
 
-UserSchema.pre('save', async function () {
+UserSchema.pre('save', async function (): Promise<void> {
   if (this.isModified('password')) {
     this.password = await hash(this.password, { type: argon2id });
   }
 });
 
-/**
- * This type represents the type of the user stored in `request.user` after
- * the authentication process.
- */
-export type RequestUser = Omit<User, 'password'> & { id: string };
+export type UserDocument = HydratedDocument<User>;

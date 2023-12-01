@@ -1,17 +1,26 @@
 import { registerAs } from '@nestjs/config';
+import ms from 'ms';
 import { z } from 'zod';
 
-import { MS_DURATION_PATTERN } from '../helper';
+import { MS_DURATION_PATTERN } from '@/_authentication/constant';
 
 export const CONFIGURATION_NAMESPACE = 'authentication.jwt';
 
 const authenticationTokensConfigurationValidationSchema = z.object({
   accessToken: z.object({
-    duration: z.string().regex(MS_DURATION_PATTERN).default('15 minutes'),
+    duration: z
+      .string()
+      .regex(MS_DURATION_PATTERN)
+      .default('15 minutes')
+      .transform(ms),
     secret: z.string().min(32).trim(),
   }),
   refreshToken: z.object({
-    duration: z.string().regex(MS_DURATION_PATTERN).default('1 week'),
+    duration: z
+      .string()
+      .regex(MS_DURATION_PATTERN)
+      .default('1 week')
+      .transform(ms),
     secret: z.string().min(32).trim(),
   }),
 });
@@ -30,5 +39,5 @@ export default registerAs(CONFIGURATION_NAMESPACE, () =>
       duration: process.env.JWT_REFRESH_TOKEN_DURATION,
       secret: process.env.JWT_REFRESH_TOKEN_SECRET,
     },
-  } as AuthenticationTokensConfiguration),
+  }),
 );

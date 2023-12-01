@@ -7,38 +7,43 @@ import {
   HttpStatus,
   Patch,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { Types } from 'mongoose';
 
 import { RequiresAccessToken } from '@/_authentication/guard/requires-access-token.guard';
+import { SerializeDocumentsHavingSchema } from '@/_library/interceptor/mongoose-document-serializer.interceptor';
 
-import { User } from '../decorator/user.decorator';
+import { User as AuthenticatedUser } from '../decorator/user.decorator';
 import { UpdateUserDto } from '../dto/update-user.dto';
-import { RequestUser } from '../schema/user.schema';
+import { UserDocument, UserSchema } from '../schema/user.schema';
+import { User as SerializedUser } from '../serializer/user.serializer';
 import { UserService } from '../service/user.service';
 
 @Controller('me')
+@UseGuards(RequiresAccessToken)
+@UseInterceptors(SerializeDocumentsHavingSchema(UserSchema, SerializedUser))
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
-  @UseGuards(RequiresAccessToken)
-  get(@User() user: RequestUser) {
+  get(@AuthenticatedUser() user: UserDocument): UserDocument {
     return user;
   }
 
   @Patch()
-  @UseGuards(RequiresAccessToken)
   async update(
-    @User('id') userId: string,
+    @AuthenticatedUser('_id') userId: Types.ObjectId,
     @Body() updateUserDto: UpdateUserDto,
-  ) {
+  ): Promise<UserDocument> {
     return this.userService.update(userId, updateUserDto);
   }
 
   @Delete()
-  @UseGuards(RequiresAccessToken)
   @HttpCode(HttpStatus.NO_CONTENT)
-  async delete(@User('id') userId: string) {
+  async delete(
+    @AuthenticatedUser('_id') userId: Types.ObjectId,
+  ): Promise<void> {
     await this.userService.delete(userId);
   }
 }

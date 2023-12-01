@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Logger } from 'winston';
 
-import { LOG_LEVELS } from '../helper';
+import { LOG_LEVELS } from '../constant';
 import { WinstonLoggerService } from './winston-logger.service';
 
 describe(WinstonLoggerService.name, () => {

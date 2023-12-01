@@ -9,11 +9,13 @@ import {
 } from 'class-validator';
 import { Connection } from 'mongoose';
 
-import { ConnectionName } from '@/_application/_database/helper';
+import { ConnectionName } from '@/_application/_database/constant';
+
+import { Constructor, PropertiesOfInstanceOfConstructor } from '../helper';
 
 @Injectable()
 @ValidatorConstraint({ async: true })
-export class IsUniqueValidatorConstraint
+export class IsUniqueValidatorConstraint<T extends Constructor<unknown>>
   implements ValidatorConstraintInterface
 {
   private readonly connections = new Map<ConnectionName, Connection>();
@@ -33,9 +35,9 @@ export class IsUniqueValidatorConstraint
     value: unknown,
     { constraints }: ValidationArguments,
   ): Promise<boolean> {
-    const [modelName, fieldUnderValidation, connectionName] = constraints as [
-      string,
-      string,
+    const [modelClass, fieldUnderValidation, connectionName] = constraints as [
+      T,
+      PropertiesOfInstanceOfConstructor<T>,
       ConnectionName,
     ];
 
@@ -47,8 +49,15 @@ export class IsUniqueValidatorConstraint
       );
     }
 
-    const documentCount = await connection
-      .model(modelName)
+    const model = connection.model(modelClass.name);
+
+    if (model.schema.path(fieldUnderValidation) === undefined) {
+      throw new InternalServerErrorException(
+        `The field: '${fieldUnderValidation}' does not exist on the schema: '${modelClass.name}'.`,
+      );
+    }
+
+    const documentCount = await model
       .find({ [fieldUnderValidation]: value })
       .count()
       .exec();
@@ -56,28 +65,32 @@ export class IsUniqueValidatorConstraint
     return documentCount === 0;
   }
 
-  defaultMessage({ property, value }: ValidationArguments): string {
-    return `The ${property} '${value}' already exists.`;
+  defaultMessage({ constraints, value }: ValidationArguments): string {
+    const fieldUnderValidation = constraints[1];
+
+    return `The ${fieldUnderValidation} '${value}' already exists.`;
   }
 }
 
-export default function IsUnique(
-  modelName: string,
-  fieldUnderValidation: string | undefined = undefined,
+export default function IsUnique<T extends Constructor<unknown>>(
+  modelClass: T,
+  fieldUnderValidation:
+    | PropertiesOfInstanceOfConstructor<T>
+    | undefined = undefined,
   connectionName: ConnectionName = ConnectionName.DEFAULT,
   validationOptions?: ValidationOptions,
-) {
+): (object: object, propertyName: string) => void {
   return (object: object, propertyName: string) =>
     registerDecorator({
       target: object.constructor,
       propertyName,
       async: true,
       constraints: [
-        modelName,
+        modelClass,
         fieldUnderValidation ?? propertyName,
         connectionName,
       ],
       options: validationOptions,
-      validator: IsUniqueValidatorConstraint,
+      validator: IsUniqueValidatorConstraint<T>,
     });
 }

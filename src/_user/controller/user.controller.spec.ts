@@ -1,22 +1,26 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { Types } from 'mongoose';
+import { Types, model } from 'mongoose';
 
 import { MockOf } from '@/_library/helper';
 
 import { UpdateUserDto } from '../dto/update-user.dto';
-import { RequestUser } from '../schema/user.schema';
+import { User, UserSchema } from '../schema/user.schema';
 import { UserService } from '../service/user.service';
 import { UserController } from './user.controller';
 
 describe(UserController.name, () => {
-  const UPDATED_USER_DATA = Symbol('updated-user-data');
-
-  let userController: UserController;
+  const UserModel = model(User.name, UserSchema);
+  const updatedUser = new UserModel({
+    _id: new Types.ObjectId(),
+    email: 'user@email.com',
+  });
 
   const userService: MockOf<UserService, 'update' | 'delete'> = {
-    update: jest.fn(() => Promise.resolve(UPDATED_USER_DATA)),
+    update: jest.fn(() => Promise.resolve(updatedUser)),
     delete: jest.fn(() => Promise.resolve()),
   };
+
+  let userController: UserController;
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -41,10 +45,10 @@ describe(UserController.name, () => {
   });
 
   describe('get', () => {
-    const user: RequestUser = {
-      id: new Types.ObjectId().toString(),
+    const user = new UserModel({
+      _id: new Types.ObjectId(),
       email: 'user@email.com',
-    };
+    });
 
     it('returns the authenticated user', () => {
       expect(userController.get(user)).toStrictEqual(user);
@@ -52,11 +56,12 @@ describe(UserController.name, () => {
   });
 
   describe('update', () => {
-    const userId = new Types.ObjectId().toString();
+    const userId = new Types.ObjectId();
     const updateUserDto: UpdateUserDto = {
       email: 'user@email.com',
       password: 'P@ssw0rd',
     };
+
     let updateResult: any;
 
     beforeEach(async () => {
@@ -68,13 +73,13 @@ describe(UserController.name, () => {
       expect(userService.update).toHaveBeenCalledWith(userId, updateUserDto);
     });
 
-    it('returns the result of `UserService::update`', () => {
-      expect(updateResult).toBe(UPDATED_USER_DATA);
+    it("returns the updated user's data", () => {
+      expect(updateResult).toStrictEqual(updatedUser);
     });
   });
 
   describe('delete', () => {
-    const userId = new Types.ObjectId().toString();
+    const userId = new Types.ObjectId();
 
     beforeEach(async () => {
       await userController.delete(userId);

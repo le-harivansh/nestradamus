@@ -1,4 +1,7 @@
-import { UnauthorizedException } from '@nestjs/common';
+import {
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { JwtSignOptions } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
@@ -11,22 +14,38 @@ import { TokenService } from '../_token/service/token.service';
 import { AccessTokenStrategy } from './access-token.strategy';
 
 describe(AccessTokenStrategy.name, () => {
-  let accessTokenStrategy: AccessTokenStrategy;
-
+  const USER_ID_THAT_THROWS_AN_ERROR = 'id-that-throws-an-error';
   const userData: Pick<ModelWithId<User>, '_id' | 'email'> = {
     _id: new Types.ObjectId(),
     email: 'user@email.com',
   };
 
+  let accessTokenStrategy: AccessTokenStrategy;
+
   const userService: MockOf<UserService, 'findOneBy'> = {
-    findOneBy: jest.fn((property: keyof ModelWithId<User>, userId: string) =>
-      property === '_id' && userId === userData._id.toString()
-        ? {
+    findOneBy: jest.fn((property: keyof ModelWithId<User>, userId: string) => {
+      if (property !== '_id') {
+        throw new Error(
+          'Only `_id` is accepted in this mocked `UserService::findOneBy` method.',
+        );
+      }
+
+      switch (userId) {
+        case userData._id.toString():
+          return {
             id: userId,
             email: userData.email,
-          }
-        : null,
-    ),
+          };
+
+        case USER_ID_THAT_THROWS_AN_ERROR:
+          throw new InternalServerErrorException('Something bad happened.');
+
+        default:
+          throw new NotFoundException(
+            `Could not find the user with id: ${userId}`,
+          );
+      }
+    }),
   };
 
   beforeAll(async () => {
@@ -76,10 +95,21 @@ describe(AccessTokenStrategy.name, () => {
       });
     });
 
-    it('throws a `NotFoundException` if the queried user does not exist in the database', () => {
+    it('returns `null` if the queried user does not exist in the database', async () => {
+      const validationResponse = await accessTokenStrategy.validate({
+        userId: 'non-existent-user-id',
+      });
+
+      expect(validationResponse).toBeNull();
+    });
+
+    it("re-throws any exception - that is not a `NotFoundException` - that occurs when retrieving the user's data", () => {
       expect(
-        accessTokenStrategy.validate({ userId: 'invalid-user-id' }),
-      ).rejects.toThrow(UnauthorizedException);
+        async () =>
+          await accessTokenStrategy.validate({
+            userId: USER_ID_THAT_THROWS_AN_ERROR,
+          }),
+      ).rejects.toThrow();
     });
   });
 });

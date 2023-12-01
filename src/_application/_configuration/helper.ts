@@ -1,14 +1,15 @@
 /**
- * This type represents the possible types of environment variables.
+ * This type represents the possible types of the values of environment
+ * variables.
  */
 type Value = string | number | boolean;
 
-type FlattenPairs<T> = {
-  [K in keyof T]: T[K] extends Value ? [K, T[K]] : FlattenPairs<T[K]>;
+type FlattenToPairs<T> = {
+  [K in keyof T]: T[K] extends Value ? [K, T[K]] : FlattenToPairs<T[K]>;
 }[keyof T] &
   [PropertyKey, Value];
 
-type Flatten<T> = { [P in FlattenPairs<T> as P[0]]: P[1] };
+type Flatten<T> = { [P in FlattenToPairs<T> as P[0]]: P[1] };
 
 type PrefixedConfiguration<N extends string, C> = {
   [K in keyof C as K extends string ? `${N}.${K}` : never]: C[K] extends object

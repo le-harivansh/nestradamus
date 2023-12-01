@@ -1,5 +1,7 @@
 import {
   IsEmail,
+  IsNotEmpty,
+  IsString,
   IsStrongPassword,
   IsStrongPasswordOptions,
   ValidationArguments,
@@ -9,8 +11,8 @@ import IsUnique from '@/_library/validator/is-unique.validator';
 import { User } from '@/_user/schema/user.schema';
 
 export class RegisterUserDto {
-  @IsEmail()
-  @IsUnique(User.name)
+  @IsEmail(undefined, { message: 'A valid email address should be provided.' })
+  @IsUnique(User)
   readonly email!: string;
 
   @IsStrongPassword(
@@ -36,4 +38,8 @@ export class RegisterUserDto {
     },
   )
   readonly password!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  readonly otp!: string;
 }

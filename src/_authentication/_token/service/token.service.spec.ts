@@ -2,23 +2,25 @@ import { InternalServerErrorException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
+import { model } from 'mongoose';
 import ms from 'ms';
 
 import {
   ConfigurationService,
   NamespacedConfiguration,
 } from '@/_application/_configuration/service/configuration.service';
-import { JwtType } from '@/_authentication/helper';
+import { JwtType } from '@/_authentication/constant';
 import { MockOf } from '@/_library/helper';
-import { RequestUser } from '@/_user/schema/user.schema';
+import { User, UserSchema } from '@/_user/schema/user.schema';
 
 import { TokenService } from './token.service';
 
 describe(TokenService.name, () => {
-  const user: RequestUser = {
-    id: new Types.ObjectId().toString(),
+  const UserModel = model(User.name, UserSchema);
+  const user = new UserModel({
+    _id: new Types.ObjectId().toString(),
     email: 'user@email.com',
-  };
+  });
 
   const generatedJsonWebToken = 'GENERATED-TOKEN';
   const jwtService: MockOf<JwtService, 'sign'> = {
@@ -36,10 +38,10 @@ describe(TokenService.name, () => {
     'application.name': 'Application',
 
     'authentication.jwt.accessToken.secret': 'access-token-secret',
-    'authentication.jwt.accessToken.duration': '15 minutes',
+    'authentication.jwt.accessToken.duration': ms('15 minutes'),
 
     'authentication.jwt.refreshToken.secret': 'refresh-token-secret',
-    'authentication.jwt.refreshToken.duration': '1 week',
+    'authentication.jwt.refreshToken.duration': ms('1 week'),
   };
   const configurationService: MockOf<ConfigurationService, 'getOrThrow'> = {
     getOrThrow: jest.fn(
@@ -88,7 +90,7 @@ describe(TokenService.name, () => {
       );
     });
 
-    it('calls TokenService::generateJsonWebToken with the appropriate arguments', () => {
+    it('calls `TokenService::generateJsonWebToken` with the appropriate arguments', () => {
       expect(jwtService.sign).toHaveBeenCalledTimes(1);
       expect(jwtService.sign).toHaveBeenCalledWith(payload, {
         algorithm: tokenService.JWT_ALGORITHM,
@@ -147,11 +149,10 @@ describe(TokenService.name, () => {
   ])(
     '$serviceMethod',
     ({ tokenType, serviceMethod, configurationDiscriminationKey }) => {
-      const duration = ms(
+      const duration =
         configuration[
           `authentication.jwt.${configurationDiscriminationKey}.duration`
-        ],
-      );
+        ];
       const secret =
         configuration[
           `authentication.jwt.${configurationDiscriminationKey}.secret`
@@ -165,7 +166,7 @@ describe(TokenService.name, () => {
 
       it('calls the JWT service with the correct payload & options', () => {
         expect((jwtService.sign.mock.calls[0] as unknown[])[0]).toStrictEqual({
-          userId: user.id,
+          userId: user._id.toString(),
         });
 
         expect((jwtService.sign.mock.calls[0] as unknown[])[1]).toMatchObject({

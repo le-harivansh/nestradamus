@@ -12,13 +12,23 @@ import { MainModule } from './main.module';
     MainModule,
     { bufferLogs: true },
   );
+
   application.useLogger(await application.resolve(WinstonLoggerService));
 
   application.enableCors();
   application.use(helmet());
 
+  /**
+   * The shutdown hooks are enabled because of healthchecks through terminus.
+   *
+   * @see: https://docs.nestjs.com/recipes/terminus#setting-up-a-healthcheck
+   */
   application.enableShutdownHooks();
 
+  /**
+   * This is needed because we want to inject nest dependencies in custom
+   * validator constraints (such as the `IsUniqueValidatorConstraint`).
+   */
   useContainer(application.select(MainModule), {
     fallbackOnErrors: true,
   });

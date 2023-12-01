@@ -1,10 +1,9 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
-import ms from 'ms';
 
 import { ConfigurationService } from '@/_application/_configuration/service/configuration.service';
-import { JwtType } from '@/_authentication/helper';
-import { RequestUser } from '@/_user/schema/user.schema';
+import { JwtType } from '@/_authentication/constant';
+import { UserDocument } from '@/_user/schema/user.schema';
 
 @Injectable()
 export class TokenService {
@@ -23,18 +22,15 @@ export class TokenService {
     this.JWT_AUDIENCE = this.JWT_ISSUER;
   }
 
-  public generateAccessTokenFor({ id: userId }: RequestUser): {
+  public generateAccessTokenFor(userDocument: UserDocument): {
     token: string;
     expiresAt: number;
   } {
-    const duration = ms(
-      this.configurationService.getOrThrow(
-        'authentication.jwt.accessToken.duration',
-      ),
+    const duration = this.configurationService.getOrThrow(
+      'authentication.jwt.accessToken.duration',
     );
-
     const token = this.generateJsonWebToken(
-      { userId },
+      { userId: userDocument._id.toString() },
       {
         type: JwtType.ACCESS_TOKEN,
         durationSeconds: Math.floor(duration / 1000),
@@ -48,18 +44,15 @@ export class TokenService {
     };
   }
 
-  public generateRefreshTokenFor({ id: userId }: RequestUser): {
+  public generateRefreshTokenFor(userDocument: UserDocument): {
     token: string;
     expiresAt: number;
   } {
-    const duration = ms(
-      this.configurationService.getOrThrow(
-        'authentication.jwt.refreshToken.duration',
-      ),
+    const duration = this.configurationService.getOrThrow(
+      'authentication.jwt.refreshToken.duration',
     );
-
     const token = this.generateJsonWebToken(
-      { userId },
+      { userId: userDocument._id.toString() },
       {
         type: JwtType.REFRESH_TOKEN,
         durationSeconds: Math.floor(duration / 1000),

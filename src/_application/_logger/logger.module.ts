@@ -2,7 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { createLogger, format, transports } from 'winston';
 
 import { ConfigurationService } from '../_configuration/service/configuration.service';
-import { LOG_COLORS, LOG_LEVELS } from './helper';
+import { LOG_COLORS, LOG_LEVELS } from './constant';
 import { WinstonLoggerService } from './service/winston-logger.service';
 
 @Global()

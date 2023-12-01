@@ -1,17 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { Types } from 'mongoose';
+import { model } from 'mongoose';
 
 import { MockOf } from '@/_library/helper';
-import { RequestUser } from '@/_user/schema/user.schema';
+import { User, UserSchema } from '@/_user/schema/user.schema';
 
 import { TokenService } from '../service/token.service';
 import { RefreshController } from './refresh.controller';
 
 describe(RefreshController.name, () => {
-  const authenticatedUser: RequestUser = {
-    id: new Types.ObjectId().toString(),
+  const UserModel = model(User.name, UserSchema);
+  const authenticatedUser = new UserModel({
     email: 'user@email.com',
-  };
+    password: 'P@ssw0rd',
+  });
 
   const generatedTokenData = {
     token: 'the-generated-token',

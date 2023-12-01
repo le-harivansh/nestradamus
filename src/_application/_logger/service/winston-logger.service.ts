@@ -1,7 +1,7 @@
 import { Injectable, LoggerService, Scope } from '@nestjs/common';
 import { Logger } from 'winston';
 
-import { LOG_LEVELS } from '../helper';
+import { LOG_LEVELS } from '../constant';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class WinstonLoggerService implements LoggerService {

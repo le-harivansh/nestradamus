@@ -1,9 +1,8 @@
-import { DynamicModule, Module, ModuleMetadata } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { ConfigurationService } from '../_configuration/service/configuration.service';
-import { SeederModule } from './_seeder/seeder.module';
 import databaseConfiguration, {
   DatabaseConfiguration,
 } from './database.config';
@@ -45,23 +44,4 @@ import databaseConfiguration, {
     }),
   ],
 })
-export class DatabaseModule {
-  static forRoot(): DynamicModule {
-    const imports: Required<ModuleMetadata>['imports'] = [];
-
-    /**
-     * We use synchronous conditional imports within a dynamic module because
-     * `ConditionalModule` returns a promise, and that interferes with e2e jest
-     * tests. It prevents jest from exiting 1 second after the tests complete;
-     * and that raises warnings.
-     */
-    if (process.env.NODE_ENV === 'development') {
-      imports.push(SeederModule);
-    }
-
-    return {
-      module: DatabaseModule,
-      imports,
-    };
-  }
-}
+export class DatabaseModule {}

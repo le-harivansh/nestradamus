@@ -9,7 +9,7 @@ import {
 import { RequiresAccessToken } from '@/_authentication/guard/requires-access-token.guard';
 import { RequiresRefreshToken } from '@/_authentication/guard/requires-refresh-token.guard';
 import { User } from '@/_user/decorator/user.decorator';
-import { RequestUser } from '@/_user/schema/user.schema';
+import { UserDocument } from '@/_user/schema/user.schema';
 
 import { TokenService } from '../service/token.service';
 
@@ -20,14 +20,14 @@ export class RefreshController {
   @Get('access-token')
   @UseGuards(RequiresRefreshToken)
   @HttpCode(HttpStatus.OK)
-  regenerateAccessToken(@User() user: RequestUser) {
+  regenerateAccessToken(@User() user: UserDocument) {
     return this.tokenService.generateAccessTokenFor(user);
   }
 
   @Get('refresh-token')
   @UseGuards(RequiresAccessToken)
   @HttpCode(HttpStatus.OK)
-  regenerateRefreshToken(@User() user: RequestUser) {
+  regenerateRefreshToken(@User() user: UserDocument) {
     return this.tokenService.generateRefreshTokenFor(user);
   }
 }

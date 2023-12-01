@@ -1,47 +1,47 @@
 import {
-  BadRequestException,
   ExecutionContext,
   InternalServerErrorException,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { Types } from 'mongoose';
+import { model } from 'mongoose';
 
-import { RequestUser } from '../schema/user.schema';
+import { User, UserDocument, UserSchema } from '../schema/user.schema';
 import { getUserFromRequest } from './user.decorator';
 
 describe(getUserFromRequest.name, () => {
-  const mockExecutionContext = (user?: RequestUser) =>
+  const mockExecutionContext = (user?: UserDocument) =>
     ({
       switchToHttp: () => ({ getRequest: () => ({ user }) }),
     }) as unknown as ExecutionContext;
 
-  const user: RequestUser = {
-    id: new Types.ObjectId().toString(),
+  const UserModel = model(User.name, UserSchema);
+  const userDocument = new UserModel({
     email: 'user@email.com',
-  };
+  });
 
   it('returns the user object attached to the request object', () => {
     expect(
-      getUserFromRequest(undefined, mockExecutionContext(user)),
-    ).toStrictEqual(user);
+      getUserFromRequest(undefined, mockExecutionContext(userDocument)),
+    ).toBe(userDocument);
   });
 
   it("returns the value of the specified property from the user's object", () => {
-    expect(getUserFromRequest('email', mockExecutionContext(user))).toBe(
-      user.email,
-    );
+    expect(
+      getUserFromRequest('email', mockExecutionContext(userDocument)),
+    ).toBe(userDocument.email);
   });
 
-  it('throws a bad-request http error if the request has no user object', () => {
+  it('throws an `UnauthorizedException` if the request has no user object', () => {
     expect(() => getUserFromRequest(undefined, mockExecutionContext())).toThrow(
-      BadRequestException,
+      UnauthorizedException,
     );
   });
 
-  it('throws a server-error if the queried property does not exist on the user object', () => {
+  it('throws an `InternalServerErrorException` if the queried property does not exist on the user object', () => {
     expect(() =>
       getUserFromRequest(
         'nope' as unknown as Parameters<typeof getUserFromRequest>[0],
-        mockExecutionContext(user),
+        mockExecutionContext(userDocument),
       ),
     ).toThrow(InternalServerErrorException);
   });

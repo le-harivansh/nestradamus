@@ -3,13 +3,19 @@ import { Connection } from 'mongoose';
 import request from 'supertest';
 
 import { RefreshController } from '@/_authentication/_token/controller/refresh.controller';
-import { TokenHttpHeader } from '@/_authentication/helper';
-import { RegisterUserDto } from '@/_registration/dto/registration.dto';
+import { TokenHttpHeader } from '@/_authentication/constant';
 import { User } from '@/_user/schema/user.schema';
 
-import { setupTestApplication, teardownTestApplication } from './helper';
+import {
+  setupTestApplication,
+  teardownTestApplication,
+} from './helper/bootstrap';
+import { Mailhog } from './helper/mailhog';
+import { registerUser } from './helper/user';
 
 describe(`${RefreshController.name} (e2e)`, () => {
+  const start = new Date();
+
   const userData: Pick<User, 'email' | 'password'> = {
     email: 'user@email.com',
     password: 'P@ssw0rd',
@@ -17,6 +23,7 @@ describe(`${RefreshController.name} (e2e)`, () => {
 
   let application: INestApplication;
   let databaseConnection: Connection;
+  let mailhog: Mailhog;
 
   let authenticationTokensData: {
     accessToken: { token: string; expiresAt: number };
@@ -33,23 +40,28 @@ describe(`${RefreshController.name} (e2e)`, () => {
     databaseConnection = testDatabaseConnection;
 
     /**
+     * It is assumed that the mailhog service is being served from
+     * the default host & port (`localhost:8025`)
+     */
+    mailhog = new Mailhog();
+
+    /**
      * Create user & get user authentication tokens
      */
 
-    await request(application.getHttpServer())
-      .post('/register')
-      .send(userData as RegisterUserDto);
-
-    const { body: authenticationTokens } = await request(
-      application.getHttpServer(),
-    )
-      .post('/login')
-      .send(userData);
-
-    authenticationTokensData = authenticationTokens;
+    authenticationTokensData = await registerUser(
+      userData,
+      {
+        httpServer: application.getHttpServer(),
+        mailhog,
+      },
+      { login: true },
+    );
   });
 
   afterAll(async () => {
+    await mailhog.deleteEmailsSentBetween(start, new Date());
+
     await teardownTestApplication({
       application,
       databaseConnection,

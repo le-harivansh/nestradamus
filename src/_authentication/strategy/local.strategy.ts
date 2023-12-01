@@ -1,17 +1,12 @@
-import {
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { verify } from 'argon2';
 import { Strategy } from 'passport-local';
 
-import { ModelWithId } from '@/_library/helper';
-import { RequestUser, User } from '@/_user/schema/user.schema';
+import { User, UserDocument } from '@/_user/schema/user.schema';
 import { UserService } from '@/_user/service/user.service';
 
-import { Guard } from '../helper';
+import { Guard } from '../constant';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy, Guard.LOCAL) {
@@ -27,8 +22,8 @@ export class LocalStrategy extends PassportStrategy(Strategy, Guard.LOCAL) {
     });
   }
 
-  async validate(email: string, password: string): Promise<RequestUser> {
-    let retrievedUser: ModelWithId<User> | null = null;
+  async validate(email: string, password: string) {
+    let retrievedUser: UserDocument | null = null;
 
     try {
       retrievedUser = await this.userService.findOneBy('email', email);
@@ -44,13 +39,9 @@ export class LocalStrategy extends PassportStrategy(Strategy, Guard.LOCAL) {
       }
     }
 
-    if (!retrievedUser || !(await verify(retrievedUser.password, password))) {
-      throw new UnauthorizedException('The provided credentials are invalid.');
-    }
-
-    return {
-      id: retrievedUser._id.toString(),
-      email,
-    };
+    return retrievedUser &&
+      (await verify(retrievedUser.get('password'), password))
+      ? retrievedUser
+      : null;
   }
 }

@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { Types } from 'mongoose';
+import { model } from 'mongoose';
 
 import { MockOf } from '@/_library/helper';
-import { RequestUser } from '@/_user/schema/user.schema';
+import { User, UserSchema } from '@/_user/schema/user.schema';
 
 import { TokenService } from '../_token/service/token.service';
 import { AuthenticationController } from './authentication.controller';
@@ -49,27 +49,29 @@ describe(AuthenticationController.name, () => {
   });
 
   describe('login', () => {
-    const authenticatedUserData: RequestUser = {
-      id: new Types.ObjectId().toString(),
+    const UserModel = model(User.name, UserSchema);
+    const authenticatedUser = new UserModel({
       email: 'user@email.com',
-    };
+      password: 'P@ssw0rd',
+    });
+
     let result: unknown;
 
     beforeEach(() => {
-      result = authenticationController.login(authenticatedUserData);
+      result = authenticationController.login(authenticatedUser);
     });
 
     it("calls `TokenService::generateAccessTokenFor` with the authenticated user's data", () => {
       expect(tokenService.generateAccessTokenFor).toHaveBeenCalledTimes(1);
       expect(tokenService.generateAccessTokenFor).toHaveBeenCalledWith(
-        authenticatedUserData,
+        authenticatedUser,
       );
     });
 
     it("calls `TokenService::generateRefreshTokenFor` with the authenticated user's data", () => {
       expect(tokenService.generateRefreshTokenFor).toHaveBeenCalledTimes(1);
       expect(tokenService.generateRefreshTokenFor).toHaveBeenCalledWith(
-        authenticatedUserData,
+        authenticatedUser,
       );
     });
 

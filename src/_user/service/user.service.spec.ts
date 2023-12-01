@@ -51,6 +51,10 @@ describe(UserService.name, () => {
     await mongoMemoryServer.stop();
   });
 
+  it('should be defined', () => {
+    expect(userService).toBeDefined();
+  });
+
   describe('createUser', () => {
     const userData: User = {
       email: 'user@email.com',
@@ -58,7 +62,7 @@ describe(UserService.name, () => {
     };
 
     it("saves the provided user's data to the database", async () => {
-      await userService.create(userData);
+      await userService.create(userData.email, userData.password);
 
       expect(
         userModel.findOne({ email: userData.email }).exec(),
@@ -68,7 +72,7 @@ describe(UserService.name, () => {
     });
 
     it("hashes the user's password before saving it to the database", async () => {
-      await userService.create(userData);
+      await userService.create(userData.email, userData.password);
 
       const retrievedUser = await userModel
         .findOne({ email: userData.email })
@@ -123,10 +127,10 @@ describe(UserService.name, () => {
       password: 'P@ssw0rd',
     };
 
-    let userId: string;
+    let userId: Types.ObjectId;
 
     beforeEach(async () => {
-      userId = (await userModel.create(userData))._id.toString();
+      userId = (await userModel.create(userData))._id;
     });
 
     it("updates the specified user's data using the provided payload [without-password]", async () => {
@@ -145,7 +149,7 @@ describe(UserService.name, () => {
 
     it('throws a `NotFoundException` if the user to update could not be found in the database', () => {
       expect(
-        userService.update(new Types.ObjectId().toString(), {
+        userService.update(new Types.ObjectId(), {
           email: 'new-user@email.com',
         }),
       ).rejects.toThrow(NotFoundException);
@@ -202,10 +206,10 @@ describe(UserService.name, () => {
       password: 'P@ssw0rd',
     };
 
-    let userId: string;
+    let userId: Types.ObjectId;
 
     beforeEach(async () => {
-      userId = (await userModel.create(userData))._id.toString();
+      userId = (await userModel.create(userData))._id;
     });
 
     it("removes the specified user's data from the database", async () => {
@@ -217,9 +221,9 @@ describe(UserService.name, () => {
     });
 
     it('throws a `NotFoundException` if the specified user could not be deleted.', () => {
-      expect(
-        userService.delete(new Types.ObjectId().toString()),
-      ).rejects.toThrow(NotFoundException);
+      expect(userService.delete(new Types.ObjectId())).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

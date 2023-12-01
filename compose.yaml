@@ -11,5 +11,24 @@ services:
     volumes:
       - database:/data/db
 
+  redis:
+    image: redis
+    restart: always
+    ports:
+      - '${REDIS_PORT}:6379'
+    volumes:
+      - redis:/data
+
+  mail:
+    image: mailhog/mailhog:latest
+    restart: always
+    ports:
+      - '${MAIL_SMTP_PORT}:1025'
+      - '8025:8025'
+    volumes:
+      - mail:/maildir
+
 volumes:
   database:
+  redis:
+  mail:

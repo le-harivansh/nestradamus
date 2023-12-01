@@ -20,6 +20,14 @@ declare global {
 
       JWT_REFRESH_TOKEN_SECRET: string;
       JWT_REFRESH_TOKEN_DURATION: string;
+
+      MAIL_SMTP_HOST: string;
+      MAIL_SMTP_PORT: number;
+      MAIL_FROM_ADDRESS: string;
+
+      QUEUE_PREFIX: string;
+      QUEUE_REDIS_HOST: string;
+      QUEUE_REDIS_PORT: number;
     }
   }
 }
