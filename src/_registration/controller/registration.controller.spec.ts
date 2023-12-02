@@ -1,10 +1,8 @@
-import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types, model } from 'mongoose';
 
 import { MockOf } from '@/_library/helper';
 import { User, UserSchema } from '@/_user/schema/user.schema';
-import { UserService } from '@/_user/service/user.service';
 
 import { RegisterUserDto } from '../dto/registration.dto';
 import { RegistrationService } from '../service/registration.service';
@@ -19,19 +17,16 @@ describe(RegistrationController.name, () => {
   });
   const validOtp = '123456';
 
-  const userServiceMock: MockOf<UserService, 'create'> = {
-    create: jest.fn(() => Promise.resolve(newUser)),
-  };
-
   const registrationServiceMock: MockOf<
     RegistrationService,
-    'sendOtpEmail' | 'verifyOtp'
+    'verifyOtp' | 'registerUser' | 'sendEmailVerificationOtpEmail'
   > = {
-    sendOtpEmail: jest.fn(),
     verifyOtp: jest.fn(
       (otp: string, email: string) =>
         otp === validOtp && email === newUser.get('email'),
     ),
+    registerUser: jest.fn().mockResolvedValue(newUser),
+    sendEmailVerificationOtpEmail: jest.fn(),
   };
 
   let registrationController: RegistrationController;
@@ -40,10 +35,6 @@ describe(RegistrationController.name, () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [RegistrationController],
       providers: [
-        {
-          provide: UserService,
-          useValue: userServiceMock,
-        },
         {
           provide: RegistrationService,
           useValue: registrationServiceMock,
@@ -68,8 +59,12 @@ describe(RegistrationController.name, () => {
 
       await registrationController.sendOtp({ destination });
 
-      expect(registrationServiceMock.sendOtpEmail).toBeCalledTimes(1);
-      expect(registrationServiceMock.sendOtpEmail).toBeCalledWith(destination);
+      expect(
+        registrationServiceMock.sendEmailVerificationOtpEmail,
+      ).toBeCalledTimes(1);
+      expect(
+        registrationServiceMock.sendEmailVerificationOtpEmail,
+      ).toBeCalledWith(destination);
     });
   });
 
@@ -80,30 +75,22 @@ describe(RegistrationController.name, () => {
       otp: validOtp,
     };
 
-    it('calls `UserService::createUser` with the appropriate data', async () => {
+    it('calls `RegistrationService::registerUser` with the appropriate arguments', async () => {
       await registrationController.register(registrationDto);
 
-      expect(userServiceMock.create).toHaveBeenCalledTimes(1);
-      expect(userServiceMock.create).toHaveBeenCalledWith(
+      expect(registrationServiceMock.registerUser).toHaveBeenCalledTimes(1);
+      expect(registrationServiceMock.registerUser).toHaveBeenCalledWith(
         registrationDto.email,
         registrationDto.password,
+        registrationDto.otp,
       );
     });
 
-    it('throws a `BadRequestException` if the provided OTP is invalid', async () => {
-      expect(
-        async () =>
-          await registrationController.register({
-            ...registrationDto,
-            otp: '000000',
-          }),
-      ).rejects.toThrow(BadRequestException);
-    });
+    it('returns the created user document', async () => {
+      const newUserDocument =
+        await registrationController.register(registrationDto);
 
-    it("returns the created user's data", async () => {
-      const result = await registrationController.register(registrationDto);
-
-      expect(result).toBe(newUser);
+      expect(newUserDocument).toBe(newUser);
     });
   });
 });

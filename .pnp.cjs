@@ -36,6 +36,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@nestjs/common", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:10.2.7"],\
             ["@nestjs/config", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:3.1.1"],\
             ["@nestjs/core", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:10.2.7"],\
+            ["@nestjs/event-emitter", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:2.0.3"],\
             ["@nestjs/jwt", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:10.1.1"],\
             ["@nestjs/mapped-types", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:2.0.4"],\
             ["@nestjs/mongoose", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:10.0.1"],\
@@ -1920,6 +1921,37 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "linkType": "HARD"\
         }]\
       ]],\
+      ["@nestjs/event-emitter", [\
+        ["npm:2.0.3", {\
+          "packageLocation": "./.yarn/cache/@nestjs-event-emitter-npm-2.0.3-e327586ac3-4c726fcb88.zip/node_modules/@nestjs/event-emitter/",\
+          "packageDependencies": [\
+            ["@nestjs/event-emitter", "npm:2.0.3"]\
+          ],\
+          "linkType": "SOFT"\
+        }],\
+        ["virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:2.0.3", {\
+          "packageLocation": "./.yarn/__virtual__/@nestjs-event-emitter-virtual-af4ce3760e/0/cache/@nestjs-event-emitter-npm-2.0.3-e327586ac3-4c726fcb88.zip/node_modules/@nestjs/event-emitter/",\
+          "packageDependencies": [\
+            ["@nestjs/event-emitter", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:2.0.3"],\
+            ["@nestjs/common", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:10.2.7"],\
+            ["@nestjs/core", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:10.2.7"],\
+            ["@types/nestjs__common", null],\
+            ["@types/nestjs__core", null],\
+            ["@types/reflect-metadata", null],\
+            ["eventemitter2", "npm:6.4.9"],\
+            ["reflect-metadata", "npm:0.1.13"]\
+          ],\
+          "packagePeers": [\
+            "@nestjs/common",\
+            "@nestjs/core",\
+            "@types/nestjs__common",\
+            "@types/nestjs__core",\
+            "@types/reflect-metadata",\
+            "reflect-metadata"\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
       ["@nestjs/jwt", [\
         ["npm:10.1.1", {\
           "packageLocation": "./.yarn/cache/@nestjs-jwt-npm-10.1.1-3c603aae72-d679ce4e0f.zip/node_modules/@nestjs/jwt/",\
@@ -3670,6 +3702,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@nestjs/common", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:10.2.7"],\
             ["@nestjs/config", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:3.1.1"],\
             ["@nestjs/core", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:10.2.7"],\
+            ["@nestjs/event-emitter", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:2.0.3"],\
             ["@nestjs/jwt", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:10.1.1"],\
             ["@nestjs/mapped-types", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:2.0.4"],\
             ["@nestjs/mongoose", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:10.0.1"],\
@@ -5862,6 +5895,15 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./.yarn/cache/etag-npm-1.8.1-54a3b989d9-571aeb3dbe.zip/node_modules/etag/",\
           "packageDependencies": [\
             ["etag", "npm:1.8.1"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["eventemitter2", [\
+        ["npm:6.4.9", {\
+          "packageLocation": "./.yarn/cache/eventemitter2-npm-6.4.9-ba37798a18-be59577c1e.zip/node_modules/eventemitter2/",\
+          "packageDependencies": [\
+            ["eventemitter2", "npm:6.4.9"]\
           ],\
           "linkType": "HARD"\
         }]\

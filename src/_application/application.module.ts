@@ -1,6 +1,7 @@
 import { Module, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD, APP_PIPE } from '@nestjs/core';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 import { ConfigurationModule } from './_configuration/configuration.module';
@@ -37,6 +38,8 @@ import applicationConfiguration from './application.config';
         },
       ],
     }),
+
+    EventEmitterModule.forRoot(),
 
     QueueModule,
 
