@@ -2,6 +2,8 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { argon2id, hash } from 'argon2';
 import { HydratedDocument } from 'mongoose';
 
+import type { OtpTypeName } from '../type';
+
 @Schema()
 export class Otp {
   /**
@@ -9,7 +11,7 @@ export class Otp {
    * e.g.: Registration, ...
    */
   @Prop({ required: true })
-  type!: string;
+  type!: OtpTypeName;
 
   @Prop({ required: true })
   destination!: string;

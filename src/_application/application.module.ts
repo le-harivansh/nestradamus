@@ -1,12 +1,12 @@
 import { Module, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD, APP_PIPE } from '@nestjs/core';
-import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 import { ConfigurationModule } from './_configuration/configuration.module';
 import { ConfigurationService } from './_configuration/service/configuration.service';
 import { DatabaseModule } from './_database/database.module';
+import { EventModule } from './_event/event.module';
 import { HealthModule } from './_health/health.module';
 import { LoggerModule } from './_logger/logger.module';
 import { MailModule } from './_mail/mail.module';
@@ -39,7 +39,7 @@ import applicationConfiguration from './application.config';
       ],
     }),
 
-    EventEmitterModule.forRoot(),
+    EventModule,
 
     QueueModule,
 

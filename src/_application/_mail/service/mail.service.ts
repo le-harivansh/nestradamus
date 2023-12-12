@@ -1,6 +1,6 @@
 import { InjectQueue } from '@nestjs/bull';
 import { Inject, Injectable } from '@nestjs/common';
-import { compile } from 'handlebars';
+import Handlebars from 'handlebars';
 import { convert } from 'html-to-text';
 import mjml2html from 'mjml';
 import { readFileSync } from 'node:fs';
@@ -9,6 +9,8 @@ import { Transporter } from 'nodemailer';
 import Mail from 'nodemailer/lib/mailer';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
 
+import { ConfigurationService } from '@/_application/_configuration/service/configuration.service';
+import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
 import { QueueOf } from '@/_application/_queue/helper';
 
 import { MAIL_QUEUE, MailQueue, TRANSPORTER } from '../constant';
@@ -22,7 +24,23 @@ export class MailService {
     private readonly transporter: Transporter<SMTPTransport.SentMessageInfo>,
     @InjectQueue(MAIL_QUEUE)
     private readonly mailQueue: QueueOf<MailProcessor>,
-  ) {}
+    private readonly loggerService: WinstonLoggerService,
+    readonly configurationService: ConfigurationService,
+  ) {
+    this.loggerService.setContext(MailService.name);
+
+    Handlebars.registerHelper('applicationName', () =>
+      configurationService.getOrThrow('application.name'),
+    );
+    Handlebars.registerHelper('copyrightYear', () => new Date().getFullYear());
+
+    Handlebars.registerPartial(
+      'layout',
+      MailService.getTemplateContent(
+        '_application/_mail/template/layout.mail.mjml.hbs',
+      ),
+    );
+  }
 
   async send(
     mailOptions: Mail.Options,
@@ -36,7 +54,7 @@ export class MailService {
         ? MailService.getTemplateContent(html.path)
         : html.template!;
 
-      const mjmlString = compile(mjmlTemplateString)(html.variables);
+      const mjmlString = Handlebars.compile(mjmlTemplateString)(html.variables);
 
       mailOptions.html = htmlString = mjml2html(mjmlString, {
         validationLevel: 'strict',
@@ -48,10 +66,15 @@ export class MailService {
         ? MailService.getTemplateContent(text.path)
         : text.template!;
 
-      mailOptions.text = compile(textTemplateString)(text.variables);
+      mailOptions.text = Handlebars.compile(textTemplateString)(text.variables);
     } else if (htmlString) {
       mailOptions.text = convert(htmlString);
     }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { html: _html, text: _text, ...mailOptionsToLog } = mailOptions;
+
+    this.loggerService.log('Sending mail', { ...mailOptionsToLog });
 
     return this.transporter.sendMail(mailOptions);
   }
@@ -61,6 +84,11 @@ export class MailService {
     html?: TemplateOptions,
     text?: TemplateOptions,
   ) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { html: _html, text: _text, ...mailOptionsToLog } = mailOptions;
+
+    this.loggerService.log('Queuing mail to send', { ...mailOptionsToLog });
+
     return this.mailQueue.add(MailQueue.SEND_MAIL, {
       options: mailOptions,
       html,

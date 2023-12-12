@@ -1,26 +1,47 @@
+import { Transform } from 'class-transformer';
 import {
-  Equals,
   IsEmail,
+  IsNotEmpty,
   IsOptional,
-  MinLength,
+  IsStrongPassword,
+  IsStrongPasswordOptions,
   ValidateIf,
+  ValidationArguments,
 } from 'class-validator';
 
-import IsUnique from '@/_library/validator/is-unique.validator';
+import ShouldNotExist from '@/_library/validator/should-not-exist.validator';
 
 import { User } from '../schema/user.schema';
 
 export class UpdateUserDto {
   @IsOptional()
   @IsEmail(undefined, { message: 'A valid email address should be provided.' })
-  @IsUnique(User)
+  @ShouldNotExist(User)
   readonly email?: string;
 
   @IsOptional()
-  @MinLength(8, {
-    message: ({ constraints }) =>
-      `The password should be at least ${constraints} characters long.`,
-  })
+  @IsStrongPassword(
+    {
+      minLength: 8,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1,
+      minSymbols: 1,
+    },
+    {
+      message: ({ property, constraints }: ValidationArguments) => {
+        const {
+          minLength,
+          minLowercase,
+          minUppercase,
+          minNumbers,
+          minSymbols,
+        } = constraints[0] as IsStrongPasswordOptions;
+
+        return `The ${property} should be ${minLength} character(s) long with at least: ${minLowercase} lowercase character(s), ${minUppercase} uppercase character(s), ${minNumbers} number(s), and ${minSymbols} symbol(s).`;
+      },
+    },
+  )
   readonly password?: string;
 
   /**
@@ -29,8 +50,9 @@ export class UpdateUserDto {
    * empty.
    */
   @ValidateIf(({ email, password }: UpdateUserDto) => !(email || password))
-  @Equals(Symbol('This value should not be filled'), {
+  @Transform(() => null)
+  @IsNotEmpty({
     message: 'Provide either an email or a password to be updated.',
   })
-  readonly _?: unknown;
+  readonly _?: never;
 }

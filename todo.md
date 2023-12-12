@@ -1,7 +1,10 @@
 # Todo
 
-- [ ] Setup forgot-password feature.
+- [ ]
 
-- [ ] Setup 2FA feature.
+### Later
 
-- [ ] Add logging for relevant parts of the application.
+Features to be implemented later - when they would actually be used by the application:
+
+- **Route-parameter binding** - similar to that of Laravel
+- **Two-factor authentication (2FA)**

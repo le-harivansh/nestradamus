@@ -27,7 +27,7 @@ import { MainModule } from './main.module';
 
   /**
    * This is needed because we want to inject nest dependencies in custom
-   * validator constraints (such as the `IsUniqueValidatorConstraint`).
+   * validator constraints.
    */
   useContainer(application.select(MainModule), {
     fallbackOnErrors: true,

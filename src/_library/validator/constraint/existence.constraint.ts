@@ -2,20 +2,23 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import {
   ValidationArguments,
-  ValidationOptions,
   ValidatorConstraint,
   ValidatorConstraintInterface,
-  registerDecorator,
 } from 'class-validator';
 import { Connection } from 'mongoose';
 
 import { ConnectionName } from '@/_application/_database/constant';
 
-import { Constructor, PropertiesOfInstanceOfConstructor } from '../helper';
+import { Constructor, PropertiesOfInstanceOfConstructor } from '../../helper';
+
+export const enum ExistenceConstraint {
+  SHOULD_EXIST = 'document-with-matching-property-should-exist',
+  SHOULD_NOT_EXIST = 'document-with-matching-property-should-not-exist',
+}
 
 @Injectable()
 @ValidatorConstraint({ async: true })
-export class IsUniqueValidatorConstraint<T extends Constructor<unknown>>
+export class ExistenceValidatorConstraint<T extends Constructor<unknown>>
   implements ValidatorConstraintInterface
 {
   private readonly connections = new Map<ConnectionName, Connection>();
@@ -27,7 +30,6 @@ export class IsUniqueValidatorConstraint<T extends Constructor<unknown>>
      * Just inject them into the constructor using parameter injection, then add
      * them to the `connections` map.
      */
-
     this.connections.set(ConnectionName.DEFAULT, defaultConnection);
   }
 
@@ -35,17 +37,23 @@ export class IsUniqueValidatorConstraint<T extends Constructor<unknown>>
     value: unknown,
     { constraints }: ValidationArguments,
   ): Promise<boolean> {
-    const [modelClass, fieldUnderValidation, connectionName] = constraints as [
+    const [
+      modelClass,
+      fieldUnderValidation,
+      connectionName,
+      existenceConstraint,
+    ] = constraints as [
       T,
       PropertiesOfInstanceOfConstructor<T>,
       ConnectionName,
+      ExistenceConstraint,
     ];
 
     const connection = this.connections.get(connectionName);
 
     if (connection === undefined) {
       throw new InternalServerErrorException(
-        `Could not get the connection '${connectionName}'.`,
+        `Could not get the connection: '${connectionName}'.`,
       );
     }
 
@@ -62,35 +70,35 @@ export class IsUniqueValidatorConstraint<T extends Constructor<unknown>>
       .count()
       .exec();
 
-    return documentCount === 0;
+    switch (existenceConstraint) {
+      case ExistenceConstraint.SHOULD_EXIST:
+        return documentCount !== 0;
+      case ExistenceConstraint.SHOULD_NOT_EXIST:
+        return documentCount === 0;
+      default:
+        throw new InternalServerErrorException(
+          `Invalid ExistenceConstraint: '${existenceConstraint}' provided.`,
+        );
+    }
   }
 
   defaultMessage({ constraints, value }: ValidationArguments): string {
-    const fieldUnderValidation = constraints[1];
+    const [, fieldUnderValidation, , existenceConstraint] = constraints as [
+      T,
+      PropertiesOfInstanceOfConstructor<T>,
+      ConnectionName,
+      ExistenceConstraint,
+    ];
 
-    return `The ${fieldUnderValidation} '${value}' already exists.`;
+    switch (existenceConstraint) {
+      case ExistenceConstraint.SHOULD_EXIST:
+        return `The ${fieldUnderValidation} '${value}' does not exist.`;
+      case ExistenceConstraint.SHOULD_NOT_EXIST:
+        return `The ${fieldUnderValidation} '${value}' already exists.`;
+      default:
+        throw new InternalServerErrorException(
+          `Invalid ExistenceConstraint: '${existenceConstraint}' provided.`,
+        );
+    }
   }
-}
-
-export default function IsUnique<T extends Constructor<unknown>>(
-  modelClass: T,
-  fieldUnderValidation:
-    | PropertiesOfInstanceOfConstructor<T>
-    | undefined = undefined,
-  connectionName: ConnectionName = ConnectionName.DEFAULT,
-  validationOptions?: ValidationOptions,
-): (object: object, propertyName: string) => void {
-  return (object: object, propertyName: string) =>
-    registerDecorator({
-      target: object.constructor,
-      propertyName,
-      async: true,
-      constraints: [
-        modelClass,
-        fieldUnderValidation ?? propertyName,
-        connectionName,
-      ],
-      options: validationOptions,
-      validator: IsUniqueValidatorConstraint<T>,
-    });
 }

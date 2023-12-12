@@ -1,13 +1,14 @@
-import { Injectable, LoggerService, Scope } from '@nestjs/common';
+import { Inject, Injectable, LoggerService, Scope } from '@nestjs/common';
 import { Logger } from 'winston';
 
-import { LOG_LEVELS } from '../constant';
+import { LOG_LEVELS, WINSTON_LOGGER } from '../constant';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class WinstonLoggerService implements LoggerService {
-  private context?: string;
+  @Inject(WINSTON_LOGGER)
+  private readonly logger!: Logger;
 
-  constructor(private readonly logger: Logger) {}
+  private context?: string;
 
   fatal(message: string, ...optionalParams: unknown[]) {
     this.logMessage('fatal', message, ...optionalParams);
@@ -33,7 +34,7 @@ export class WinstonLoggerService implements LoggerService {
     this.logMessage('verbose', message, ...optionalParams);
   }
 
-  setContext(context?: string) {
+  setContext(context: string) {
     this.context = context;
   }
 
@@ -43,11 +44,7 @@ export class WinstonLoggerService implements LoggerService {
     ...optionalParams: unknown[]
   ) {
     const metadata = {
-      context:
-        this.context ??
-        (optionalParams.length === 1 && typeof optionalParams[0] === 'string'
-          ? optionalParams[0]
-          : 'Application'),
+      context: this.context,
       optionalParams,
     };
 

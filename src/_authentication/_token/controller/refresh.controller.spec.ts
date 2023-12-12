@@ -1,45 +1,37 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { model } from 'mongoose';
 
-import { MockOf } from '@/_library/helper';
+import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
+import { newDocument } from '@/_library/helper';
 import { User, UserSchema } from '@/_user/schema/user.schema';
 
 import { TokenService } from '../service/token.service';
 import { RefreshController } from './refresh.controller';
 
-describe(RefreshController.name, () => {
-  const UserModel = model(User.name, UserSchema);
-  const authenticatedUser = new UserModel({
-    email: 'user@email.com',
-    password: 'P@ssw0rd',
-  });
+jest.mock('@/_application/_logger/service/winston-logger.service');
+jest.mock('../service/token.service');
 
+describe(RefreshController.name, () => {
   const generatedTokenData = {
     token: 'the-generated-token',
     expiresAt: Date.now(),
   };
-  const tokenService: MockOf<
-    TokenService,
-    'generateAccessTokenFor' | 'generateRefreshTokenFor'
-  > = {
-    generateAccessTokenFor: jest.fn(() => generatedTokenData),
-    generateRefreshTokenFor: jest.fn(() => generatedTokenData),
-  };
 
+  let loggerService: jest.Mocked<WinstonLoggerService>;
+  let tokenService: jest.Mocked<TokenService>;
   let refreshController: RefreshController;
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [RefreshController],
-      providers: [
-        {
-          provide: TokenService,
-          useValue: tokenService,
-        },
-      ],
+      providers: [WinstonLoggerService, TokenService],
     }).compile();
 
+    loggerService = module.get(WinstonLoggerService);
+    tokenService = module.get(TokenService);
     refreshController = module.get(RefreshController);
+
+    tokenService.generateAccessTokenFor.mockReturnValue(generatedTokenData);
+    tokenService.generateRefreshTokenFor.mockReturnValue(generatedTokenData);
   });
 
   afterEach(() => {
@@ -60,6 +52,11 @@ describe(RefreshController.name, () => {
       serviceMethod: 'generateRefreshTokenFor',
     },
   ] as const)('$controllerMethod', ({ controllerMethod, serviceMethod }) => {
+    const authenticatedUser = newDocument<User>(User, UserSchema, {
+      email: 'user@email.com',
+      password: 'P@ssw0rd',
+    });
+
     let response: unknown;
 
     beforeEach(() => {
@@ -75,6 +72,14 @@ describe(RefreshController.name, () => {
 
     it(`returns the value of 'TokenService::${serviceMethod}'`, () => {
       expect(response).toStrictEqual(generatedTokenData);
+    });
+
+    it('logs the request to generate the specified token', () => {
+      expect(loggerService.log).toHaveBeenCalledTimes(1);
+      expect(loggerService.log).toHaveBeenCalledWith(
+        expect.stringMatching(/^Request to generate (access|refresh)-token$/),
+        authenticatedUser,
+      );
     });
   });
 });

@@ -9,7 +9,8 @@ const Sequencer = require('@jest/test-sequencer').default;
  *
  * e.g.: registration tests should be run before authentication tests;
  *       authentication tests should be run before tests that use the
- *       application's authentication mechanism.
+ *       application's authentication mechanism;
+ *       etc...
  *
  * As a result, the e2e tests should be named with a number prefix such as:
  *    - 1_first.test.ts

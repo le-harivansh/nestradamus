@@ -7,12 +7,12 @@ import {
   ValidationArguments,
 } from 'class-validator';
 
-import IsUnique from '@/_library/validator/is-unique.validator';
+import ShouldNotExist from '@/_library/validator/should-not-exist.validator';
 import { User } from '@/_user/schema/user.schema';
 
 export class RegisterUserDto {
   @IsEmail(undefined, { message: 'A valid email address should be provided.' })
-  @IsUnique(User)
+  @ShouldNotExist(User)
   readonly email!: string;
 
   @IsStrongPassword(

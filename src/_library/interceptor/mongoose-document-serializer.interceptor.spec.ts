@@ -1,11 +1,12 @@
 import { PlainLiteralObject } from '@nestjs/common';
-import { SchemaFactory } from '@nestjs/mongoose';
+import { Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Exclude, Expose } from 'class-transformer';
-import { model } from 'mongoose';
 
+import { newDocument } from '../helper';
 import { SerializeDocumentsHavingSchema } from './mongoose-document-serializer.interceptor';
 
+@Schema()
 class Person {
   @Expose()
   name!: string;
@@ -15,8 +16,6 @@ class Person {
 }
 
 const PersonSchema = SchemaFactory.createForClass(Person);
-
-const PersonModel = model(Person.name, PersonSchema);
 
 const personData = {
   name: 'One Two',
@@ -39,17 +38,17 @@ describe(SerializeDocumentsHavingSchema.name, () => {
 
   describe('convertPlainObjectToClass', () => {
     it('returns a new model instance if the passed-in object IS an instance of `mongoose.Document`', () => {
-      const PersonDocument = new PersonModel(personData);
+      const person = newDocument<Person>(Person, PersonSchema, personData);
 
-      expect(
-        interceptor.convertPlainObjectToClass(PersonDocument),
-      ).toBeInstanceOf(Person);
+      expect(interceptor['convertPlainObjectToClass'](person)).toBeInstanceOf(
+        Person,
+      );
     });
 
     it('returns the passed-in object if it IS NOT an instance of `mongoose.Document`', () => {
-      expect(interceptor.convertPlainObjectToClass(personData)).toStrictEqual(
-        personData,
-      );
+      expect(
+        interceptor['convertPlainObjectToClass'](personData),
+      ).toStrictEqual(personData);
     });
   });
 
@@ -71,9 +70,9 @@ describe(SerializeDocumentsHavingSchema.name, () => {
     });
 
     it('calls `convertPlainObjectToClass` on the passed-in argument if it IS NOT an array', () => {
-      const response = new PersonModel(personData);
+      const response = newDocument<Person>(Person, PersonSchema, personData);
       const transformedResponse =
-        interceptor.transformResponseToClass(response);
+        interceptor['transformResponseToClass'](response);
 
       expect(convertPlainObjectToClassSpy).toHaveBeenCalledTimes(1);
       expect(convertPlainObjectToClassSpy).toHaveBeenCalledWith(response);
@@ -82,12 +81,12 @@ describe(SerializeDocumentsHavingSchema.name, () => {
 
     it('calls `convertPlainObjectToClass` on every item within the passed-in argument if it IS an array', () => {
       const response = [
-        new PersonModel(personData),
-        new PersonModel(personData),
-        new PersonModel(personData),
+        newDocument<Person>(Person, PersonSchema, personData),
+        newDocument<Person>(Person, PersonSchema, personData),
+        newDocument<Person>(Person, PersonSchema, personData),
       ];
       const transformedResponse =
-        interceptor.transformResponseToClass(response);
+        interceptor['transformResponseToClass'](response);
 
       expect(convertPlainObjectToClassSpy).toHaveBeenCalledTimes(3);
 
@@ -120,7 +119,7 @@ describe(SerializeDocumentsHavingSchema.name, () => {
     });
 
     it('calls `transformResponseToClass` on the passed-in argument', () => {
-      const response = new PersonModel(personData);
+      const response = newDocument<Person>(Person, PersonSchema, personData);
       interceptor.serialize(response, {});
 
       expect(transformResponseToClassSpy).toHaveBeenCalledTimes(1);

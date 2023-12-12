@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 
 import { OtpModule } from './_otp/otp.module';
-import { IsUniqueValidatorConstraint } from './validator/is-unique.validator';
+import { ExistenceValidatorConstraint } from './validator/constraint/existence.constraint';
 
 @Module({
-  providers: [IsUniqueValidatorConstraint],
+  providers: [ExistenceValidatorConstraint],
   imports: [OtpModule],
 })
 export class LibraryModule {}

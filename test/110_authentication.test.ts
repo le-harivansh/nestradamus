@@ -13,26 +13,23 @@ import { Mailhog } from './helper/mailhog';
 import { registerUser } from './helper/user';
 
 describe(`${AuthenticationController.name} (e2e)`, () => {
-  const start = new Date();
-
+  let start: Date;
   let application: INestApplication;
   let databaseConnection: Connection;
   let mailhog: Mailhog;
 
   beforeAll(async () => {
+    start = new Date();
+
     const {
       application: testApplication,
       databaseConnection: testDatabaseConnection,
+      mailhog: testMailhog,
     } = await setupTestApplication();
 
     application = testApplication;
     databaseConnection = testDatabaseConnection;
-
-    /**
-     * It is assumed that the mailhog service is being served from
-     * the default host & port (`localhost:8025`)
-     */
-    mailhog = new Mailhog();
+    mailhog = testMailhog;
   });
 
   afterAll(async () => {
@@ -82,11 +79,18 @@ describe(`${AuthenticationController.name} (e2e)`, () => {
         email: string;
         password: string;
       }>([
-        { email: '', password: '' }, // all empty fields
-        { email: userData.email, password: '' }, // empty password field
-        { email: '', password: userData.password }, // empty email field
-        { email: userData.email, password: 'wrong-password' }, // wrong password
-        { email: 'wrong@email.com', password: userData.password }, // wrong email
+        // empty DTO
+        {} as any,
+        // all empty fields
+        { email: '', password: '' },
+        // empty password field
+        { email: userData.email, password: '' },
+        // empty email field
+        { email: '', password: userData.password },
+        // wrong password
+        { email: userData.email, password: 'wrong-password' },
+        // wrong email
+        { email: 'wrong@email.com', password: userData.password },
       ])(
         "responds with HTTP:UNAUTHORIZED if the provided credentials are wrong [email: '$email', password: '$password']",
         async ({ email, password }) => {

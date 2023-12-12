@@ -15,13 +15,12 @@ import { Mailhog } from './helper/mailhog';
 import { registerUser } from './helper/user';
 
 describe(`${UserController.name} (e2e)`, () => {
-  const start = new Date();
-
   const userData: Pick<User, 'email' | 'password'> = {
     email: 'user@email.com',
     password: 'P@ssw0rd',
   };
 
+  let start: Date;
   let application: INestApplication;
   let databaseConnection: Connection;
   let mailhog: Mailhog;
@@ -32,19 +31,17 @@ describe(`${UserController.name} (e2e)`, () => {
   };
 
   beforeAll(async () => {
+    start = new Date();
+
     const {
       application: testApplication,
       databaseConnection: testDatabaseConnection,
+      mailhog: testMailhog,
     } = await setupTestApplication();
 
     application = testApplication;
     databaseConnection = testDatabaseConnection;
-
-    /**
-     * It is assumed that the mailhog service is being served from
-     * the default host & port (`localhost:8025`)
-     */
-    mailhog = new Mailhog();
+    mailhog = testMailhog;
 
     /**
      * Create user & get user authentication tokens
@@ -272,17 +269,58 @@ describe(`${UserController.name} (e2e)`, () => {
         },
       );
 
-      it('fails when am empty dataset is provided', async () => {
-        const { status } = await request(application.getHttpServer())
-          .patch('/me')
-          .send({})
-          .set(
-            TokenHttpHeader.ACCESS_TOKEN,
-            authenticationTokensData.accessToken.token,
-          );
+      test.each<UpdateUserDto>([
+        // empty DTO
+        {},
+        // all empty fields
+        { email: '', password: '' },
+        // empty password field
+        {
+          email: 'updated-user@email.com',
+          password: '',
+        },
+        // empty email field
+        { email: '', password: 'P@ssw0rd' },
+        // no uppercase character in password
+        {
+          email: 'updated-user@email.com',
+          password: 'p@ssw0rd',
+        },
+        // no lowercase character in password
+        {
+          email: 'updated-user@email.com',
+          password: 'P@SSW0RD',
+        },
+        // no special character in password
+        {
+          email: 'updated-user@email.com',
+          password: 'Passw0rd',
+        },
+        // no number in password
+        {
+          email: 'updated-user@email.com',
+          password: 'P@ssword',
+        },
+        // email already exists
+        { ...userData },
+        // value passed to the `_` arbiter property
+        {
+          _: 'this value should not be processed',
+        } as unknown as UpdateUserDto,
+      ])(
+        'invalid user data is provided to the request',
+        async (updateUserDto) => {
+          const { status } = await request(application.getHttpServer())
+            .patch('/me')
+            .send(updateUserDto)
+            .set(
+              TokenHttpHeader.ACCESS_TOKEN,
+              authenticationTokensData.accessToken.token,
+            );
 
-        expect(status).toBe(HttpStatus.BAD_REQUEST);
-      });
+          expect(status).toBe(HttpStatus.BAD_REQUEST);
+        },
+      );
     });
   });
 });

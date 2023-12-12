@@ -1,70 +1,130 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { argon2id, hash } from 'argon2';
-import { Types, model } from 'mongoose';
 
-import { MockOf, ModelWithId } from '@/_library/helper';
-import { User, UserSchema } from '@/_user/schema/user.schema';
+import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
+import { newDocument } from '@/_library/helper';
+import { User, UserDocument, UserSchema } from '@/_user/schema/user.schema';
 import { UserService } from '@/_user/service/user.service';
 
 import { LocalStrategy } from './local.strategy';
 
-describe(LocalStrategy.name, () => {
-  const clearTextPassword = 'le-password';
+jest.mock('@/_application/_logger/service/winston-logger.service');
+jest.mock('@/_user/service/user.service');
 
-  const UserModel = model(User.name, UserSchema);
-  const userDocument = new UserModel({
-    _id: new Types.ObjectId(),
+describe(LocalStrategy.name, () => {
+  const clearTextPassword = 'P@ssw0rd-1';
+  const user = newDocument<User>(User, UserSchema, {
     email: 'user@email.com',
     password: 'P@ssw0rd',
   });
 
+  let userService: jest.Mocked<UserService>;
+  let loggerService: jest.Mocked<WinstonLoggerService>;
   let localStrategy: LocalStrategy;
 
   beforeAll(async () => {
-    userDocument.set(
-      'password',
-      await hash(clearTextPassword, { type: argon2id }),
-    );
+    user.set('password', await hash(clearTextPassword, { type: argon2id }));
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        LocalStrategy,
-        {
-          provide: UserService,
-          useValue: {
-            async findOneBy(property: keyof ModelWithId<User>, value: string) {
-              if (property === 'email' && value === userDocument.get('email')) {
-                return Promise.resolve(userDocument);
-              }
-
-              throw new NotFoundException();
-            },
-          } as MockOf<UserService, 'findOneBy'>,
-        },
-      ],
+      providers: [WinstonLoggerService, UserService, LocalStrategy],
     }).compile();
 
+    userService = module.get(UserService);
+    loggerService = module.get(WinstonLoggerService);
     localStrategy = module.get(LocalStrategy);
   });
 
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   describe('validate', () => {
-    it('returns the corresponding user document when the correct credentials are provided', async () => {
-      expect(
-        localStrategy.validate(userDocument.email, clearTextPassword),
-      ).resolves.toBe(userDocument);
+    beforeAll(() => {
+      userService.findOne.mockResolvedValue(user);
     });
 
-    it('returns `null` if the user could not be retrieved from the database', async () => {
-      expect(
-        localStrategy.validate('wrong@email.com', clearTextPassword),
-      ).resolves.toBeNull();
+    describe('[on success]', () => {
+      let validationResult: UserDocument | null;
+
+      beforeEach(async () => {
+        validationResult = await localStrategy.validate(
+          user.email,
+          clearTextPassword,
+        );
+      });
+
+      it('returns the corresponding user document when the correct credentials are provided', () => {
+        expect(validationResult).toBe(user);
+      });
+
+      it('calls `WinstonLoggerService::log` with the authenticated user', () => {
+        expect(loggerService.log).toHaveBeenCalledTimes(1);
+        expect(loggerService.log).toHaveBeenCalledWith(
+          'Successful user login attempt',
+          validationResult,
+        );
+      });
     });
 
-    it('returns `null` if the wrong password is provided', async () => {
-      expect(
-        localStrategy.validate(userDocument.get('email'), 'wrong-password'),
-      ).resolves.toBeNull();
+    describe('[on failure]', () => {
+      describe('- wrong email', () => {
+        const email = 'unknown@email.com';
+
+        beforeAll(() => {
+          userService.findOne.mockImplementation(() => {
+            throw new NotFoundException();
+          });
+        });
+
+        it('returns null if the specified user cannot not be retrieved', async () => {
+          await expect(
+            localStrategy.validate(email, clearTextPassword),
+          ).resolves.toBeNull();
+        });
+
+        it('calls `WinstonLoggerService::log` with the attempted user email address', async () => {
+          await localStrategy.validate(email, clearTextPassword);
+
+          expect(loggerService.log).toHaveBeenCalledTimes(1);
+          expect(loggerService.log).toHaveBeenCalledWith(
+            'Unsuccessful user login attempt',
+            { email },
+          );
+        });
+      });
+
+      describe('- wrong password', () => {
+        beforeEach(() => {
+          userService.findOne.mockResolvedValue(user);
+        });
+
+        it('returns null if the specified user was retrieved, but the provided password is wrong', async () => {
+          await expect(
+            localStrategy.validate(user.get('email'), 'incorrect-password'),
+          ).resolves.toBeNull();
+        });
+
+        it("re-throws any exception - that is not a `NotFoundException` - that occurs when retrieving the user's data", async () => {
+          userService.findOne.mockImplementationOnce(() => {
+            throw new Error();
+          });
+
+          await expect(() =>
+            localStrategy.validate(user.get('email'), clearTextPassword),
+          ).rejects.toThrow();
+        });
+
+        it('calls `WinstonLoggerService::log` with the attempted user email address', async () => {
+          await localStrategy.validate(user.get('email'), 'incorrect-password');
+
+          expect(loggerService.log).toHaveBeenCalledTimes(1);
+          expect(loggerService.log).toHaveBeenCalledWith(
+            'Unsuccessful user login attempt',
+            { email: user.get('email') },
+          );
+        });
+      });
     });
   });
 });

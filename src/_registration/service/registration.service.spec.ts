@@ -1,87 +1,64 @@
 import { BadRequestException } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Types, model } from 'mongoose';
 
 import { ConfigurationService } from '@/_application/_configuration/service/configuration.service';
+import { EventService } from '@/_application/_event/service/event.service';
+import { Event } from '@/_application/_event/type';
+import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
 import { MailService } from '@/_application/_mail/service/mail.service';
-import { USER_REGISTERED } from '@/_application/event.constant';
+import { Otp, OtpSchema } from '@/_library/_otp/schema/otp.schema';
 import { OtpService } from '@/_library/_otp/service/otp.service';
-import { MockOf } from '@/_library/helper';
+import { OtpType } from '@/_library/_otp/type';
+import { newDocument } from '@/_library/helper';
 import { User, UserSchema } from '@/_user/schema/user.schema';
 import { UserService } from '@/_user/service/user.service';
 
 import { RegistrationService } from './registration.service';
 
+jest.mock('@/_application/_configuration/service/configuration.service');
+jest.mock('@/_application/_logger/service/winston-logger.service');
+jest.mock('@/_application/_event/service/event.service');
+jest.mock('@/_application/_mail/service/mail.service');
+jest.mock('@/_user/service/user.service');
+jest.mock('@/_library/_otp/service/otp.service');
+
 describe(RegistrationService.name, () => {
-  const UserModel = model(User.name, UserSchema);
-  const newUser = new UserModel({
-    _id: new Types.ObjectId(),
+  const newUser = newDocument<User>(User, UserSchema, {
     email: 'user@email.com',
     password: 'P@ssw0rd',
   });
-  const userServiceMock: MockOf<UserService, 'create'> = {
-    create: jest.fn(() => Promise.resolve(newUser)),
-  };
 
-  const validOtp = '123456';
-  const otpServiceMock: MockOf<OtpService, 'isValid' | 'create'> = {
-    isValid: jest.fn((otp) => otp === validOtp),
-    create: jest.fn(() => ({
-      get: (property: string) =>
-        ({
-          password: validOtp,
-        })[property],
-    })),
-  };
-
-  const configurationServiceMock: MockOf<ConfigurationService, 'getOrThrow'> = {
-    getOrThrow: jest.fn(
-      (key: string) =>
-        ({
-          'application.name': 'Application',
-        })[key],
-    ),
-  };
-
-  const eventEmitterMock: MockOf<EventEmitter2, 'emit'> = {
-    emit: jest.fn(),
-  };
-
-  const mailServiceMock: MockOf<MailService, 'queueSend'> = {
-    queueSend: jest.fn(),
-  };
-
+  let configurationService: jest.Mocked<ConfigurationService>;
+  let loggerService: jest.Mocked<WinstonLoggerService>;
+  let eventService: jest.Mocked<EventService>;
+  let mailService: jest.Mocked<MailService>;
+  let userService: jest.Mocked<UserService>;
+  let otpService: jest.Mocked<OtpService>;
   let registrationService: RegistrationService;
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        {
-          provide: ConfigurationService,
-          useValue: configurationServiceMock,
-        },
-        {
-          provide: EventEmitter2,
-          useValue: eventEmitterMock,
-        },
-        {
-          provide: UserService,
-          useValue: userServiceMock,
-        },
-        {
-          provide: OtpService,
-          useValue: otpServiceMock,
-        },
-        {
-          provide: MailService,
-          useValue: mailServiceMock,
-        },
+        ConfigurationService,
+        WinstonLoggerService,
+        EventService,
+        MailService,
+        UserService,
+        OtpService,
         RegistrationService,
       ],
     }).compile();
 
-    registrationService = module.get<RegistrationService>(RegistrationService);
+    configurationService = module.get(ConfigurationService);
+    loggerService = module.get(WinstonLoggerService);
+    eventService = module.get(EventService);
+    mailService = module.get(MailService);
+    userService = module.get(UserService);
+    otpService = module.get(OtpService);
+    registrationService = module.get(RegistrationService);
+
+    userService.create.mockResolvedValue(newUser);
+    otpService.isValid.mockResolvedValue(true);
   });
 
   afterEach(() => {
@@ -92,102 +69,130 @@ describe(RegistrationService.name, () => {
     expect(registrationService).toBeDefined();
   });
 
-  describe('verifyOtp', () => {
-    it('calls `OtpService::isValid` with the provided arguments', async () => {
-      const destination = 'user@email.com';
-
-      const verificationResult = await registrationService.verifyOtp(
-        validOtp,
-        destination,
-      );
-
-      expect(otpServiceMock.isValid).toHaveBeenCalledTimes(1);
-      expect(otpServiceMock.isValid).toHaveBeenCalledWith(validOtp, {
-        type: RegistrationService.OTP_TYPE,
-        destination,
-      });
-
-      expect(verificationResult).toBe(true);
-    });
-  });
-
   describe('registerUser', () => {
     const userRegistrationData = {
       email: 'user@email.com',
       password: 'P@ssw0rd',
-      otp: validOtp,
+      otp: '109854',
     };
 
-    it('calls `UserService::createUser` with the appropriate data', async () => {
+    it('calls `OtpService::isValid` with the appropriate arguments', async () => {
       await registrationService.registerUser(
         userRegistrationData.email,
         userRegistrationData.password,
         userRegistrationData.otp,
       );
 
-      expect(userServiceMock.create).toHaveBeenCalledTimes(1);
-      expect(userServiceMock.create).toHaveBeenCalledWith(
+      expect(otpService.isValid).toHaveBeenCalledTimes(1);
+      expect(otpService.isValid).toHaveBeenCalledWith(
+        userRegistrationData.otp,
+        {
+          destination: userRegistrationData.email,
+          type: OtpType.userRegistration.name,
+        },
+      );
+    });
+
+    it('calls `UserService::createUser` with the appropriate arguments', async () => {
+      await registrationService.registerUser(
+        userRegistrationData.email,
+        userRegistrationData.password,
+        userRegistrationData.otp,
+      );
+
+      expect(userService.create).toHaveBeenCalledTimes(1);
+      expect(userService.create).toHaveBeenCalledWith(
         userRegistrationData.email,
         userRegistrationData.password,
       );
     });
 
     it('throws a `BadRequestException` if the provided OTP is invalid', async () => {
-      expect(
-        async () =>
-          await registrationService.registerUser(
-            userRegistrationData.email,
-            userRegistrationData.password,
-            '000000',
-          ),
+      otpService.isValid.mockResolvedValueOnce(false);
+
+      await expect(() =>
+        registrationService.registerUser(
+          userRegistrationData.email,
+          userRegistrationData.password,
+          '000000',
+        ),
       ).rejects.toThrow(BadRequestException);
     });
 
     it('returns the created user document', async () => {
-      const result = await registrationService.registerUser(
-        userRegistrationData.email,
-        userRegistrationData.password,
-        userRegistrationData.otp,
-      );
-
-      expect(result).toBe(newUser);
+      await expect(
+        registrationService.registerUser(
+          userRegistrationData.email,
+          userRegistrationData.password,
+          userRegistrationData.otp,
+        ),
+      ).resolves.toBe(newUser);
     });
 
-    it('calls `EventEmitter2::emit` with the proper arguments', async () => {
+    it('calls `EventService::emit` with the proper arguments', async () => {
       const newUser = await registrationService.registerUser(
         userRegistrationData.email,
         userRegistrationData.password,
         userRegistrationData.otp,
       );
 
-      expect(eventEmitterMock.emit).toHaveBeenCalledTimes(1);
-      expect(eventEmitterMock.emit).toHaveBeenCalledWith(
-        USER_REGISTERED,
+      expect(eventService.emit).toHaveBeenCalledTimes(1);
+      expect(eventService.emit).toHaveBeenCalledWith(
+        Event.User.REGISTERED,
+        newUser,
+      );
+    });
+
+    it('logs data about the newly created user', async () => {
+      await expect(
+        registrationService.registerUser(
+          userRegistrationData.email,
+          userRegistrationData.password,
+          userRegistrationData.otp,
+        ),
+      ).resolves.toBe(newUser);
+
+      expect(loggerService.log).toHaveBeenCalledTimes(1);
+      expect(loggerService.log).toHaveBeenCalledWith(
+        'Registered user',
         newUser,
       );
     });
   });
 
   describe('sendEmailVerificationOtpEmail', () => {
-    it('calls `MailService::queueSend` with the appropriate arguments', async () => {
-      const destination = 'user@email.com';
+    const destination = 'user@email.com';
+
+    beforeEach(async () => {
+      const otp = newDocument<Otp>(Otp, OtpSchema, {
+        type: OtpType.userRegistration.name,
+        destination,
+        password: '987654',
+        expiresAt: new Date(
+          Date.now() + OtpType.userRegistration.ttlSeconds * 1000,
+        ),
+      });
+
+      otpService.create.mockResolvedValueOnce(otp);
 
       await registrationService.sendEmailVerificationOtpEmail(destination);
+    });
 
-      expect(otpServiceMock.create).toHaveBeenCalledTimes(1);
-      expect(otpServiceMock.create).toHaveBeenCalledWith(
-        RegistrationService.OTP_TYPE,
+    it('calls `MailService::queueSend` with the appropriate arguments', () => {
+      expect(otpService.create).toHaveBeenCalledTimes(1);
+      expect(otpService.create).toHaveBeenCalledWith(
+        OtpType.userRegistration.name,
         destination,
-        RegistrationService.OTP_TTL_SECONDS,
+        OtpType.userRegistration.ttlSeconds,
       );
 
-      expect(configurationServiceMock.getOrThrow).toHaveBeenCalledTimes(1);
-      expect(configurationServiceMock.getOrThrow).toHaveBeenCalledWith(
+      expect(configurationService.getOrThrow).toHaveBeenCalledTimes(1);
+      expect(configurationService.getOrThrow).toHaveBeenCalledWith(
         'application.name',
       );
 
-      expect(mailServiceMock.queueSend).toHaveBeenCalledTimes(1);
-      expect(mailServiceMock.queueSend).toHaveBeenCalledWith(
+      expect(mailService.queueSend).toHaveBeenCalledTimes(1);
+      expect(mailService.queueSend).toHaveBeenCalledWith(
         {
           to: destination,
           subject: expect.any(String),
@@ -195,26 +200,36 @@ describe(RegistrationService.name, () => {
         {
           path: expect.any(String),
           variables: {
-            password: expect.any(String),
+            otp: expect.any(String),
           },
         },
+      );
+    });
+
+    it('logs data about the registration verification email queuing', () => {
+      expect(loggerService.log).toHaveBeenCalledTimes(1);
+      expect(loggerService.log).toHaveBeenCalledWith(
+        'Queuing registration verification mail',
+        { destination },
       );
     });
   });
 
   describe('sendWelcomeEmail', () => {
-    it('calls `MailService::queueSend` with the appropriate arguments', async () => {
-      const destination = 'user@email.com';
+    const destination = 'user@email.com';
 
+    beforeEach(async () => {
       await registrationService.sendWelcomeEmail(destination);
+    });
 
-      expect(configurationServiceMock.getOrThrow).toHaveBeenCalledTimes(1);
-      expect(configurationServiceMock.getOrThrow).toHaveBeenCalledWith(
+    it('calls `MailService::queueSend` with the appropriate arguments', async () => {
+      expect(configurationService.getOrThrow).toHaveBeenCalledTimes(1);
+      expect(configurationService.getOrThrow).toHaveBeenCalledWith(
         'application.name',
       );
 
-      expect(mailServiceMock.queueSend).toHaveBeenCalledTimes(1);
-      expect(mailServiceMock.queueSend).toHaveBeenCalledWith(
+      expect(mailService.queueSend).toHaveBeenCalledTimes(1);
+      expect(mailService.queueSend).toHaveBeenCalledWith(
         {
           to: destination,
           subject: expect.any(String),
@@ -224,9 +239,17 @@ describe(RegistrationService.name, () => {
           variables: {
             email: destination,
             applicationName:
-              configurationServiceMock.getOrThrow('application.name'),
+              configurationService.getOrThrow('application.name'),
           },
         },
+      );
+    });
+
+    it('logs data about the registration welcome email queuing', () => {
+      expect(loggerService.log).toHaveBeenCalledTimes(1);
+      expect(loggerService.log).toHaveBeenCalledWith(
+        'Queuing registration welcome mail',
+        { destination },
       );
     });
   });

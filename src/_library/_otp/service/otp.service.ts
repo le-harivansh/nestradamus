@@ -1,19 +1,27 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { verify } from 'argon2';
 import { Model } from 'mongoose';
 
+import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
+
 import { Otp, OtpDocument } from '../schema/otp.schema';
+import type { OtpTypeName } from '../type';
 
 @Injectable()
 export class OtpService {
   static readonly PASSWORD_LENGTH = 6;
 
-  constructor(@InjectModel(Otp.name) private readonly otpModel: Model<Otp>) {}
+  constructor(
+    @InjectModel(Otp.name) private readonly otpModel: Model<Otp>,
+    private readonly loggerService: WinstonLoggerService,
+  ) {
+    this.loggerService.setContext(OtpService.name);
+  }
 
   async create(
-    type: Otp['type'],
-    destination: Otp['destination'],
+    type: OtpTypeName,
+    destination: string,
     ttlSeconds: number,
   ): Promise<OtpDocument> {
     const password = OtpService.generateNumericPassword(
@@ -27,6 +35,8 @@ export class OtpService {
       expiresAt: new Date(Date.now() + 1000 * ttlSeconds),
     });
 
+    this.loggerService.log('Created new OTP', newOtp);
+
     /**
      * We set the `cleartext` password here, because we need the `cleartext`
      * password in the subsequent steps (e.g.: when creating the OTP email...).
@@ -34,55 +44,49 @@ export class OtpService {
     return newOtp.set('password', password);
   }
 
-  async find(
-    type: Otp['type'],
-    destination: Otp['destination'],
-  ): Promise<OtpDocument[]> {
-    const retrievedOtp = await this.otpModel
+  async isValid(
+    password: string,
+    { type, destination }: { type: OtpTypeName; destination: string },
+  ): Promise<boolean> {
+    const retrievedOtps = await this.otpModel
       .find({ type, destination, expiresAt: { $gt: new Date() } })
       .exec();
 
-    if (retrievedOtp.length === 0) {
-      throw new NotFoundException(
-        `Could not find any OTP matching: [type: '${type}', destination: '${destination}'].`,
-      );
+    const atLeastOneMatchingOtpIsValid = (
+      await Promise.all(
+        retrievedOtps.map((otp) => verify(otp.get('password'), password)),
+      )
+    ).reduce((previous, current) => previous || current, false);
+
+    this.loggerService.log(
+      atLeastOneMatchingOtpIsValid
+        ? 'Found at least 1 matching OTP'
+        : 'Did not find any matching OTP',
+      { type, destination },
+    );
+
+    /**
+     * If an OTP has been validated, it - and similar ones
+     * (i.e.: ones having the same `type` & `destination`) - are removed to
+     * prevent replay attacks.
+     */
+    if (atLeastOneMatchingOtpIsValid) {
+      const { deletedCount } = await this.otpModel.deleteMany({
+        _id: { $in: retrievedOtps.map(({ _id }) => _id) },
+      });
+
+      this.loggerService.log(`Deleted all ${deletedCount} OTP(s) matching`, {
+        type,
+        destination,
+      });
     }
 
-    return retrievedOtp;
-  }
+    this.loggerService.log(
+      `OTP ${atLeastOneMatchingOtpIsValid ? 'is' : 'is not'} valid`,
+      { type, destination },
+    );
 
-  async isValid(
-    password: Otp['password'],
-    { type, destination }: Pick<Otp, 'type' | 'destination'>,
-  ): Promise<boolean> {
-    try {
-      const retrievedOtps = await this.find(type, destination);
-
-      const atLeastOneMatchingOtpIsValid = (
-        await Promise.all(
-          retrievedOtps.map((otp) => verify(otp.get('password'), password)),
-        )
-      ).reduce((previous, current) => previous || current, false);
-
-      /**
-       * If an OTP has been validated, it - and similar ones
-       * (i.e.: ones having the same `type` & `destination`) - are removed to
-       * prevent replay attacks.
-       */
-      if (atLeastOneMatchingOtpIsValid) {
-        await this.otpModel.deleteMany({
-          _id: { $in: retrievedOtps.map(({ _id }) => _id) },
-        });
-      }
-
-      return atLeastOneMatchingOtpIsValid;
-    } catch (error) {
-      if (!(error instanceof NotFoundException)) {
-        throw error;
-      }
-    }
-
-    return false;
+    return atLeastOneMatchingOtpIsValid;
   }
 
   static generateNumericPassword(length: number): string {

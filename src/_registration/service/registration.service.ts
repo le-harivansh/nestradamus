@@ -1,35 +1,26 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { ConfigurationService } from '@/_application/_configuration/service/configuration.service';
+import { EventService } from '@/_application/_event/service/event.service';
+import { Event } from '@/_application/_event/type';
+import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
 import { MailService } from '@/_application/_mail/service/mail.service';
-import { USER_REGISTERED } from '@/_application/event.constant';
-import { Otp } from '@/_library/_otp/schema/otp.schema';
 import { OtpService } from '@/_library/_otp/service/otp.service';
+import { OtpType } from '@/_library/_otp/type';
 import { UserDocument } from '@/_user/schema/user.schema';
 import { UserService } from '@/_user/service/user.service';
 
 @Injectable()
 export class RegistrationService {
-  static readonly OTP_TYPE = 'user:registration';
-  static readonly OTP_TTL_SECONDS = 5 * 60;
-
   constructor(
+    private readonly loggerService: WinstonLoggerService,
     private readonly otpService: OtpService,
     private readonly mailService: MailService,
     private readonly userService: UserService,
-    private readonly eventEmitter: EventEmitter2,
+    private readonly eventService: EventService,
     private readonly configurationService: ConfigurationService,
-  ) {}
-
-  async verifyOtp(
-    password: Otp['password'],
-    destination: Otp['destination'],
-  ): Promise<boolean> {
-    return this.otpService.isValid(password, {
-      type: RegistrationService.OTP_TYPE,
-      destination,
-    });
+  ) {
+    this.loggerService.setContext(RegistrationService.name);
   }
 
   async registerUser(
@@ -37,7 +28,10 @@ export class RegistrationService {
     password: string,
     otp: string,
   ): Promise<UserDocument> {
-    const otpIsValid = await this.verifyOtp(otp, email);
+    const otpIsValid = await this.otpService.isValid(otp, {
+      destination: email,
+      type: OtpType.userRegistration.name,
+    });
 
     if (!otpIsValid) {
       throw new BadRequestException(
@@ -47,22 +41,28 @@ export class RegistrationService {
 
     const newUser = await this.userService.create(email, password);
 
-    this.eventEmitter.emit(USER_REGISTERED, newUser);
+    this.eventService.emit(Event.User.REGISTERED, newUser);
+
+    this.loggerService.log('Registered user', newUser);
 
     return newUser;
   }
 
-  async sendEmailVerificationOtpEmail(destination: Otp['destination']) {
+  async sendEmailVerificationOtpEmail(destination: string) {
     const createdOtp = await this.otpService.create(
-      RegistrationService.OTP_TYPE,
+      OtpType.userRegistration.name,
       destination,
-      RegistrationService.OTP_TTL_SECONDS,
+      OtpType.userRegistration.ttlSeconds,
     );
+    const applicationName =
+      this.configurationService.getOrThrow('application.name');
 
-    const subject = `Your ${this.configurationService.getOrThrow(
-      'application.name',
-    )} email verification OTP.`;
-    const password = createdOtp.get('password');
+    const subject = `${applicationName} - Your email verification OTP.`;
+    const otp = createdOtp.get('password');
+
+    this.loggerService.log('Queuing registration verification mail', {
+      destination,
+    });
 
     return this.mailService.queueSend(
       {
@@ -71,7 +71,7 @@ export class RegistrationService {
       },
       {
         path: '_registration/template/verify-email.mail.mjml.hbs',
-        variables: { password },
+        variables: { otp },
       },
     );
   }
@@ -80,7 +80,11 @@ export class RegistrationService {
     const applicationName =
       this.configurationService.getOrThrow('application.name');
 
-    const subject = `Account successfully created on ${applicationName}!`;
+    const subject = `${applicationName} - Your account was successfully created!`;
+
+    this.loggerService.log('Queuing registration welcome mail', {
+      destination,
+    });
 
     return this.mailService.queueSend(
       {

@@ -5,7 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ConfigurationService } from '@/_application/_configuration/service/configuration.service';
 
 import { MAIL_QUEUE, TRANSPORTER } from './constant';
-import { transporterFactory } from './factory/transporter.factory';
+import transporterFactory from './factory/transporter.factory';
 import mailConfiguration from './mail.config';
 import { MailProcessor } from './processor/mail.processor';
 import { MailService } from './service/mail.service';

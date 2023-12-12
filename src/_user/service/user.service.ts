@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { FilterQuery, Model, Types } from 'mongoose';
 
-import { ModelWithId } from '@/_library/helper';
+import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
 
 import { User, UserDocument } from '../schema/user.schema';
 
@@ -10,58 +10,79 @@ import { User, UserDocument } from '../schema/user.schema';
 export class UserService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<User>,
-  ) {}
-
-  async create(
-    email: User['email'],
-    password: User['password'],
-  ): Promise<UserDocument> {
-    return this.userModel.create({ email, password });
+    private readonly loggerService: WinstonLoggerService,
+  ) {
+    this.loggerService.setContext(UserService.name);
   }
 
-  async findOneBy(
-    property: keyof ModelWithId<User>,
-    value: ModelWithId<User>[keyof ModelWithId<User>],
+  async create(email: string, password: string): Promise<UserDocument> {
+    const newUser = await this.userModel.create({ email, password });
+
+    this.loggerService.log('Created user', newUser);
+
+    return newUser;
+  }
+
+  async findOne(id: Types.ObjectId): Promise<UserDocument>;
+  async findOne(filterQuery: FilterQuery<User>): Promise<UserDocument>;
+  async findOne(
+    criteria: FilterQuery<User> | Types.ObjectId,
   ): Promise<UserDocument> {
-    const retrievedUser = await this.userModel
-      .findOne({ [property]: value })
-      .exec();
+    let retrievedUser: UserDocument | null;
+
+    if (criteria instanceof Types.ObjectId) {
+      retrievedUser = await this.userModel.findById(criteria).exec();
+    } else {
+      retrievedUser = await this.userModel.findOne(criteria).exec();
+    }
 
     if (!retrievedUser) {
       throw new NotFoundException(
-        `Could not find the user with ${property}: '${value}'.`,
+        `Could not find the user matching the filter-query: ${JSON.stringify(
+          criteria,
+        )}.`,
       );
     }
+
+    this.loggerService.log('Queried user', retrievedUser);
 
     return retrievedUser;
   }
 
   async update(
     id: Types.ObjectId,
-    userData: Partial<User>,
+    updates: Partial<User>,
+  ): Promise<UserDocument>;
+  async update(
+    filterQuery: FilterQuery<User>,
+    updates: Partial<User>,
+  ): Promise<UserDocument>;
+  async update(
+    criteria: FilterQuery<User> | Types.ObjectId,
+    updates: Partial<User>,
   ): Promise<UserDocument> {
-    const user = await this.userModel.findById(id).exec();
+    const user = await this.findOne(criteria);
 
-    if (!user) {
-      throw new NotFoundException(
-        `Could not find the user with id: ${id.toString()}.`,
-      );
-    }
-
-    for (const [property, value] of Object.entries(userData)) {
+    for (const [property, value] of Object.entries(updates)) {
       user.set({ [property]: value });
     }
 
-    return user.save();
+    const updatedUser = await user.save();
+
+    this.loggerService.log('Updated user', updatedUser);
+
+    return updatedUser;
   }
 
   async delete(id: Types.ObjectId): Promise<void> {
     const { deletedCount } = await this.userModel.deleteOne({ _id: id });
 
-    if (deletedCount !== 1) {
+    if (deletedCount === 0) {
       throw new NotFoundException(
         `Could not delete the user with id: '${id.toString()}'.`,
       );
     }
+
+    this.loggerService.log('Deleted user', { id });
   }
 }

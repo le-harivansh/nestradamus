@@ -1,8 +1,9 @@
 import { HttpStatus, INestApplication } from '@nestjs/common';
-import { Connection, Model } from 'mongoose';
+import { Connection } from 'mongoose';
 import request from 'supertest';
 
 import { Otp, OtpSchema } from '@/_library/_otp/schema/otp.schema';
+import { OtpService } from '@/_library/_otp/service/otp.service';
 import { RegistrationController } from '@/_registration/controller/registration.controller';
 import { RegisterUserDto } from '@/_registration/dto/registration.dto';
 
@@ -14,30 +15,23 @@ import { Mailhog } from './helper/mailhog';
 import { getRegistrationOtp, registerUser } from './helper/user';
 
 describe(`${RegistrationController.name} (e2e)`, () => {
-  const otpEmailTextContent = 'Your one-time pin is';
-  const registrationOtpRegexp = new RegExp(
-    `${otpEmailTextContent}:\\s+(\\d{6})`,
-  );
-  const start = new Date();
-
+  let start: Date;
   let application: INestApplication;
   let databaseConnection: Connection;
   let mailhog: Mailhog;
 
   beforeAll(async () => {
+    start = new Date();
+
     const {
       application: testApplication,
       databaseConnection: testDatabaseConnection,
+      mailhog: testMailhog,
     } = await setupTestApplication();
 
     application = testApplication;
     databaseConnection = testDatabaseConnection;
-
-    /**
-     * It is assumed that the mailhog service is being served from
-     * the default host & port (`localhost:8025`)
-     */
-    mailhog = new Mailhog();
+    mailhog = testMailhog;
   });
 
   afterAll(async () => {
@@ -49,11 +43,9 @@ describe(`${RegistrationController.name} (e2e)`, () => {
     });
   });
 
-  describe('/send-otp (POST)', () => {
+  describe('/register/send-otp (POST)', () => {
     afterEach(async () => {
-      await Promise.all([
-        databaseConnection.model(Otp.name, OtpSchema).deleteMany().exec(),
-      ]);
+      await databaseConnection.model(Otp.name, OtpSchema).deleteMany();
     });
 
     describe('[succeeds because]', () => {
@@ -66,8 +58,13 @@ describe(`${RegistrationController.name} (e2e)`, () => {
       });
 
       it('receives the email with the 6-digit OTP', async () => {
-        const otpRequestSentAt = new Date();
         const destination = 'user-2@email.com';
+        const otpEmailTextContent = 'Your one-time pin is';
+        const registrationOtpRegexp = new RegExp(
+          `${otpEmailTextContent}:\\s+(\\d{${OtpService.PASSWORD_LENGTH}})`,
+        );
+
+        const otpRequestSentAt = new Date();
 
         await request(application.getHttpServer())
           .post('/register/send-otp')
@@ -94,12 +91,6 @@ describe(`${RegistrationController.name} (e2e)`, () => {
         otp: null,
       };
 
-      let otpModel: Model<Otp>;
-
-      beforeAll(() => {
-        otpModel = databaseConnection.model(Otp.name, OtpSchema);
-      });
-
       beforeEach(async () => {
         userData.otp = await getRegistrationOtp(userData.email, {
           httpServer: application.getHttpServer(),
@@ -108,7 +99,7 @@ describe(`${RegistrationController.name} (e2e)`, () => {
       });
 
       afterEach(async () => {
-        await otpModel.deleteMany();
+        await databaseConnection.model(Otp.name, OtpSchema).deleteMany();
 
         userData.otp = null;
       });
@@ -156,65 +147,61 @@ describe(`${RegistrationController.name} (e2e)`, () => {
           httpServer: application.getHttpServer(),
           mailhog,
         });
-
-        // create `new` user.
-        await registerUser(newUserData, {
-          httpServer: application.getHttpServer(),
-          mailhog,
-        });
       });
 
-      it.each<Omit<RegisterUserDto, 'otp'> & { otp: () => string }>([
+      it.each<Omit<RegisterUserDto, 'otp'> & { getOtp: () => string }>([
+        // empty DTO
+        { getOtp: () => undefined } as any,
         // all empty fields
-        { email: '', password: '', otp: () => '' },
+        { email: '', password: '', getOtp: () => '' },
         // empty password field
         {
           email: newUserData.email,
           password: '',
-          otp: () => newUserData.otp!,
+          getOtp: () => newUserData.otp!,
         },
         // empty email field
-        { email: '', password: 'P@ssw0rd', otp: () => newUserData.otp! },
+        { email: '', password: 'P@ssw0rd', getOtp: () => newUserData.otp! },
         // no uppercase character in password
         {
           email: newUserData.email,
           password: 'p@ssw0rd',
-          otp: () => newUserData.otp!,
+          getOtp: () => newUserData.otp!,
         },
         // no lowercase character in password
         {
           email: newUserData.email,
           password: 'P@SSW0RD',
-          otp: () => newUserData.otp!,
+          getOtp: () => newUserData.otp!,
         },
         // no special character in password
         {
           email: newUserData.email,
           password: 'Passw0rd',
-          otp: () => newUserData.otp!,
+          getOtp: () => newUserData.otp!,
         },
         // no number in password
         {
           email: newUserData.email,
           password: 'P@ssword',
-          otp: () => newUserData.otp!,
+          getOtp: () => newUserData.otp!,
         },
         // email already exists
         {
           ...existingUserData,
-          otp: () => newUserData.otp!,
+          getOtp: () => newUserData.otp!,
         },
         // bad otp
         {
           ...newUserData,
-          otp: () => 'bad-otp',
+          getOtp: () => 'bad-otp',
         },
       ])(
         "responds with HTTP:BAD_REQUEST if the provided user-data is invalid [email: '$email', password: '$password']",
-        async ({ email, password, otp }) => {
+        async ({ email, password, getOtp }) => {
           const { status } = await request(application.getHttpServer())
             .post('/register')
-            .send({ email, password, otp: otp() });
+            .send({ email, password, otp: getOtp() });
 
           expect(status).toBe(HttpStatus.BAD_REQUEST);
         },

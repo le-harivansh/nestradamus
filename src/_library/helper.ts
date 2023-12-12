@@ -1,11 +1,5 @@
-import { Require_id } from 'mongoose';
-
-export type ModelWithId<T extends object> = Require_id<T>;
-
-export type MockOf<T, P extends keyof T> = {
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  [K in P]: T[K] extends Function ? jest.Mock<unknown> : T[P];
-};
+import { Type } from '@nestjs/common';
+import { Schema, model } from 'mongoose';
 
 /**
  * Returns a type where `T` and `U` are mutually exclusive.
@@ -30,3 +24,22 @@ export type PropertiesOfInstanceOfConstructor<T> = {
 }[keyof InstanceOfConstructor<T>];
 
 type InstanceOfConstructor<T> = T extends Constructor<infer U> ? U : never;
+
+/******************
+ ** Test helpers **
+ ******************/
+
+/**
+ * A simple helper function to create a new document.
+ *
+ * Note: The generic type `T` **SHOULD** be specified.
+ */
+export function newDocument<T>(
+  rawClass: Type<T>,
+  schema: Schema<T>,
+  documentData: T,
+) {
+  const mongooseModel = model(rawClass.name, schema);
+
+  return new mongooseModel(documentData);
+}

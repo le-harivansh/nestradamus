@@ -6,10 +6,10 @@ import { Model } from 'mongoose';
 import { User, UserDocument } from '../schema/user.schema';
 
 /**
- * This is a factory class used during the seeding of the database.
+ * This is a factory class normally used during the seeding of the database.
  *
- * While it lives in the current module, it **should** be registered in the
- * factory module at `cli/script/seeder/_factory`.
+ * While it lives in the current module, it **SHOULD** generally be registered
+ * in the factory module at `cli/script/seeder/_factory`.
  */
 @Injectable()
 export class UserFactory {
@@ -17,7 +17,7 @@ export class UserFactory {
     @InjectModel(User.name) private readonly userModel: Model<User>,
   ) {}
 
-  private getModelData(): User {
+  private getData(): User {
     return {
       email: faker.internet.email(),
       password: 'password',
@@ -26,9 +26,7 @@ export class UserFactory {
 
   async generate(count: number = 1): Promise<UserDocument[]> {
     return Promise.all(
-      [...Array(count)].map(() =>
-        new this.userModel(this.getModelData()).save(),
-      ),
+      [...Array(count)].map(() => new this.userModel(this.getData()).save()),
     );
   }
 }

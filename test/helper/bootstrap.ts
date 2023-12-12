@@ -7,6 +7,8 @@ import { Connection } from 'mongoose';
 
 import { MainModule } from '@/main.module';
 
+import { Mailhog } from './mailhog';
+
 export async function setupTestApplication() {
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [MainModule],
@@ -25,9 +27,16 @@ export async function setupTestApplication() {
 
   await application.init();
 
+  /**
+   * It is assumed that the mailhog service is being served from
+   * the default host & port: `localhost:8025`.
+   */
+  const mailhog = new Mailhog();
+
   return {
     application,
     databaseConnection,
+    mailhog,
   };
 }
 

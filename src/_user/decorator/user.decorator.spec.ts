@@ -3,7 +3,8 @@ import {
   InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { model } from 'mongoose';
+
+import { newDocument } from '@/_library/helper';
 
 import { User, UserDocument, UserSchema } from '../schema/user.schema';
 import { getUserFromRequest } from './user.decorator';
@@ -14,21 +15,21 @@ describe(getUserFromRequest.name, () => {
       switchToHttp: () => ({ getRequest: () => ({ user }) }),
     }) as unknown as ExecutionContext;
 
-  const UserModel = model(User.name, UserSchema);
-  const userDocument = new UserModel({
+  const user = newDocument<User>(User, UserSchema, {
     email: 'user@email.com',
+    password: 'P@ssw0rd',
   });
 
   it('returns the user object attached to the request object', () => {
-    expect(
-      getUserFromRequest(undefined, mockExecutionContext(userDocument)),
-    ).toBe(userDocument);
+    expect(getUserFromRequest(undefined, mockExecutionContext(user))).toBe(
+      user,
+    );
   });
 
   it("returns the value of the specified property from the user's object", () => {
-    expect(
-      getUserFromRequest('email', mockExecutionContext(userDocument)),
-    ).toBe(userDocument.email);
+    expect(getUserFromRequest('email', mockExecutionContext(user))).toBe(
+      user.email,
+    );
   });
 
   it('throws an `UnauthorizedException` if the request has no user object', () => {
@@ -41,7 +42,7 @@ describe(getUserFromRequest.name, () => {
     expect(() =>
       getUserFromRequest(
         'nope' as unknown as Parameters<typeof getUserFromRequest>[0],
-        mockExecutionContext(userDocument),
+        mockExecutionContext(user),
       ),
     ).toThrow(InternalServerErrorException);
   });

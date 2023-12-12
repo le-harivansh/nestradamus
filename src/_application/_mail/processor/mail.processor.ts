@@ -2,13 +2,20 @@ import { Process, Processor } from '@nestjs/bull';
 import { Job } from 'bull';
 import Mail from 'nodemailer/lib/mailer';
 
+import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
+
 import { MAIL_QUEUE, MailQueue } from '../constant';
 import { TemplateOptions } from '../helper';
 import { MailService } from '../service/mail.service';
 
 @Processor(MAIL_QUEUE)
 export class MailProcessor {
-  constructor(private readonly mailService: MailService) {}
+  constructor(
+    private readonly mailService: MailService,
+    private readonly loggerService: WinstonLoggerService,
+  ) {
+    this.loggerService.setContext(MailProcessor.name);
+  }
 
   @Process(MailQueue.SEND_MAIL)
   async sendMail({
@@ -18,6 +25,8 @@ export class MailProcessor {
     html?: TemplateOptions;
     text?: TemplateOptions;
   }>) {
+    this.loggerService.log('Processing mail to be sent', mailOptions);
+
     return this.mailService.send(mailOptions, html, text);
   }
 }

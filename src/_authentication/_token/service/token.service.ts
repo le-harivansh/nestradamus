@@ -2,6 +2,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 
 import { ConfigurationService } from '@/_application/_configuration/service/configuration.service';
+import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
 import { JwtType } from '@/_authentication/constant';
 import { UserDocument } from '@/_user/schema/user.schema';
 
@@ -12,17 +13,18 @@ export class TokenService {
   public readonly JWT_AUDIENCE: string;
 
   constructor(
-    private readonly jwtService: JwtService,
     private readonly configurationService: ConfigurationService,
+    private readonly loggerService: WinstonLoggerService,
+    private readonly jwtService: JwtService,
   ) {
-    this.JWT_ISSUER = this.configurationService
+    this.loggerService.setContext(TokenService.name);
+
+    this.JWT_AUDIENCE = this.JWT_ISSUER = this.configurationService
       .getOrThrow('application.name')
       .toLowerCase();
-
-    this.JWT_AUDIENCE = this.JWT_ISSUER;
   }
 
-  public generateAccessTokenFor(userDocument: UserDocument): {
+  public generateAccessTokenFor(user: UserDocument): {
     token: string;
     expiresAt: number;
   } {
@@ -30,7 +32,7 @@ export class TokenService {
       'authentication.jwt.accessToken.duration',
     );
     const token = this.generateJsonWebToken(
-      { userId: userDocument._id.toString() },
+      { userId: user._id.toString() },
       {
         type: JwtType.ACCESS_TOKEN,
         durationSeconds: Math.floor(duration / 1000),
@@ -38,13 +40,15 @@ export class TokenService {
       },
     );
 
+    this.loggerService.log('Generated access-token', user);
+
     return {
       token,
       expiresAt: Date.now() + duration,
     };
   }
 
-  public generateRefreshTokenFor(userDocument: UserDocument): {
+  public generateRefreshTokenFor(user: UserDocument): {
     token: string;
     expiresAt: number;
   } {
@@ -52,13 +56,15 @@ export class TokenService {
       'authentication.jwt.refreshToken.duration',
     );
     const token = this.generateJsonWebToken(
-      { userId: userDocument._id.toString() },
+      { userId: user._id.toString() },
       {
         type: JwtType.REFRESH_TOKEN,
         durationSeconds: Math.floor(duration / 1000),
         secret: this.getSecret(JwtType.REFRESH_TOKEN),
       },
     );
+
+    this.loggerService.log('Generated refresh-token', user);
 
     return {
       token,

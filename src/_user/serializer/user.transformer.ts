@@ -1,10 +1,10 @@
 import { Exclude, Expose, Transform } from 'class-transformer';
 
-import { User as UserModel } from '../schema/user.schema';
+import { User } from '../schema/user.schema';
 
-export class User extends UserModel {
+export class UserTransformer extends User {
   @Expose()
-  @Transform(({ obj: userDocument }) => userDocument._id.toString(), {
+  @Transform(({ obj: user }) => user._id.toString(), {
     toClassOnly: true,
   })
   readonly id!: string;

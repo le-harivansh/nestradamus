@@ -16,6 +16,11 @@ describe(HealthController.name, () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [HealthController],
       providers: [
+        /**
+         * It's easier to use `undefined` providers than to auto-mock
+         * `@nestjs/terminus`; otherwise, `@HealthCheck` needs to be mocked.
+         */
+
         {
           provide: HealthCheckService,
           useValue: undefined,

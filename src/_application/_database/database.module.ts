@@ -12,12 +12,13 @@ import databaseConfiguration, {
     ConfigModule.forFeature(databaseConfiguration),
     MongooseModule.forRootAsync({
       /**
-       * If there is *more than* 1 connection, each connection should named.
-       * However, for the sake of simplicity, if there is *only* 1 connection,
+       * If there is *more than* 1 connection; each connection should named.
+       * However, for the sake of simplicity, if there is *ONLY* 1 connection,
        * it should not be named, otherwise every model will need to registered
        * for that specific `connectionName`.
        */
       // connectionName: ConnectionName.DEFAULT,
+
       inject: [ConfigurationService],
       useFactory: (configurationService: ConfigurationService) => {
         const {

@@ -2,71 +2,43 @@ import { InternalServerErrorException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
-import { model } from 'mongoose';
-import ms from 'ms';
 
-import {
-  ConfigurationService,
-  NamespacedConfiguration,
-} from '@/_application/_configuration/service/configuration.service';
+import { ConfigurationService } from '@/_application/_configuration/service/configuration.service';
+import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
 import { JwtType } from '@/_authentication/constant';
-import { MockOf } from '@/_library/helper';
+import { newDocument } from '@/_library/helper';
 import { User, UserSchema } from '@/_user/schema/user.schema';
 
 import { TokenService } from './token.service';
 
+jest.mock('@nestjs/jwt');
+jest.mock('@/_application/_configuration/service/configuration.service');
+jest.mock('@/_application/_logger/service/winston-logger.service');
+
 describe(TokenService.name, () => {
-  const UserModel = model(User.name, UserSchema);
-  const user = new UserModel({
-    _id: new Types.ObjectId().toString(),
-    email: 'user@email.com',
-  });
-
   const generatedJsonWebToken = 'GENERATED-TOKEN';
-  const jwtService: MockOf<JwtService, 'sign'> = {
-    sign: jest.fn(() => generatedJsonWebToken),
-  };
 
-  const configuration: Pick<
-    NamespacedConfiguration,
-    | 'application.name'
-    | 'authentication.jwt.accessToken.secret'
-    | 'authentication.jwt.accessToken.duration'
-    | 'authentication.jwt.refreshToken.secret'
-    | 'authentication.jwt.refreshToken.duration'
-  > = {
-    'application.name': 'Application',
-
-    'authentication.jwt.accessToken.secret': 'access-token-secret',
-    'authentication.jwt.accessToken.duration': ms('15 minutes'),
-
-    'authentication.jwt.refreshToken.secret': 'refresh-token-secret',
-    'authentication.jwt.refreshToken.duration': ms('1 week'),
-  };
-  const configurationService: MockOf<ConfigurationService, 'getOrThrow'> = {
-    getOrThrow: jest.fn(
-      (key: keyof typeof configuration) => configuration[key],
-    ),
-  };
-
+  let configurationService: jest.Mocked<ConfigurationService>;
+  let loggerService: jest.Mocked<WinstonLoggerService>;
+  let jwtService: jest.Mocked<JwtService>;
   let tokenService: TokenService;
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        {
-          provide: JwtService,
-          useValue: jwtService,
-        },
-        {
-          provide: ConfigurationService,
-          useValue: configurationService,
-        },
+        ConfigurationService,
+        WinstonLoggerService,
+        JwtService,
         TokenService,
       ],
     }).compile();
 
+    configurationService = module.get(ConfigurationService);
+    loggerService = module.get(WinstonLoggerService);
+    jwtService = module.get(JwtService);
     tokenService = module.get(TokenService);
+
+    jwtService.sign.mockReturnValue(generatedJsonWebToken);
   });
 
   afterEach(() => {
@@ -111,13 +83,17 @@ describe(TokenService.name, () => {
   describe('getSecret', () => {
     it('returns the secret of `access-tokens`', () => {
       expect(tokenService.getSecret(JwtType.ACCESS_TOKEN)).toBe(
-        configuration['authentication.jwt.accessToken.secret'],
+        configurationService.getOrThrow(
+          'authentication.jwt.accessToken.secret',
+        ),
       );
     });
 
     it('returns the secret of `refresh-tokens`', () => {
       expect(tokenService.getSecret(JwtType.REFRESH_TOKEN)).toBe(
-        configuration['authentication.jwt.refreshToken.secret'],
+        configurationService.getOrThrow(
+          'authentication.jwt.refreshToken.secret',
+        ),
       );
     });
 
@@ -149,27 +125,35 @@ describe(TokenService.name, () => {
   ])(
     '$serviceMethod',
     ({ tokenType, serviceMethod, configurationDiscriminationKey }) => {
-      const duration =
-        configuration[
-          `authentication.jwt.${configurationDiscriminationKey}.duration`
-        ];
-      const secret =
-        configuration[
-          `authentication.jwt.${configurationDiscriminationKey}.secret`
-        ];
+      const user = newDocument<User>(User, UserSchema, {
+        email: 'user@email.com',
+        password: 'P@ssw0rd',
+      });
 
+      let duration: number;
+      let secret: string;
       let tokenWithExpiry: { token: string; expiresAt: number };
+
+      beforeAll(() => {
+        duration = configurationService.getOrThrow(
+          `authentication.jwt.${configurationDiscriminationKey}.duration`,
+        );
+
+        secret = configurationService.getOrThrow(
+          `authentication.jwt.${configurationDiscriminationKey}.secret`,
+        );
+      });
 
       beforeEach(() => {
         tokenWithExpiry = tokenService[serviceMethod](user);
       });
 
       it('calls the JWT service with the correct payload & options', () => {
-        expect((jwtService.sign.mock.calls[0] as unknown[])[0]).toStrictEqual({
+        expect(jwtService.sign.mock.calls[0]![0]).toStrictEqual({
           userId: user._id.toString(),
         });
 
-        expect((jwtService.sign.mock.calls[0] as unknown[])[1]).toMatchObject({
+        expect(jwtService.sign.mock.calls[0]![1]).toMatchObject({
           expiresIn: Math.floor(duration / 1000),
           subject: tokenType,
           secret,
@@ -181,6 +165,14 @@ describe(TokenService.name, () => {
         expect(tokenWithExpiry.expiresAt / 10_000).toBeCloseTo(
           (Date.now() + duration) / 10_000,
           1,
+        );
+      });
+
+      it('logs the data about the user requesting the token', () => {
+        expect(loggerService.log).toHaveBeenCalledTimes(1);
+        expect(loggerService.log).toHaveBeenCalledWith(
+          expect.stringMatching(/Generated (access|refresh)-token/),
+          user,
         );
       });
     },

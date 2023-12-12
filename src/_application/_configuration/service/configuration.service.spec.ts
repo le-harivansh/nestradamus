@@ -1,28 +1,20 @@
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { MockOf } from '@/_library/helper';
-
 import { ConfigurationService } from './configuration.service';
 
-describe('ConfigurationService', () => {
-  const configService: MockOf<ConfigService, 'getOrThrow'> = {
-    getOrThrow: jest.fn(),
-  };
+jest.mock('@nestjs/config');
 
+describe('ConfigurationService', () => {
   let configurationService: ConfigurationService;
+  let configService: jest.Mocked<ConfigService>;
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ConfigurationService,
-        {
-          provide: ConfigService,
-          useValue: configService,
-        },
-      ],
+      providers: [ConfigService, ConfigurationService],
     }).compile();
 
+    configService = module.get(ConfigService);
     configurationService = module.get(ConfigurationService);
   });
 
@@ -35,7 +27,7 @@ describe('ConfigurationService', () => {
   });
 
   describe('getOrThrow', () => {
-    it('calls `configService::getOrThrow` with the specified key', () => {
+    it('calls `ConfigService::getOrThrow` with the specified key', () => {
       const key = 'application.environment';
 
       configurationService.getOrThrow(key);

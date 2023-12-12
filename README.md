@@ -152,6 +152,10 @@ yarn run test:unit
 yarn run test:cli:unit
 ```
 
+#### Testing services
+
+CRUD services that make heavy use of the database should use [MongooseMemoryServer](https://github.com/nodkz/mongodb-memory-server) - because it makes the tests more expressive, and easier to integrate, than mocks.
+
 ### E2E tests
 
 E2E tests are stored in `.test.ts` files next to the files under test.

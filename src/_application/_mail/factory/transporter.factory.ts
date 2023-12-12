@@ -3,7 +3,7 @@ import SMTPTransport from 'nodemailer/lib/smtp-transport';
 
 import { ConfigurationService } from '../../_configuration/service/configuration.service';
 
-export function transporterFactory(
+export default function transporterFactory(
   configurationService: ConfigurationService,
 ): Transporter<SMTPTransport.SentMessageInfo> {
   return createTransport(

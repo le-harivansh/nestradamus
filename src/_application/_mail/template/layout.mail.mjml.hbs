@@ -1,0 +1,15 @@
+<mjml>
+  <mj-body>
+    <mj-section background-color="#f0f0f0">
+      <mj-column>
+        <mj-text align="center" font-style="italic" font-size="20px" color="#626262">{{ applicationName }}</mj-text>
+      </mj-column>
+    </mj-section>
+    {{> @partial-block }}
+    <mj-section background-color="#f0f0f0">
+      <mj-column>
+        <mj-text align="center" font-size="10px" color="#94a3b8">&copy; {{ applicationName }} {{ copyrightYear }}</mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

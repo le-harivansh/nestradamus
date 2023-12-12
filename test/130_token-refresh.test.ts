@@ -14,13 +14,12 @@ import { Mailhog } from './helper/mailhog';
 import { registerUser } from './helper/user';
 
 describe(`${RefreshController.name} (e2e)`, () => {
-  const start = new Date();
-
   const userData: Pick<User, 'email' | 'password'> = {
     email: 'user@email.com',
     password: 'P@ssw0rd',
   };
 
+  let start: Date;
   let application: INestApplication;
   let databaseConnection: Connection;
   let mailhog: Mailhog;
@@ -31,19 +30,17 @@ describe(`${RefreshController.name} (e2e)`, () => {
   };
 
   beforeAll(async () => {
+    start = new Date();
+
     const {
       application: testApplication,
       databaseConnection: testDatabaseConnection,
+      mailhog: testMailhog,
     } = await setupTestApplication();
 
     application = testApplication;
     databaseConnection = testDatabaseConnection;
-
-    /**
-     * It is assumed that the mailhog service is being served from
-     * the default host & port (`localhost:8025`)
-     */
-    mailhog = new Mailhog();
+    mailhog = testMailhog;
 
     /**
      * Create user & get user authentication tokens
@@ -87,36 +84,25 @@ describe(`${RefreshController.name} (e2e)`, () => {
     });
 
     describe('[fails because]', () => {
-      /**
-       * We assign a method to `value` because we want
-       * `authenticationTokensData.refreshToken.token` to be evaluated
-       * when the tests run; not when the test-runner is parsing the test file.
-       *
-       * If we pass `authenticationTokensData.refreshToken.token` to `value`, it
-       * will be evaluated when the test-runner parses the file - before any hook
-       * is run - which will result in `authenticationTokensData` being evaluated
-       * as `undefined` (its starting value), and as a consequence, `value` will
-       * be `undefined`.
-       */
       it.each<{
         header: TokenHttpHeader;
-        value: () => string;
+        getValue: () => string;
       }>([
-        { header: TokenHttpHeader.REFRESH_TOKEN, value: () => '' },
+        { header: TokenHttpHeader.REFRESH_TOKEN, getValue: () => '' },
         {
           header: TokenHttpHeader.REFRESH_TOKEN,
-          value: () => 'wrong-refresh-token',
+          getValue: () => 'wrong-refresh-token',
         },
         {
           header: 'wrong-token-header' as TokenHttpHeader,
-          value: () => authenticationTokensData.refreshToken.token,
+          getValue: () => authenticationTokensData.refreshToken.token,
         },
       ])(
-        "responds with a HTTP:UNAUTHORIZED status when an incorrect `refresh-token` is provided [header: '$header', value: '$value']",
-        async ({ header, value }) => {
+        'responds with a HTTP:UNAUTHORIZED status when an incorrect `refresh-token` is provided',
+        async ({ header, getValue }) => {
           const { status } = await request(application.getHttpServer())
             .get('/token/refresh/access-token')
-            .set(header, value());
+            .set(header, getValue());
 
           expect(status).toBe(HttpStatus.UNAUTHORIZED);
         },
@@ -143,28 +129,25 @@ describe(`${RefreshController.name} (e2e)`, () => {
     });
 
     describe('[fails because]', () => {
-      /**
-       * See line 78 - 88 about why `value` is assigned a function.
-       */
       it.each<{
         header: TokenHttpHeader;
-        value: () => string;
+        getValue: () => string;
       }>([
-        { header: TokenHttpHeader.ACCESS_TOKEN, value: () => '' },
+        { header: TokenHttpHeader.ACCESS_TOKEN, getValue: () => '' },
         {
           header: TokenHttpHeader.ACCESS_TOKEN,
-          value: () => 'wrong-access-token',
+          getValue: () => 'wrong-access-token',
         },
         {
           header: 'wrong-token-header' as TokenHttpHeader,
-          value: () => authenticationTokensData.accessToken.token,
+          getValue: () => authenticationTokensData.accessToken.token,
         },
       ])(
         "responds with a HTTP:UNAUTHORIZED status when an incorrect `access-token` is provided [header: '$header', value: '$value']",
-        async ({ header, value }) => {
+        async ({ header, getValue }) => {
           const { status } = await request(application.getHttpServer())
             .get('/token/refresh/refresh-token')
-            .set(header, value());
+            .set(header, getValue());
 
           expect(status).toBe(HttpStatus.UNAUTHORIZED);
         },

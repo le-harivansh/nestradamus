@@ -1,14 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Logger } from 'winston';
 
-import { LOG_LEVELS } from '../constant';
+import { LOG_LEVELS, WINSTON_LOGGER } from '../constant';
 import { WinstonLoggerService } from './winston-logger.service';
 
-describe(WinstonLoggerService.name, () => {
-  const winstonLogger = {
-    log: jest.fn(),
-  };
+jest.mock('winston');
 
+describe(WinstonLoggerService.name, () => {
+  const context = 'WinstonLoggerServiceTest';
+
+  let winstonLogger: jest.Mocked<Logger>;
   let winstonLoggerService: WinstonLoggerService;
   let logMessageSpy: jest.SpyInstance;
 
@@ -16,21 +17,24 @@ describe(WinstonLoggerService.name, () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         {
-          provide: Logger,
-          useValue: winstonLogger,
+          provide: WINSTON_LOGGER,
+          useClass: Logger,
         },
         WinstonLoggerService,
       ],
     }).compile();
 
+    winstonLogger = module.get(WINSTON_LOGGER);
     winstonLoggerService = await module.resolve(WinstonLoggerService);
     logMessageSpy = jest.spyOn(winstonLoggerService as any, 'logMessage');
   });
 
+  beforeEach(() => {
+    winstonLoggerService.setContext(context);
+  });
+
   afterEach(() => {
     jest.clearAllMocks();
-
-    winstonLoggerService.setContext(undefined);
   });
 
   it('should be defined', () => {
@@ -45,8 +49,8 @@ describe(WinstonLoggerService.name, () => {
       winstonLoggerService['logMessage'](level, message);
 
       expect(winstonLogger.log).toHaveBeenCalledTimes(1);
-      expect(winstonLogger.log.mock.calls[0][0]).toBe(level);
-      expect(winstonLogger.log.mock.calls[0][1]).toBe(message);
+      expect(winstonLogger.log.mock.calls[0]![0]).toBe(level);
+      expect(winstonLogger.log.mock.calls[0]![1]).toBe(message);
     });
 
     it("calls the logger's `log` method with the proper `metadata`", () => {
@@ -54,28 +58,36 @@ describe(WinstonLoggerService.name, () => {
 
       winstonLoggerService['logMessage']('debug', 'message', ...optionalParams);
 
-      expect(winstonLogger.log.mock.calls[0][2]).toStrictEqual({
-        context: 'Application',
+      expect(
+        (
+          winstonLogger.log.mock.calls[0] as unknown as [
+            string,
+            string,
+            unknown,
+          ]
+        )[2],
+      ).toStrictEqual({
+        context,
         optionalParams,
       });
     });
 
     it("calls the logger's `log` method with the predefined `context` in the `metadata`", () => {
-      const context = 'WinstonLoggerServiceTest';
+      const context = 'AnotherContext';
 
       winstonLoggerService.setContext(context);
 
       winstonLoggerService['logMessage']('debug', 'message');
 
-      expect(winstonLogger.log.mock.calls[0][2].context).toBe(context);
-    });
-
-    it("calls the logger's `log` method with the first item of the `optionalParams` as the `context` in the `metadata` - if the `optionalParams` contains only a single string", () => {
-      const context = 'AnotherContext';
-
-      winstonLoggerService['logMessage']('verbose', 'message', context);
-
-      expect(winstonLogger.log.mock.calls[0][2].context).toBe(context);
+      expect(
+        (
+          winstonLogger.log.mock.calls[0] as unknown as [
+            string,
+            string,
+            { context: string },
+          ]
+        )[2].context,
+      ).toBe(context);
     });
   });
 

@@ -4,21 +4,31 @@ import { Queue } from 'bull';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Transporter } from 'nodemailer';
+import { MailOptions } from 'nodemailer/lib/json-transport';
 import Mail from 'nodemailer/lib/mailer';
 
-import { MockOf } from '@/_library/helper';
+import { ConfigurationService } from '@/_application/_configuration/service/configuration.service';
+import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
 
 import { MAIL_QUEUE, MailQueue, TRANSPORTER } from '../constant';
 import { TemplateOptions } from '../helper';
 import { MailService } from './mail.service';
 
-// filesystem (node:fs) mock
-jest.mock('node:fs', () => ({
-  readFileSync: jest.fn((path: string) => ({
+jest.mock('node:fs');
+jest.mock('@/_application/_logger/service/winston-logger.service');
+jest.mock('@/_application/_configuration/service/configuration.service');
+
+describe(MailService.name, () => {
+  (readFileSync as jest.Mock).mockImplementation((path: string) => ({
     toString: () => {
       const parsedPath = path.split('/');
 
       switch (parsedPath[parsedPath.length - 1]) {
+        case 'layout.mail.mjml.hbs':
+        /**
+         * The above case is needed because a 'layout' partial is defined in the
+         * constructor of the `MailService`.
+         */
         case 'mjml.template':
           return `
             <mjml>
@@ -39,34 +49,37 @@ jest.mock('node:fs', () => ({
           throw new Error(`Invalid path (${path}) provided for the test.`);
       }
     },
-  })),
-}));
+  }));
 
-describe(MailService.name, () => {
-  const transporter: MockOf<Transporter, 'sendMail'> = {
-    sendMail: jest.fn(),
-  };
-  const mailQueue: MockOf<Queue, 'add'> = {
-    add: jest.fn(),
-  };
-
+  let loggerService: jest.Mocked<WinstonLoggerService>;
+  let transporter: jest.Mocked<Transporter>;
+  let mailQueue: jest.Mocked<Queue>;
   let mailService: MailService;
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        ConfigurationService,
+        WinstonLoggerService,
         {
           provide: TRANSPORTER,
-          useValue: transporter,
+          useValue: {
+            sendMail: jest.fn(),
+          },
         },
         {
           provide: getQueueToken(MAIL_QUEUE),
-          useValue: mailQueue,
+          useValue: {
+            add: jest.fn(),
+          },
         },
         MailService,
       ],
     }).compile();
 
+    loggerService = module.get(WinstonLoggerService);
+    transporter = module.get(TRANSPORTER);
+    mailQueue = module.get(getQueueToken(MAIL_QUEUE));
     mailService = module.get(MailService);
   });
 
@@ -135,9 +148,9 @@ describe(MailService.name, () => {
       await mailService.send(mailOptions, html);
 
       expect(
-        transporter.sendMail.mock.calls[0][0].html.includes(
-          (html.variables as { user: string }).user,
-        ),
+        (transporter.sendMail.mock.calls[0]![0] as MailOptions)
+          .html!.toString()
+          .includes((html.variables as { user: string }).user),
       ).toBeTruthy();
     });
 
@@ -145,10 +158,12 @@ describe(MailService.name, () => {
       await mailService.send(mailOptions, htmlTemplateOptions);
 
       expect(
-        transporter.sendMail.mock.calls[0][0].html.includes(
-          (htmlTemplateOptions.variables as { admin: { name: string } }).admin
-            .name,
-        ),
+        (transporter.sendMail.mock.calls[0]![0] as MailOptions)
+          .html!.toString()
+          .includes(
+            (htmlTemplateOptions.variables as { admin: { name: string } }).admin
+              .name,
+          ),
       ).toBeTruthy();
     });
 
@@ -156,10 +171,12 @@ describe(MailService.name, () => {
       await mailService.send(mailOptions, htmlTemplateOptions);
 
       expect(
-        transporter.sendMail.mock.calls[0][0].text.includes(
-          (htmlTemplateOptions.variables as { admin: { name: string } }).admin
-            .name,
-        ),
+        (transporter.sendMail.mock.calls[0]![0] as MailOptions)
+          .text!.toString()
+          .includes(
+            (htmlTemplateOptions.variables as { admin: { name: string } }).admin
+              .name,
+          ),
       ).toBeTruthy();
     });
 
@@ -172,9 +189,9 @@ describe(MailService.name, () => {
       await mailService.send(mailOptions, undefined, text);
 
       expect(
-        transporter.sendMail.mock.calls[0][0].text.includes(
-          (text.variables as { message: string }).message,
-        ),
+        (transporter.sendMail.mock.calls[0]![0] as MailOptions)
+          .text!.toString()
+          .includes((text.variables as { message: string }).message),
       ).toBeTruthy();
     });
 
@@ -187,9 +204,9 @@ describe(MailService.name, () => {
       await mailService.send(mailOptions, undefined, text);
 
       expect(
-        transporter.sendMail.mock.calls[0][0].text.includes(
-          (text.variables as { user: string }).user,
-        ),
+        (transporter.sendMail.mock.calls[0]![0] as MailOptions)
+          .text!.toString()
+          .includes((text.variables as { user: string }).user),
       ).toBeTruthy();
     });
 
@@ -202,27 +219,39 @@ describe(MailService.name, () => {
       await mailService.send(mailOptions, htmlTemplateOptions, text);
 
       expect(
-        transporter.sendMail.mock.calls[0][0].text.includes(
-          (text.variables as { user: string }).user,
-        ),
+        (transporter.sendMail.mock.calls[0]![0] as MailOptions)
+          .text!.toString()
+          .includes((text.variables as { user: string }).user),
       ).toBeTruthy();
+    });
+
+    it('calls `WinstonLoggerService::log` with the passed in mail data', async () => {
+      await mailService.send(mailOptions);
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { html, text, ...mailOptionsToLog } = mailOptions;
+
+      expect(loggerService.log).toHaveBeenCalledTimes(1);
+      expect(loggerService.log).toHaveBeenCalledWith('Sending mail', {
+        ...mailOptionsToLog,
+      });
     });
   });
 
   describe('queueSend', () => {
-    it('calls `Queue::add` with the passed in arguments', async () => {
-      const mailOptions: Mail.Options = {
-        from: 'from@email.com',
-        to: 'to@email.com',
-        subject: 'The Subject',
-        text: 'The text content of the email',
-      };
-      const html: TemplateOptions = { template: '<h1>Hello</h1>' };
-      const text: TemplateOptions = {
-        path: 'path/to/template.text.hbs',
-        variables: { message: 'ok' },
-      };
+    const mailOptions: Mail.Options = {
+      from: 'from@email.com',
+      to: 'to@email.com',
+      subject: 'The Subject',
+      text: 'The text content of the email',
+    };
+    const html: TemplateOptions = { template: '<h1>Hello</h1>' };
+    const text: TemplateOptions = {
+      path: 'path/to/template.text.hbs',
+      variables: { message: 'ok' },
+    };
 
+    it('calls `Queue::add` with the passed in arguments', async () => {
       await mailService.queueSend(mailOptions, html, text);
 
       expect(mailQueue.add).toHaveBeenCalledTimes(1);
@@ -230,6 +259,18 @@ describe(MailService.name, () => {
         options: mailOptions,
         html,
         text,
+      });
+    });
+
+    it('calls `WinstonLoggerService::log` with the passed in mail data', async () => {
+      await mailService.queueSend(mailOptions);
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { html, text, ...mailOptionsToLog } = mailOptions;
+
+      expect(loggerService.log).toHaveBeenCalledTimes(1);
+      expect(loggerService.log).toHaveBeenCalledWith('Queuing mail to send', {
+        ...mailOptionsToLog,
       });
     });
   });
