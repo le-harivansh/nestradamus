@@ -1,8 +1,7 @@
-import { InternalServerErrorException } from '@nestjs/common';
 import { format } from 'winston';
 
 export default format((info) => {
-  const optionalParams: unknown[] = info['metadata'].optionalParams;
+  const optionalParams: unknown[] = info['metadata'].optionalParams ?? [];
 
   info['metadata'].context =
     optionalParams.length === 1 &&
@@ -15,13 +14,7 @@ export default format((info) => {
       'NestApplication',
     ].includes(optionalParams[0])
       ? (optionalParams.shift() as string)
-      : info['metadata'].context;
-
-  if (info['metadata'].context === undefined) {
-    throw new InternalServerErrorException(
-      'A context should be defined for the logger.',
-    );
-  }
+      : info['metadata'].context ?? 'UNDEFINED';
 
   return info;
 });

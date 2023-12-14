@@ -1,6 +1,11 @@
 # Todo
 
-- [ ]
+- [ ] Move away from passport.
+- [ ] Implement administration section.
+- [ ] Implement ACL for administrators.
+- [ ] Add CLI to add a "super-admin".
+
+- [ ] Update dependencies.
 
 ### Later
 

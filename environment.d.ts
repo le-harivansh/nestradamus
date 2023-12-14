@@ -15,11 +15,11 @@ declare global {
       DATABASE_PASSWORD: string;
       DATABASE_NAME: string;
 
-      JWT_ACCESS_TOKEN_SECRET: string;
-      JWT_ACCESS_TOKEN_DURATION: string;
+      USER_JWT_ACCESS_TOKEN_SECRET: string;
+      USER_JWT_ACCESS_TOKEN_DURATION: string;
 
-      JWT_REFRESH_TOKEN_SECRET: string;
-      JWT_REFRESH_TOKEN_DURATION: string;
+      USER_JWT_REFRESH_TOKEN_SECRET: string;
+      USER_JWT_REFRESH_TOKEN_DURATION: string;
 
       MAIL_SMTP_HOST: string;
       MAIL_SMTP_PORT: number;

@@ -87,6 +87,21 @@ describe(`${AuthenticationController.name} (e2e)`, () => {
         { email: userData.email, password: '' },
         // empty email field
         { email: '', password: userData.password },
+      ])(
+        "responds with HTTP:BAD_REQUEST if the provided credentials are invalid [email: '$email', password: '$password']",
+        async ({ email, password }) => {
+          const { status } = await request(application.getHttpServer())
+            .post('/login')
+            .send({ email, password });
+
+          expect(status).toBe(HttpStatus.BAD_REQUEST);
+        },
+      );
+
+      it.each<{
+        email: string;
+        password: string;
+      }>([
         // wrong password
         { email: userData.email, password: 'wrong-password' },
         // wrong email

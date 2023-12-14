@@ -7,11 +7,12 @@ import {
 } from '@nestjs/common';
 
 import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
-import { RequiresAccessToken } from '@/_authentication/guard/requires-access-token.guard';
-import { RequiresRefreshToken } from '@/_authentication/guard/requires-refresh-token.guard';
+import { RequiresUserAccessToken } from '@/_authentication/guard/requires-user-access-token.guard';
+import { RequiresUserRefreshToken } from '@/_authentication/guard/requires-user-refresh-token.guard';
 import { User } from '@/_user/decorator/user.decorator';
 import { UserDocument } from '@/_user/schema/user.schema';
 
+import { Type } from '../constant';
 import { TokenService } from '../service/token.service';
 
 @Controller('token/refresh')
@@ -24,20 +25,26 @@ export class RefreshController {
   }
 
   @Get('access-token')
-  @UseGuards(RequiresRefreshToken)
+  @UseGuards(RequiresUserRefreshToken)
   @HttpCode(HttpStatus.OK)
   regenerateAccessToken(@User() user: UserDocument) {
     this.loggerService.log('Request to generate access-token', user);
 
-    return this.tokenService.generateAccessTokenFor(user);
+    return this.tokenService.generateAuthenticationJwt(
+      Type.USER_ACCESS_TOKEN,
+      user,
+    );
   }
 
   @Get('refresh-token')
-  @UseGuards(RequiresAccessToken)
+  @UseGuards(RequiresUserAccessToken)
   @HttpCode(HttpStatus.OK)
   regenerateRefreshToken(@User() user: UserDocument) {
     this.loggerService.log('Request to generate refresh-token', user);
 
-    return this.tokenService.generateRefreshTokenFor(user);
+    return this.tokenService.generateAuthenticationJwt(
+      Type.USER_REFRESH_TOKEN,
+      user,
+    );
   }
 }

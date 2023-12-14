@@ -2,7 +2,7 @@ import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Connection } from 'mongoose';
 import request from 'supertest';
 
-import { TokenHttpHeader } from '@/_authentication/constant';
+import { JwtHttpHeader } from '@/_authentication/constant';
 import { UserController } from '@/_user/controller/user.controller';
 import { UpdateUserDto } from '@/_user/dto/update-user.dto';
 import { User } from '@/_user/schema/user.schema';
@@ -72,7 +72,7 @@ describe(`${UserController.name} (e2e)`, () => {
         const { status, body } = await request(application.getHttpServer())
           .get('/me')
           .set(
-            TokenHttpHeader.ACCESS_TOKEN,
+            JwtHttpHeader.USER_ACCESS_TOKEN,
             authenticationTokensData.accessToken.token,
           );
 
@@ -93,7 +93,7 @@ describe(`${UserController.name} (e2e)`, () => {
         async ({ accessToken }) => {
           const { status } = await request(application.getHttpServer())
             .get('/me')
-            .set(TokenHttpHeader.ACCESS_TOKEN, accessToken);
+            .set(JwtHttpHeader.USER_ACCESS_TOKEN, accessToken);
 
           expect(status).toBe(HttpStatus.UNAUTHORIZED);
         },
@@ -133,7 +133,7 @@ describe(`${UserController.name} (e2e)`, () => {
         const { status } = await request(application.getHttpServer())
           .delete('/me')
           .set(
-            TokenHttpHeader.ACCESS_TOKEN,
+            JwtHttpHeader.USER_ACCESS_TOKEN,
             userToDelete.authenticationTokens.accessToken.token,
           );
 
@@ -144,14 +144,14 @@ describe(`${UserController.name} (e2e)`, () => {
         await request(application.getHttpServer())
           .delete('/me')
           .set(
-            TokenHttpHeader.ACCESS_TOKEN,
+            JwtHttpHeader.USER_ACCESS_TOKEN,
             userToDelete.authenticationTokens.accessToken.token,
           );
 
         const { status } = await request(application.getHttpServer())
           .get('/me')
           .set(
-            TokenHttpHeader.ACCESS_TOKEN,
+            JwtHttpHeader.USER_ACCESS_TOKEN,
             userToDelete.authenticationTokens.accessToken.token,
           );
 
@@ -168,7 +168,7 @@ describe(`${UserController.name} (e2e)`, () => {
         async ({ accessToken }) => {
           const { status } = await request(application.getHttpServer())
             .delete('/me')
-            .set(TokenHttpHeader.ACCESS_TOKEN, accessToken);
+            .set(JwtHttpHeader.USER_ACCESS_TOKEN, accessToken);
 
           expect(status).toBe(HttpStatus.UNAUTHORIZED);
         },
@@ -208,7 +208,7 @@ describe(`${UserController.name} (e2e)`, () => {
         await request(application.getHttpServer())
           .delete('/me')
           .set(
-            TokenHttpHeader.ACCESS_TOKEN,
+            JwtHttpHeader.USER_ACCESS_TOKEN,
             userToUpdate.authenticationTokens.accessToken.token,
           );
       });
@@ -227,7 +227,7 @@ describe(`${UserController.name} (e2e)`, () => {
             .patch('/me')
             .send(updateUserDto)
             .set(
-              TokenHttpHeader.ACCESS_TOKEN,
+              JwtHttpHeader.USER_ACCESS_TOKEN,
               userToUpdate.authenticationTokens.accessToken.token,
             );
 
@@ -263,7 +263,7 @@ describe(`${UserController.name} (e2e)`, () => {
             .send({
               email: 'new@email.com',
             })
-            .set(TokenHttpHeader.ACCESS_TOKEN, accessToken);
+            .set(JwtHttpHeader.USER_ACCESS_TOKEN, accessToken);
 
           expect(status).toBe(HttpStatus.UNAUTHORIZED);
         },
@@ -314,7 +314,7 @@ describe(`${UserController.name} (e2e)`, () => {
             .patch('/me')
             .send(updateUserDto)
             .set(
-              TokenHttpHeader.ACCESS_TOKEN,
+              JwtHttpHeader.USER_ACCESS_TOKEN,
               authenticationTokensData.accessToken.token,
             );
 

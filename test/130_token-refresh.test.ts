@@ -3,7 +3,7 @@ import { Connection } from 'mongoose';
 import request from 'supertest';
 
 import { RefreshController } from '@/_authentication/_token/controller/refresh.controller';
-import { TokenHttpHeader } from '@/_authentication/constant';
+import { JwtHttpHeader } from '@/_authentication/constant';
 import { User } from '@/_user/schema/user.schema';
 
 import {
@@ -71,7 +71,7 @@ describe(`${RefreshController.name} (e2e)`, () => {
         const { status, body } = await request(application.getHttpServer())
           .get('/token/refresh/access-token')
           .set(
-            TokenHttpHeader.REFRESH_TOKEN,
+            JwtHttpHeader.USER_REFRESH_TOKEN,
             authenticationTokensData.refreshToken.token,
           );
 
@@ -85,16 +85,16 @@ describe(`${RefreshController.name} (e2e)`, () => {
 
     describe('[fails because]', () => {
       it.each<{
-        header: TokenHttpHeader;
+        header: JwtHttpHeader;
         getValue: () => string;
       }>([
-        { header: TokenHttpHeader.REFRESH_TOKEN, getValue: () => '' },
+        { header: JwtHttpHeader.USER_REFRESH_TOKEN, getValue: () => '' },
         {
-          header: TokenHttpHeader.REFRESH_TOKEN,
+          header: JwtHttpHeader.USER_REFRESH_TOKEN,
           getValue: () => 'wrong-refresh-token',
         },
         {
-          header: 'wrong-token-header' as TokenHttpHeader,
+          header: 'wrong-token-header' as JwtHttpHeader,
           getValue: () => authenticationTokensData.refreshToken.token,
         },
       ])(
@@ -116,7 +116,7 @@ describe(`${RefreshController.name} (e2e)`, () => {
         const { status, body } = await request(application.getHttpServer())
           .get('/token/refresh/refresh-token')
           .set(
-            TokenHttpHeader.ACCESS_TOKEN,
+            JwtHttpHeader.USER_ACCESS_TOKEN,
             authenticationTokensData.accessToken.token,
           );
 
@@ -130,16 +130,16 @@ describe(`${RefreshController.name} (e2e)`, () => {
 
     describe('[fails because]', () => {
       it.each<{
-        header: TokenHttpHeader;
+        header: JwtHttpHeader;
         getValue: () => string;
       }>([
-        { header: TokenHttpHeader.ACCESS_TOKEN, getValue: () => '' },
+        { header: JwtHttpHeader.USER_ACCESS_TOKEN, getValue: () => '' },
         {
-          header: TokenHttpHeader.ACCESS_TOKEN,
+          header: JwtHttpHeader.USER_ACCESS_TOKEN,
           getValue: () => 'wrong-access-token',
         },
         {
-          header: 'wrong-token-header' as TokenHttpHeader,
+          header: 'wrong-token-header' as JwtHttpHeader,
           getValue: () => authenticationTokensData.accessToken.token,
         },
       ])(

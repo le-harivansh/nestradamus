@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 
 import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
-import { RequiresAccessToken } from '@/_authentication/guard/requires-access-token.guard';
+import { RequiresUserAccessToken } from '@/_authentication/guard/requires-user-access-token.guard';
 import { SerializeDocumentsHavingSchema } from '@/_library/interceptor/mongoose-document-serializer.interceptor';
 
 import { User as AuthenticatedUser } from '../decorator/user.decorator';
@@ -21,8 +21,7 @@ import { UserTransformer } from '../serializer/user.transformer';
 import { UserService } from '../service/user.service';
 
 @Controller('me')
-@UseGuards(RequiresAccessToken)
-@UseInterceptors(SerializeDocumentsHavingSchema(UserSchema, UserTransformer))
+@UseGuards(RequiresUserAccessToken)
 export class UserController {
   constructor(
     private readonly userService: UserService,
@@ -32,6 +31,7 @@ export class UserController {
   }
 
   @Get()
+  @UseInterceptors(SerializeDocumentsHavingSchema(UserSchema, UserTransformer))
   get(@AuthenticatedUser() user: UserDocument): UserDocument {
     this.loggerService.log('Request to get authenticated user', user);
 
@@ -39,6 +39,7 @@ export class UserController {
   }
 
   @Patch()
+  @UseInterceptors(SerializeDocumentsHavingSchema(UserSchema, UserTransformer))
   async update(
     @AuthenticatedUser() user: UserDocument,
     @Body() updateUserDto: UpdateUserDto,

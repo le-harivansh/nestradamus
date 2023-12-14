@@ -55,17 +55,17 @@ export async function registerUser(
     httpServer: NestExpressApplication;
     mailhog: Mailhog;
   },
-): Promise<Omit<UserTransformer, 'password'>>;
+  options: {
+    login: true;
+  },
+): ReturnType<AuthenticationController['login']>;
 export async function registerUser(
   userData: { email: string; password: string; otp?: string },
   configuration: {
     httpServer: NestExpressApplication;
     mailhog: Mailhog;
   },
-  options: {
-    login: true;
-  },
-): Promise<ReturnType<AuthenticationController['login']>>;
+): Promise<Omit<UserTransformer, 'password'>>;
 export async function registerUser(
   userData: { email: string; password: string; otp?: string },
   configuration: {

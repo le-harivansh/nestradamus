@@ -1,36 +1,42 @@
-import {
-  Controller,
-  HttpCode,
-  HttpStatus,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 
 import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
-import { User } from '@/_user/decorator/user.decorator';
-import { UserDocument } from '@/_user/schema/user.schema';
 
+import { Type } from '../_token/constant';
 import { TokenService } from '../_token/service/token.service';
-import { RequiresCredentials } from '../guard/requires-credentials.guard';
+import { LoginDto } from '../dto/login.dto';
+import { AuthenticationService } from '../service/authentication.service';
 
 @Controller()
 export class AuthenticationController {
   constructor(
     private readonly tokenService: TokenService,
     private readonly loggerService: WinstonLoggerService,
+    private readonly authenticationService: AuthenticationService,
   ) {
     this.loggerService.setContext(AuthenticationController.name);
   }
 
   @Post('login')
-  @UseGuards(RequiresCredentials)
   @HttpCode(HttpStatus.OK)
-  login(@User() user: UserDocument) {
-    this.loggerService.log('User logged in', user);
+  async login(@Body() { email, password }: LoginDto) {
+    const authenticatedUser =
+      await this.authenticationService.authenticateUserUsingCredentials(
+        email,
+        password,
+      );
+
+    this.loggerService.log('User authenticated', authenticatedUser);
 
     return {
-      accessToken: this.tokenService.generateAccessTokenFor(user),
-      refreshToken: this.tokenService.generateRefreshTokenFor(user),
+      accessToken: this.tokenService.generateAuthenticationJwt(
+        Type.USER_ACCESS_TOKEN,
+        authenticatedUser,
+      ),
+      refreshToken: this.tokenService.generateAuthenticationJwt(
+        Type.USER_REFRESH_TOKEN,
+        authenticatedUser,
+      ),
     };
   }
 }

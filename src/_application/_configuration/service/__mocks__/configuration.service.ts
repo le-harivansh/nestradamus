@@ -8,15 +8,17 @@ export function ConfigurationService(this: {
   ): NamespacedConfiguration[typeof key];
 }) {
   this.getOrThrow = jest.fn(
-    (key: string) =>
-      ({
-        'application.name': 'Application',
+    (key: keyof NamespacedConfiguration) =>
+      (
+        ({
+          'application.name': 'Application',
 
-        'authentication.jwt.accessToken.secret': 'access-token-secret',
-        'authentication.jwt.accessToken.duration': ms('15 minutes'),
+          'user.authentication.jwt.accessToken.secret': 'access-token-secret',
+          'user.authentication.jwt.accessToken.duration': ms('15 minutes'),
 
-        'authentication.jwt.refreshToken.secret': 'refresh-token-secret',
-        'authentication.jwt.refreshToken.duration': ms('1 week'),
-      })[key]!,
+          'user.authentication.jwt.refreshToken.secret': 'refresh-token-secret',
+          'user.authentication.jwt.refreshToken.duration': ms('1 week'),
+        }) as Partial<NamespacedConfiguration>
+      )[key]!,
   );
 }

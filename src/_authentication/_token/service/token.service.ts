@@ -3,12 +3,21 @@ import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 
 import { ConfigurationService } from '@/_application/_configuration/service/configuration.service';
 import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
-import { JwtType } from '@/_authentication/constant';
 import { UserDocument } from '@/_user/schema/user.schema';
+
+import { Type } from '../constant';
+import {
+  AuthenticationJwtPayload,
+  JwtDurationConfigurationKey,
+  JwtSecretConfigurationKey,
+} from '../type';
 
 @Injectable()
 export class TokenService {
-  public readonly JWT_ALGORITHM: JwtSignOptions['algorithm'] = 'HS512';
+  public readonly JWT_ALGORITHM: Exclude<
+    JwtSignOptions['algorithm'],
+    undefined
+  > = 'HS512';
   public readonly JWT_ISSUER: string;
   public readonly JWT_AUDIENCE: string;
 
@@ -24,99 +33,92 @@ export class TokenService {
       .toLowerCase();
   }
 
-  public generateAccessTokenFor(user: UserDocument): {
-    token: string;
-    expiresAt: number;
-  } {
-    const duration = this.configurationService.getOrThrow(
-      'authentication.jwt.accessToken.duration',
+  public generateAuthenticationJwt(
+    type: Type,
+    user: UserDocument,
+  ): { token: string; expiresAt: number } {
+    const { jwtDurationConfigurationKey, jwtSecretConfigurationKey } =
+      this.getConfigurationKeysForTokenType(type);
+    const payload: AuthenticationJwtPayload = { id: user._id.toString() };
+
+    const durationSeconds = Math.floor(
+      this.configurationService.getOrThrow(jwtDurationConfigurationKey) / 1000,
     );
-    const token = this.generateJsonWebToken(
-      { userId: user._id.toString() },
-      {
-        type: JwtType.ACCESS_TOKEN,
-        durationSeconds: Math.floor(duration / 1000),
-        secret: this.getSecret(JwtType.ACCESS_TOKEN),
-      },
+    const secret = this.configurationService.getOrThrow(
+      jwtSecretConfigurationKey,
     );
 
-    this.loggerService.log('Generated access-token', user);
+    const token = this.jwtService.sign(payload, {
+      algorithm: this.JWT_ALGORITHM,
+      issuer: this.JWT_ISSUER,
+      audience: this.JWT_AUDIENCE,
+      secret: secret,
+      notBefore: 0,
+      expiresIn: durationSeconds,
+    });
 
-    return {
-      token,
-      expiresAt: Date.now() + duration,
-    };
+    this.loggerService.log('JWT generated', { type, user });
+
+    const expiresAt = Date.now() + durationSeconds * 1000;
+
+    return { token, expiresAt };
   }
 
-  public generateRefreshTokenFor(user: UserDocument): {
-    token: string;
-    expiresAt: number;
-  } {
-    const duration = this.configurationService.getOrThrow(
-      'authentication.jwt.refreshToken.duration',
-    );
-    const token = this.generateJsonWebToken(
-      { userId: user._id.toString() },
-      {
-        type: JwtType.REFRESH_TOKEN,
-        durationSeconds: Math.floor(duration / 1000),
-        secret: this.getSecret(JwtType.REFRESH_TOKEN),
-      },
-    );
+  public validateAuthenticationJwt(
+    type: Type,
+    jwt: string,
+  ): AuthenticationJwtPayload {
+    const { jwtSecretConfigurationKey } =
+      this.getConfigurationKeysForTokenType(type);
 
-    this.loggerService.log('Generated refresh-token', user);
+    const payload = this.jwtService.verify<
+      AuthenticationJwtPayload & { [key: string]: unknown }
+    >(jwt, {
+      algorithms: [this.JWT_ALGORITHM],
+      issuer: this.JWT_ISSUER,
+      audience: this.JWT_AUDIENCE,
+      secret: this.configurationService.getOrThrow(jwtSecretConfigurationKey),
+    });
 
-    return {
-      token,
-      expiresAt: Date.now() + duration,
-    };
+    this.loggerService.log('Validated authentication JWT', {
+      type,
+      payload,
+    });
+
+    return { id: payload.id };
   }
 
-  public getSecret(tokenType: JwtType): string {
-    switch (tokenType) {
-      case JwtType.ACCESS_TOKEN:
-        return this.configurationService.getOrThrow(
-          'authentication.jwt.accessToken.secret',
-        );
+  private getConfigurationKeysForTokenType(type: Type): {
+    jwtDurationConfigurationKey: JwtDurationConfigurationKey;
+    jwtSecretConfigurationKey: JwtSecretConfigurationKey;
+  } {
+    let jwtDurationConfigurationKey: JwtDurationConfigurationKey;
+    let jwtSecretConfigurationKey: JwtSecretConfigurationKey;
 
-      case JwtType.REFRESH_TOKEN:
-        return this.configurationService.getOrThrow(
-          'authentication.jwt.refreshToken.secret',
-        );
+    switch (type) {
+      case Type.USER_ACCESS_TOKEN:
+        jwtDurationConfigurationKey =
+          'user.authentication.jwt.accessToken.duration';
+        jwtSecretConfigurationKey =
+          'user.authentication.jwt.accessToken.secret';
+        break;
+
+      case Type.USER_REFRESH_TOKEN:
+        jwtDurationConfigurationKey =
+          'user.authentication.jwt.refreshToken.duration';
+        jwtSecretConfigurationKey =
+          'user.authentication.jwt.refreshToken.secret';
+        break;
 
       default:
         throw new InternalServerErrorException(
-          `Invalid token-type: ${tokenType} specified.`,
+          `Invalid JWT type '${type}' provided.`,
         );
     }
-  }
 
-  /**
-   * Generates a JWT.
-   *
-   * @param payload The payload of the JWT.
-   * @param tokenConfiguration An object containing the token's:
-   *  * `type`,
-   *  * `durationSeconds` (duration in seconds),
-   *  * `secret`
-   * @returns The Json Web Token string.
-   */
-  private generateJsonWebToken(
-    payload: object,
-    {
-      type,
-      durationSeconds,
-      secret,
-    }: { type: JwtType; durationSeconds: number; secret: string },
-  ): string {
-    return this.jwtService.sign(payload, {
-      algorithm: this.JWT_ALGORITHM,
-      expiresIn: durationSeconds,
-      notBefore: 0,
-      audience: this.JWT_AUDIENCE,
-      issuer: this.JWT_ISSUER,
-      subject: type,
-      secret: secret,
-    });
+    return {
+      jwtDurationConfigurationKey,
+      jwtSecretConfigurationKey,
+    };
   }
 }

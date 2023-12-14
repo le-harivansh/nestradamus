@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
+import { TokenService } from '@/_authentication/_token/service/token.service';
 import { newDocument } from '@/_library/helper';
 
 import { UpdateUserDto } from '../dto/update-user.dto';
@@ -9,6 +10,7 @@ import { UserService } from '../service/user.service';
 import { UserController } from './user.controller';
 
 jest.mock('../service/user.service');
+jest.mock('@/_authentication/_token/service/token.service');
 jest.mock('@/_application/_logger/service/winston-logger.service');
 
 describe(UserController.name, () => {
@@ -24,7 +26,11 @@ describe(UserController.name, () => {
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UserController],
-      providers: [WinstonLoggerService, UserService],
+      providers: [
+        WinstonLoggerService,
+        UserService,
+        TokenService, // needed for: `RequiresUserAccessToken` guard.
+      ],
     }).compile();
 
     loggerService = module.get(WinstonLoggerService);
