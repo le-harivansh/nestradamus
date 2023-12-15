@@ -2,9 +2,9 @@ import { HttpStatus, InternalServerErrorException } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import request from 'supertest';
 
-import { AuthenticationController } from '@/_authentication/controller/authentication.controller';
 import { OtpService } from '@/_library/_otp/service/otp.service';
-import { UserTransformer } from '@/_user/serializer/user.transformer';
+import { AuthenticationController } from '@/_user/_authentication/controller/authentication.controller';
+import { UserTransformer } from '@/_user/_user/serializer/user.transformer';
 
 import { Mailhog } from './mailhog';
 

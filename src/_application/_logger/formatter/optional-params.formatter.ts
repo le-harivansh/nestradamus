@@ -4,8 +4,8 @@ import { format } from 'winston';
 
 import { OtpSchema } from '@/_library/_otp/schema/otp.schema';
 import { OtpTransformer } from '@/_library/_otp/serializer/otp.transformer';
-import { UserSchema } from '@/_user/schema/user.schema';
-import { UserTransformer } from '@/_user/serializer/user.transformer';
+import { UserSchema } from '@/_user/_user/schema/user.schema';
+import { UserTransformer } from '@/_user/_user/serializer/user.transformer';
 
 export default format((info) => {
   info['metadata'].parsedOptionalParams = parseOptionalParameters(

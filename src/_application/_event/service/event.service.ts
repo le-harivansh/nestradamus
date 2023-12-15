@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
-import { UserDocument } from '@/_user/schema/user.schema';
+import { UserDocument } from '@/_user/_user/schema/user.schema';
 
 import { Event } from '../type';
 

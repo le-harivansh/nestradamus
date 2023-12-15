@@ -2,8 +2,8 @@ import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Connection } from 'mongoose';
 import request from 'supertest';
 
-import { AuthenticationController } from '@/_authentication/controller/authentication.controller';
-import { User } from '@/_user/schema/user.schema';
+import { AuthenticationController } from '@/_user/_authentication/controller/authentication.controller';
+import { User } from '@/_user/_user/schema/user.schema';
 
 import {
   setupTestApplication,

@@ -17,7 +17,7 @@ import {
 import {
   AuthenticationTokensConfiguration,
   CONFIGURATION_NAMESPACE as authenticationTokensConfigurationNamespace,
-} from '@/_authentication/_token/token.config';
+} from '@/_user/_authentication/_token/token.config';
 
 /**
  * We register the namespaced configuration data - of every configuration that

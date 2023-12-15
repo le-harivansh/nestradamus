@@ -4,8 +4,8 @@ import request from 'supertest';
 
 import { Otp, OtpSchema } from '@/_library/_otp/schema/otp.schema';
 import { OtpService } from '@/_library/_otp/service/otp.service';
-import { RegistrationController } from '@/_registration/controller/registration.controller';
-import { RegisterUserDto } from '@/_registration/dto/registration.dto';
+import { RegistrationController } from '@/_user/_registration/controller/registration.controller';
+import { RegistrationDto } from '@/_user/_registration/dto/registration.dto';
 
 import {
   setupTestApplication,
@@ -83,7 +83,7 @@ describe(`${RegistrationController.name} (e2e)`, () => {
 
   describe('/register (POST)', () => {
     describe('[succeeds because]', () => {
-      const userData: Omit<RegisterUserDto, 'otp'> & {
+      const userData: Omit<RegistrationDto, 'otp'> & {
         otp: string | null;
       } = {
         email: 'user-3@email.com',
@@ -118,12 +118,12 @@ describe(`${RegistrationController.name} (e2e)`, () => {
     });
 
     describe('[fails because]', () => {
-      const existingUserData: Omit<RegisterUserDto, 'otp'> = {
+      const existingUserData: Omit<RegistrationDto, 'otp'> = {
         email: 'user-4@email.com',
         password: 'P@ssw0rd',
       };
 
-      const newUserData: Omit<RegisterUserDto, 'otp'> & {
+      const newUserData: Omit<RegistrationDto, 'otp'> & {
         otp: string | undefined;
       } = {
         email: 'user-5@email.com',
@@ -149,7 +149,7 @@ describe(`${RegistrationController.name} (e2e)`, () => {
         });
       });
 
-      it.each<Omit<RegisterUserDto, 'otp'> & { getOtp: () => string }>([
+      it.each<Omit<RegistrationDto, 'otp'> & { getOtp: () => string }>([
         // empty DTO
         { getOtp: () => undefined } as any,
         // all empty fields

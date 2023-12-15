@@ -2,7 +2,6 @@ import { getQueueToken } from '@nestjs/bull';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Queue } from 'bull';
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { Transporter } from 'nodemailer';
 import { MailOptions } from 'nodemailer/lib/json-transport';
 import Mail from 'nodemailer/lib/mailer';
@@ -98,9 +97,7 @@ describe(MailService.name, () => {
       MailService['getTemplateContent'](path);
 
       expect(readFileSync).toHaveBeenCalledTimes(1);
-      expect(readFileSync).toHaveBeenCalledWith(
-        join(process.cwd(), 'src', path),
-      );
+      expect(readFileSync).toHaveBeenCalledWith(path);
     });
   });
 

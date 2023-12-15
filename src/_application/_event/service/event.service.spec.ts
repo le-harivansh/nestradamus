@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
 import { newDocument } from '@/_library/helper';
-import { User, UserSchema } from '@/_user/schema/user.schema';
+import { User, UserSchema } from '@/_user/_user/schema/user.schema';
 
 import { Event } from '../type';
 import { EventService } from './event.service';

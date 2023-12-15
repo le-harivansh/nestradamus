@@ -2,9 +2,9 @@ import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Connection } from 'mongoose';
 import request from 'supertest';
 
-import { RefreshController } from '@/_authentication/_token/controller/refresh.controller';
-import { JwtHttpHeader } from '@/_authentication/constant';
-import { User } from '@/_user/schema/user.schema';
+import { RefreshController } from '@/_user/_authentication/_token/controller/refresh.controller';
+import { JwtHttpHeader } from '@/_user/_authentication/constant';
+import { User } from '@/_user/_user/schema/user.schema';
 
 import {
   setupTestApplication,

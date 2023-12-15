@@ -6,8 +6,8 @@
  * 1. `yarn run ts-node ./cli/script/generate-keys/script.ts --length 64`:
  *      This will generate a 64 character random string.
  *
- * 2. `yarn run ts-node ./cli/script/generate-keys/script.ts --length 32 --env-file .env --env-vars JWT_ACCESS_TOKEN_SECRET JWT_REFRESH_TOKEN_SECRET`:
- *      This will generate two 32 character random string, and store them in the environment variables `JWT_ACCESS_TOKEN_SECRET` and `JWT_REFRESH_TOKEN_SECRET`
+ * 2. `yarn run ts-node ./cli/script/generate-keys/script.ts --length 32 --env-file .env --env-vars USER_JWT_ACCESS_TOKEN_SECRET USER_JWT_REFRESH_TOKEN_SECRET`:
+ *      This will generate two 32 character random string, and store them in the environment variables `USER_JWT_ACCESS_TOKEN_SECRET` and `USER_JWT_REFRESH_TOKEN_SECRET`
  *      in the .env file found in the directory from which the script is run.
  */
 import chalk from 'chalk';

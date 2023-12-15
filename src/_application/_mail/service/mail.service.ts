@@ -37,7 +37,7 @@ export class MailService {
     Handlebars.registerPartial(
       'layout',
       MailService.getTemplateContent(
-        '_application/_mail/template/layout.mail.mjml.hbs',
+        join(__dirname, '..', 'template/layout.mail.mjml.hbs'),
       ),
     );
   }
@@ -97,6 +97,6 @@ export class MailService {
   }
 
   private static getTemplateContent(path: string): string {
-    return readFileSync(join(process.cwd(), 'src', path)).toString();
+    return readFileSync(path).toString();
   }
 }

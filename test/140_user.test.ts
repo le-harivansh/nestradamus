@@ -2,10 +2,10 @@ import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Connection } from 'mongoose';
 import request from 'supertest';
 
-import { JwtHttpHeader } from '@/_authentication/constant';
-import { UserController } from '@/_user/controller/user.controller';
-import { UpdateUserDto } from '@/_user/dto/update-user.dto';
-import { User } from '@/_user/schema/user.schema';
+import { JwtHttpHeader } from '@/_user/_authentication/constant';
+import { UserController } from '@/_user/_user/controller/user.controller';
+import { UpdateUserDto } from '@/_user/_user/dto/update-user.dto';
+import { User } from '@/_user/_user/schema/user.schema';
 
 import {
   setupTestApplication,

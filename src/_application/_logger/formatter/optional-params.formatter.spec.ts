@@ -3,7 +3,7 @@ import { Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Otp, OtpSchema } from '@/_library/_otp/schema/otp.schema';
 import { OtpTypeName } from '@/_library/_otp/type';
 import { newDocument } from '@/_library/helper';
-import { User, UserSchema } from '@/_user/schema/user.schema';
+import { User, UserSchema } from '@/_user/_user/schema/user.schema';
 
 import {
   omitPropertiesFromAndParse,

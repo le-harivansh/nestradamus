@@ -2,11 +2,11 @@ import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Connection } from 'mongoose';
 import request from 'supertest';
 
-import { ForgotPasswordController } from '@/_authentication/_forgot-password/controller/forgot-password.controller';
-import { ResetPasswordDto } from '@/_authentication/_forgot-password/dto/reset-password.dto';
 import { Otp, OtpSchema } from '@/_library/_otp/schema/otp.schema';
 import { OtpService } from '@/_library/_otp/service/otp.service';
-import { User, UserSchema } from '@/_user/schema/user.schema';
+import { ForgotPasswordController } from '@/_user/_authentication/_forgot-password/controller/forgot-password.controller';
+import { ResetPasswordDto } from '@/_user/_authentication/_forgot-password/dto/reset-password.dto';
+import { User, UserSchema } from '@/_user/_user/schema/user.schema';
 
 import {
   setupTestApplication,

@@ -6,7 +6,7 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import { Model } from 'mongoose';
 
 import { ConnectionName } from '@/_application/_database/constant';
-import { User, UserSchema } from '@/_user/schema/user.schema';
+import { User, UserSchema } from '@/_user/_user/schema/user.schema';
 
 import {
   ExistenceConstraint,
