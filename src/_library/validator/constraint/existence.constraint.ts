@@ -63,7 +63,7 @@ export class ExistenceValidatorConstraint<T extends Constructor<unknown>>
 
     const documentCount = await model
       .find({ [fieldUnderValidation]: value })
-      .count()
+      .countDocuments()
       .exec();
 
     switch (existenceConstraint) {

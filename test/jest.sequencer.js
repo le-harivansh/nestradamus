@@ -33,8 +33,9 @@ class CustomSequencer extends Sequencer {
      * If the test files are in the `helper` directory, we want to run them
      * first. Hence the `00_` prefix on the path.
      *
-     * We don't care about the order of the tests in that directory. That's why
-     * the tests in the `helper` directory are not prefixed with a number.
+     * Note: We don't care about the order of the tests in that directory.
+     * That's why the tests in the `helper` directory are not prefixed by a
+     * number.
      */
     if (path.startsWith('helper/')) {
       path = `00_${path}`;

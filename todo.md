@@ -1,10 +1,11 @@
 # Todo
 
-- [-] Update README.md.
-- [ ] Update dependencies.
-
 - [ ] Implement ACL for administrators.
-- [ ] Add CLI to add an administrator (with options to choose the desired "level").
+- [ ] Add CLI command to add an administrator (with options to choose the desired "level"; e.g.: "superadmin" et al.).
+- [ ] Add administration routes to:
+  - [ ] manage administrator roles/permissions
+  - [ ] CRUD administrators
+  - [ ] CRUD users
 
 ### Later
 

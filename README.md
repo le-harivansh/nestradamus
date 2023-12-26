@@ -4,7 +4,7 @@ This application is intended to be used as a starting point for web projects.
 
 ## General
 
-While NestJs provides a solid framework to start with, common features such as authentication, registration, etc... are not provided out of the box.
+While NestJs provides a solid framework to start with, common features such as authentication, registration, ACL, etc... are not provided out of the box.
 This project provides an opinionated take on some of the commonly used features in web applications.
 
 ### Features
@@ -25,13 +25,13 @@ cloned, and the dependencies - built. i.e.: `git clone ...`; `cd` into the proje
 
 ### Development environment
 
-The following has been set-up in the development environment:
+The following have been set-up in the development environment:
 
 - Containers are managed using [docker compose](https://docs.docker.com/compose)
 - Git hooks are managed using [husky](https://typicode.github.io/husky)
-- Linting & formatting is managed using [lint-staged](https://github.com/lint-staged/lint-staged)
-- Linting is done using [eslint](https://eslint.org)
-- Formatting is done using [prettier](https://prettier.io)
+- Linting & formatting is _managed_ using [lint-staged](https://github.com/lint-staged/lint-staged)
+- Linting is _done_ using [eslint](https://eslint.org)
+- Formatting is _done_ using [prettier](https://prettier.io)
 
 #### Containers
 
@@ -43,7 +43,7 @@ The following containers are provided, and used, by the project:
 
 ##### Environment variables
 
-Environment variables for the containers are pulled from the project's `.env` file found in the root directory of the project.
+Environment variables for the containers are pulled from the project's `.env` file found in the root directory of the project. During testing the `.env.test` is used; and a `.env.example` file is provided for reference.
 
 #### Prettier
 
@@ -51,12 +51,18 @@ Environment variables for the containers are pulled from the project's `.env` fi
 
 #### Path alias
 
-A path alias has been set in the project. `@` points to `src`.
-_Note_: When setting path aliases; they need to be added to the `paths` section of the `tsconfig.json` file, and to the `moduleMapper` section in any [jest](https://jestjs.io) configuration file.
+Path aliases have been set in the project:
+
+- `@` points to `src`
+- `@cli` points to `cli`
+
+_Note_: When setting path aliases; they need to be added to the `paths` section of the `tsconfig.json` file, **AND** to the `moduleNameMapper` section in any [jest](https://jestjs.io) configuration file.
 
 ### Todos
 
 The project's tasks & todos are stored in the `todo.md` file, found in the root directory of the project.
+
+@todo: admin + e2e tests
 
 ## Installation
 
@@ -86,7 +92,7 @@ yarn
 cd nestradamus
 ```
 
-2. Create a new `.env` file
+2. Create a new `.env` file (from the provided `.env.example` file)
 
 ```shell
 cp .env.example .env
@@ -124,15 +130,17 @@ Tests are run using [jest](https://jestjs.io).
 
 The application has the following test suites:
 
-| Command                  | Test type | Description                        |
-| ------------------------ | --------- | ---------------------------------- |
-| `yarn run test:unit`     | Unit test | Run unit tests for the application |
-| `yarn run test:cli:unit` | Unit test | Run unit tests for the cli         |
-| `yarn run test:e2e`      | E2E test  | Run e2e tests for the application  |
+| Command                  | Test type | Description                          |
+| ------------------------ | --------- | ------------------------------------ |
+| `yarn run test:unit`     | Unit test | Run unit tests for the application   |
+| `yarn run test:cli:unit` | Unit test | Run unit tests for the cli           |
+| `yarn run test:e2e`      | E2E test  | Run e2e tests for the application    |
+|                          |           |                                      |
+| `yarn run test:all`      | All tests | Run all the tests of the application |
 
 #### Test configuration
 
-The test configuration is expected to be in a `.env.test` file. You create a new `.env.test` file by copying the `.env.example` file, and changing any environment variable as needed.
+The E2E test configuration is expected to be in a `.env.test` file. You create a new `.env.test` file by copying the `.env.example` file, and changing any environment variable as needed.
 
 ### Unit tests
 
@@ -154,11 +162,11 @@ yarn run test:cli:unit
 
 #### Testing services
 
-CRUD services that make heavy use of the database should use [MongooseMemoryServer](https://github.com/nodkz/mongodb-memory-server) - because it makes the tests more expressive, and easier to integrate, than mocks.
+CRUD services that make heavy use of the database should use [MongooseMemoryServer](https://github.com/nodkz/mongodb-memory-server) - because it makes the tests more expressive, and easier to integrate than mocks.
 
 ### E2E tests
 
-E2E tests are stored in `.test.ts` files next to the files under test.
+E2E tests are stored in `.test.ts` files in the `test` directory found at the root of the project.
 
 To run the E2E tests, do the following:
 
@@ -192,10 +200,10 @@ The application's custom scripts are stored in the `cli/script` directory, and a
 
 The following custom scripts are available:
 
-| Script                      | `package.json` script | Description                  |
-| --------------------------- | --------------------- | ---------------------------- |
-| cli/seeder/script.ts        | `db:seed`             | Seeds the database           |
-| cli/generate-keys/script.ts | `key:generate`        | Generate environment secrets |
+| Script                             | `package.json` script | Description                  |
+| ---------------------------------- | --------------------- | ---------------------------- |
+| cli/script/seeder/script.ts        | `db:seed`             | Seeds the database           |
+| cli/script/generate-keys/script.ts | `key:generate`        | Generate environment secrets |
 
 ### Database seeding
 
@@ -207,7 +215,7 @@ The _model factory_ & _database seed_ follows the same convention as [Laravel](h
 
 To register a new model to be seeded by the seeder, do the following:
 
-1. Create a factory for the model to be seeded (see `src/_application/_user/factory/user.factory.ts`)
+1. Create a factory for the model to be seeded (see `src/_application/_user/_user/factory/user.factory.ts`)
 2. Register the factory **and** mongoose schema in `cli/script/seeder/_factory/factory.module.ts`
 3. Call the relevant factory method in `cli/script/seeder/_seeder/seeder/database.seeder.ts`
 
@@ -226,9 +234,10 @@ cp .env.example .env
 To add new configuration values to the application, the following need be done in order:
 
 1. Add the relevant environment variables & values to the `.env` file.
-2. Create a new `<module-name>.config.ts` file to validate the new environment variable values pulled from the `.env` file.
-3. Register the default export of the `<module-name>.config.ts` file in the module via `ConfigModule::forFeature`.
-4. Add the relevant namespace & configuration type to the `NamespacedConfigurationType` in the `ConfigurationService` (which - in turn - is in `ConfigurationModule`).
+2. Add the relevant typings to the `environment.d.ts` module (found in the root directory of the project).
+3. Create a new `<module-name>.config.ts` file to validate the new environment variable values pulled from the `.env` file.
+4. Register the default export of the `<module-name>.config.ts` file in the module via `ConfigModule::forFeature`.
+5. Add the relevant namespace & configuration type to the `NamespacedConfigurationType` in the `type.ts` file of the `ConfigurationModule`.
 
 ## Module configuration
 
@@ -242,7 +251,7 @@ To add a new module configuration to the application, the following needs to be 
 2. Register the environment variables in `environment.d.ts`.
 3. Create a `<module>.config.ts` configuration file in the module (see `src/_application/application.config.ts` for reference).
 4. Register the configuration from the newly created configuration file in the module (using `ConfigModule::forFeature`).
-5. Register the configuration types in `src/_application/_configuration/service/configuration.service.ts` (for proper typing).
+5. Register the configuration types in `src/_application/_configuration/type.ts`.
 
 ### Retrieving configuration values
 
@@ -277,23 +286,30 @@ The project has the following branches:
 - `main`: The stable branch.
 - `development`: The branch where development occurs.
 
+## Administration Section
+
+The application has an administration 'section' which is accessible at [admin.application.local]. This can be changed through the `HOST` constant found in the `src/_administration/constant.ts` file.
+
+**Note**: Any new controllers & routes that are being registered in the administration section should use the host (`HOST`) defined in the aforementioned file.
+
 ## Authentication
 
 Authentication in the application is done using [JSON Web Tokens](https://en.wikipedia.org/wiki/JSON_Web_Token).
 
 ### Access-Token
 
-To enable authentication for a route, it needs to be decorated with the `RequiresAccessToken` guard. To authenticate a request guarded with `RequiresAccessToken`, the following needs to be done:
+To enable authentication for a route, it needs to be decorated with the `Requires...AccessToken` (`RequiresUserAccessToken` or `RequiresAdministratorAccessToken`) guard.
+To authenticate a request guarded with `Requires...AccessToken`, the following needs to be done:
 
-1. Request an _access-token_ from the `/login` route.
-2. To authenticate a request to the guarded route, add the _access-token_ to the `access-token` header on the request.
+1. Request an _access-token_ from the `/login` route - for the relevant section (administration or user). An _access-token_ & a _refresh-token_ will be returned.
+2. To authenticate a request to the guarded route, add the _access-token_ to the specified header on the request (currently: `user.access-token` for users and `administrator.access-token` for administrators).
 
 ### Refresh-Token
 
-To require a _refresh-token_ for a route, it needs to be decorated with the `RequiresRefreshToken` guard. To authenticate a request guarded with `RequiresRefreshToken`, the following needs to be done:
+To require a _refresh-token_ for a route, it needs to be decorated with the `Requires...RefreshToken` (`RequiresUserRefreshToken` or `RequiresAdministratorRefreshToken`) guard. To authenticate a request guarded with `Requires...RefreshToken`, the following needs to be done:
 
-1. Request a _refresh-token_ from the `/login` route.
-2. To authenticate a request to the guarded route, add the _refresh-token_ to the `refresh-token` header on the request.
+1. Request a _refresh-token_ from the `/login` route - for the relevant section (administration or user). An _access-token_ & a _refresh-token_ will be returned.
+2. To authenticate a request to the guarded route, add the _refresh-token_ to the specified header on the request (currently: `user.refresh-token` for users and `administrator.refresh-token` for administrators).
 
 ## Throttling
 
@@ -314,3 +330,12 @@ Mails can be sent immediately, or they can be queued to be sent once a worker is
 ## Serialization
 
 Raw mongodb documents should be serialized if they are being returned in a response. An interceptor-serializer `SerializeDocumentHavingSchema` (in: `src/_library/interceptor/mongoose-document-serializer.interceptor.ts`) has been provided for this use-case.
+
+## Miscellaneous
+
+1. After upgrading packages in the project (using `yarn upgrade-interactive`) - if you encounter issues (usually after upgrading typescript); you need to upgrade yarn, and its SDK. See [this issue](https://github.com/yarnpkg/berry/issues/4872#issuecomment-1284318301).
+
+```shell
+yarn set version stable
+yarn dlx @yarnpkg/sdks vscode
+```
