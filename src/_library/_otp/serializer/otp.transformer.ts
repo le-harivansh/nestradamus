@@ -1,17 +1,16 @@
 import { Exclude, Expose, Transform } from 'class-transformer';
 
 import { Otp } from '../schema/otp.schema';
-import { OtpTypeName } from '../type';
 
 export class OtpTransformer extends Otp {
   @Expose()
-  @Transform(({ obj: user }) => user._id.toString(), {
+  @Transform(({ obj: otp }) => otp._id.toString(), {
     toClassOnly: true,
   })
   readonly id!: string;
 
   @Expose()
-  declare readonly type: OtpTypeName;
+  declare readonly type: string;
 
   @Expose()
   declare readonly destination: string;

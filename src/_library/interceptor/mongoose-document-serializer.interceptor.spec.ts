@@ -3,7 +3,7 @@ import { Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Exclude, Expose } from 'class-transformer';
 
-import { newDocument } from '../helper';
+import { newDocument } from '../test.helper';
 import { SerializeDocumentsHavingSchema } from './mongoose-document-serializer.interceptor';
 
 @Schema()

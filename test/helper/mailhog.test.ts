@@ -32,11 +32,9 @@ describe(`${Mailhog.name} (e2e)`, () => {
   });
 
   afterAll(async () => {
-    await mailhog.deleteEmailsSentBetween(start, new Date());
-
-    await teardownTestApplication({
-      application,
-      databaseConnection,
+    await teardownTestApplication(application, databaseConnection, {
+      mailhog,
+      start,
     });
   });
 

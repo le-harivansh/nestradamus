@@ -8,7 +8,7 @@ import { UserService } from './service/user.service';
 
 @Module({
   imports: [
-    forwardRef(() => TokenModule), // needed because of `RequiresUserAccessToken`/`RequiresUserRefreshToken` guards
+    forwardRef(() => TokenModule),
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
   ],
   controllers: [UserController],

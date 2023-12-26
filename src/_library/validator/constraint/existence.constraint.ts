@@ -8,13 +8,9 @@ import {
 import { Connection } from 'mongoose';
 
 import { ConnectionName } from '@/_application/_database/constant';
+import { ExistenceConstraint } from '@/_library/constant';
 
-import { Constructor, PropertiesOfInstanceOfConstructor } from '../../helper';
-
-export const enum ExistenceConstraint {
-  SHOULD_EXIST = 'document-with-matching-property-should-exist',
-  SHOULD_NOT_EXIST = 'document-with-matching-property-should-not-exist',
-}
+import { Constructor, PropertiesOfInstanceOfConstructor } from '../../type';
 
 @Injectable()
 @ValidatorConstraint({ async: true })

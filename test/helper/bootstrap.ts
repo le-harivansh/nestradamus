@@ -40,14 +40,25 @@ export async function setupTestApplication() {
   };
 }
 
-export async function teardownTestApplication({
-  application,
-  databaseConnection,
-}: {
-  application: INestApplication;
-  databaseConnection: Connection;
-}) {
-  await databaseConnection.db.dropDatabase();
+export async function teardownTestApplication(
+  application: INestApplication,
+  databaseConnection?: Connection,
+  mailOptions?: { mailhog: Mailhog; start: Date },
+) {
+  if (databaseConnection) {
+    await databaseConnection.db.dropDatabase();
+  }
+
+  if (
+    typeof mailOptions === 'object' &&
+    mailOptions.mailhog &&
+    mailOptions.start
+  ) {
+    await mailOptions.mailhog.deleteEmailsSentBetween(
+      mailOptions.start,
+      new Date(),
+    );
+  }
 
   await application.close();
 }

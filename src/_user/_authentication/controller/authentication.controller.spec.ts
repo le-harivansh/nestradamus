@@ -1,11 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
-import { newDocument } from '@/_library/helper';
+import { JwtType } from '@/_library/authentication/type';
+import { newDocument } from '@/_library/test.helper';
 import { User, UserSchema } from '@/_user/_user/schema/user.schema';
 
-import { Type } from '../_token/constant';
 import { TokenService } from '../_token/service/token.service';
+import { LoginDto } from '../dto/login.dto';
 import { AuthenticationService } from '../service/authentication.service';
 import { AuthenticationController } from './authentication.controller';
 
@@ -32,10 +33,12 @@ describe(AuthenticationController.name, () => {
     authenticationService = module.get(AuthenticationService);
     authenticationController = module.get(AuthenticationController);
 
-    tokenService.generateAuthenticationJwt.mockImplementation((type: Type) => ({
-      token: type,
-      expiresAt: tokenExpiresAt,
-    }));
+    tokenService.generateAuthenticationJwt.mockImplementation(
+      (type: JwtType) => ({
+        token: type,
+        expiresAt: tokenExpiresAt,
+      }),
+    );
   });
 
   afterEach(() => {
@@ -47,49 +50,47 @@ describe(AuthenticationController.name, () => {
   });
 
   describe('login', () => {
-    const username = 'user@email.com';
-    const password = 'P@ssw0rd';
+    const loginDto: LoginDto = {
+      email: 'user@email.com',
+      password: 'P@ssw0rd',
+    };
 
     const authenticatedUser = newDocument<User>(User, UserSchema, {
-      email: username,
-      password,
+      username: loginDto.email,
+      password: loginDto.password,
     });
 
     let result: unknown;
 
     beforeAll(() => {
-      authenticationService.authenticateUserUsingCredentials.mockResolvedValue(
+      authenticationService.authenticateUsingCredentials.mockResolvedValue(
         authenticatedUser,
       );
     });
 
     beforeEach(async () => {
-      result = await authenticationController.login(authenticatedUser);
+      result = await authenticationController.login(loginDto);
+    });
+
+    it('calls `AuthenticationService::authenticateUsingCredentials` with the provided credentials from the DTO', () => {
+      expect(
+        authenticationService.authenticateUsingCredentials,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        authenticationService.authenticateUsingCredentials,
+      ).toHaveBeenCalledWith(loginDto.email, loginDto.password);
     });
 
     it("calls `TokenService::generateAuthenticationjwt` with the token type & authenticated user's data", () => {
       expect(tokenService.generateAuthenticationJwt).toHaveBeenCalledTimes(2);
       expect(tokenService.generateAuthenticationJwt).toHaveBeenCalledWith(
-        Type.USER_ACCESS_TOKEN,
+        'access-token',
         authenticatedUser,
       );
       expect(tokenService.generateAuthenticationJwt).toHaveBeenCalledWith(
-        Type.USER_REFRESH_TOKEN,
+        'refresh-token',
         authenticatedUser,
       );
-    });
-
-    it('responds with the `access-token` & `refresh-token` data', () => {
-      expect(result).toStrictEqual({
-        accessToken: {
-          token: Type.USER_ACCESS_TOKEN,
-          expiresAt: tokenExpiresAt,
-        },
-        refreshToken: {
-          token: Type.USER_REFRESH_TOKEN,
-          expiresAt: tokenExpiresAt,
-        },
-      });
     });
 
     it('calls `WinstonLoggerService::log` with the authenticated user', () => {
@@ -98,6 +99,19 @@ describe(AuthenticationController.name, () => {
         'User authenticated',
         authenticatedUser,
       );
+    });
+
+    it('responds with the `access-token` & `refresh-token` data', () => {
+      expect(result).toStrictEqual({
+        accessToken: {
+          token: 'access-token',
+          expiresAt: tokenExpiresAt,
+        },
+        refreshToken: {
+          token: 'refresh-token',
+          expiresAt: tokenExpiresAt,
+        },
+      });
     });
   });
 });

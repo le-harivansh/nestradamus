@@ -7,10 +7,11 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { Throttle, seconds } from '@nestjs/throttler';
+import { HydratedDocument } from 'mongoose';
 
 import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
 import { SerializeDocumentsHavingSchema } from '@/_library/interceptor/mongoose-document-serializer.interceptor';
-import { UserDocument, UserSchema } from '@/_user/_user/schema/user.schema';
+import { User, UserSchema } from '@/_user/_user/schema/user.schema';
 import { UserTransformer } from '@/_user/_user/serializer/user.transformer';
 
 import { RegistrationDto } from '../dto/registration.dto';
@@ -30,7 +31,9 @@ export class RegistrationController {
   @Throttle({ default: { limit: 1, ttl: seconds(30) } })
   @HttpCode(HttpStatus.NO_CONTENT)
   async sendOtp(@Body() { destination }: SendOtpDto): Promise<void> {
-    this.loggerService.log('Request to send registration OTP', { destination });
+    this.loggerService.log('Request to send user-registration OTP', {
+      destination,
+    });
 
     await this.registrationService.sendVerificationOtpEmail(destination);
   }
@@ -39,7 +42,7 @@ export class RegistrationController {
   @UseInterceptors(SerializeDocumentsHavingSchema(UserSchema, UserTransformer))
   async register(
     @Body() { email, password, otp }: RegistrationDto,
-  ): Promise<UserDocument> {
+  ): Promise<HydratedDocument<User>> {
     this.loggerService.log('Request to register user', { email });
 
     return this.registrationService.registerUser(email, password, otp);

@@ -1,12 +1,13 @@
 import { registerAs } from '@nestjs/config';
 import ms from 'ms';
+import { env } from 'node:process';
 import { z } from 'zod';
 
 import { MS_DURATION_PATTERN } from '@/_library/constant';
 
 export const CONFIGURATION_NAMESPACE = 'user.authentication.jwt';
 
-const authenticationTokensConfigurationValidationSchema = z.object({
+const userAuthenticationTokensConfigurationValidationSchema = z.object({
   accessToken: z.object({
     duration: z
       .string()
@@ -25,19 +26,19 @@ const authenticationTokensConfigurationValidationSchema = z.object({
   }),
 });
 
-export type AuthenticationTokensConfiguration = z.infer<
-  typeof authenticationTokensConfigurationValidationSchema
+export type UserAuthenticationTokensConfiguration = z.infer<
+  typeof userAuthenticationTokensConfigurationValidationSchema
 >;
 
 export default registerAs(CONFIGURATION_NAMESPACE, () =>
-  authenticationTokensConfigurationValidationSchema.parse({
+  userAuthenticationTokensConfigurationValidationSchema.parse({
     accessToken: {
-      duration: process.env.USER_JWT_ACCESS_TOKEN_DURATION,
-      secret: process.env.USER_JWT_ACCESS_TOKEN_SECRET,
+      duration: env.USER_JWT_ACCESS_TOKEN_DURATION,
+      secret: env.USER_JWT_ACCESS_TOKEN_SECRET,
     },
     refreshToken: {
-      duration: process.env.USER_JWT_REFRESH_TOKEN_DURATION,
-      secret: process.env.USER_JWT_REFRESH_TOKEN_SECRET,
+      duration: env.USER_JWT_REFRESH_TOKEN_DURATION,
+      secret: env.USER_JWT_REFRESH_TOKEN_SECRET,
     },
   }),
 );

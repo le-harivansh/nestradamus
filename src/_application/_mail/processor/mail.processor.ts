@@ -4,7 +4,7 @@ import Mail from 'nodemailer/lib/mailer';
 
 import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
 
-import { MAIL_QUEUE, MailQueue } from '../constant';
+import { MAIL_QUEUE, MailJob } from '../constant';
 import { TemplateOptions } from '../helper';
 import { MailService } from '../service/mail.service';
 
@@ -17,7 +17,7 @@ export class MailProcessor {
     this.loggerService.setContext(MailProcessor.name);
   }
 
-  @Process(MailQueue.SEND_MAIL)
+  @Process(MailJob.SEND_MAIL)
   async sendMail({
     data: { options: mailOptions, html = undefined, text = undefined },
   }: Job<{

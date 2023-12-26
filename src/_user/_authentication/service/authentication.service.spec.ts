@@ -1,9 +1,8 @@
-import { NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { argon2id, hash } from 'argon2';
+import { HydratedDocument } from 'mongoose';
 
 import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
-import { newDocument } from '@/_library/helper';
+import { newDocument } from '@/_library/test.helper';
 import { User, UserSchema } from '@/_user/_user/schema/user.schema';
 import { UserService } from '@/_user/_user/service/user.service';
 
@@ -12,8 +11,7 @@ import { AuthenticationService } from './authentication.service';
 jest.mock('@/_user/_user/service/user.service');
 jest.mock('@/_application/_logger/service/winston-logger.service');
 
-describe('AuthenticationService', () => {
-  let loggerService: jest.Mocked<WinstonLoggerService>;
+describe(AuthenticationService.name, () => {
   let userService: jest.Mocked<UserService>;
   let authenticationService: AuthenticationService;
 
@@ -22,7 +20,6 @@ describe('AuthenticationService', () => {
       providers: [UserService, WinstonLoggerService, AuthenticationService],
     }).compile();
 
-    loggerService = module.get(WinstonLoggerService);
     userService = module.get(UserService);
     authenticationService = module.get(AuthenticationService);
   });
@@ -35,65 +32,30 @@ describe('AuthenticationService', () => {
     expect(authenticationService).toBeDefined();
   });
 
-  describe('- when a user with the specified username exists', () => {
+  describe('retrieveAuthenticatableEntity', () => {
     const username = 'user@email.com';
-    const password = 'P@ssw0rd';
+    let user: HydratedDocument<User>;
 
-    const authenticatedUser = newDocument<User>(User, UserSchema, {
-      email: username,
-      password: '',
-    });
-
-    beforeAll(async () => {
-      authenticatedUser.set(
-        'password',
-        await hash(password, { type: argon2id }),
-      );
-
-      userService.findOne.mockResolvedValue(authenticatedUser);
-    });
-
-    it('returns the found user instance if it has a valid password', async () => {
-      await expect(
-        authenticationService.authenticateUserUsingCredentials(
-          username,
-          password,
-        ),
-      ).resolves.toBe(authenticatedUser);
-    });
-
-    it("logs the authenticated user's data", async () => {
-      await authenticationService.authenticateUserUsingCredentials(
+    beforeAll(() => {
+      user = newDocument<User>(User, UserSchema, {
         username,
-        password,
-      );
+        password: 'P@ssw0rd',
+      });
 
-      expect(loggerService.log).toHaveBeenCalledTimes(1);
-      expect(loggerService.log).toHaveBeenLastCalledWith(
-        'Valid credentials provided for user',
-        authenticatedUser,
-      );
+      userService.findOne.mockResolvedValue(user);
     });
 
-    it('throws an `UnauthorizedException` if the provided password is invalid', async () => {
+    it('calls `UserService::findOne` with the provided `username` parameter', async () => {
+      await authenticationService.retrieveAuthenticatableEntity(username);
+
+      expect(userService.findOne).toHaveBeenCalledTimes(1);
+      expect(userService.findOne).toHaveBeenCalledWith({ username });
+    });
+
+    it('returns the retrieved authenticated user', async () => {
       await expect(
-        authenticationService.authenticateUserUsingCredentials(
-          username,
-          'wrong-password',
-        ),
-      ).rejects.toThrow(UnauthorizedException);
+        authenticationService.retrieveAuthenticatableEntity(username),
+      ).resolves.toBe(user);
     });
-  });
-
-  it('throws an `UnauthorizedException` if no user - matching the provided `username` - is found', async () => {
-    userService.findOne.mockImplementation(() => {
-      throw new NotFoundException();
-    });
-    await expect(
-      authenticationService.authenticateUserUsingCredentials(
-        'a-username',
-        'a-password',
-      ),
-    ).rejects.toThrow(UnauthorizedException);
   });
 });

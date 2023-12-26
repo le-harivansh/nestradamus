@@ -6,12 +6,10 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import { Model } from 'mongoose';
 
 import { ConnectionName } from '@/_application/_database/constant';
+import { ExistenceConstraint } from '@/_library/constant';
 import { User, UserSchema } from '@/_user/_user/schema/user.schema';
 
-import {
-  ExistenceConstraint,
-  ExistenceValidatorConstraint,
-} from './existence.constraint';
+import { ExistenceValidatorConstraint } from './existence.constraint';
 
 describe(ExistenceValidatorConstraint.name, () => {
   let application: INestApplication;
@@ -59,8 +57,8 @@ describe(ExistenceValidatorConstraint.name, () => {
 
   describe('validate', () => {
     const userData = [
-      { email: 'user-1@email.com', password: 'Passw0rd' },
-      { email: 'user-2@email.com', password: 'Passw0rd' },
+      { username: 'user-1@email.com', password: 'Passw0rd' },
+      { username: 'user-2@email.com', password: 'Passw0rd' },
     ] as const;
 
     beforeAll(async () => {
@@ -73,7 +71,7 @@ describe(ExistenceValidatorConstraint.name, () => {
 
     it('throws an `InternalServerErrorException` if the specified connection could not be retrieved', async () => {
       await expect(
-        validatorConstraint.validate(userData[0].email, {
+        validatorConstraint.validate(userData[0].username, {
           constraints: [
             User,
             'email',
@@ -86,7 +84,7 @@ describe(ExistenceValidatorConstraint.name, () => {
 
     it('throws an `InternalServerErrorException` if the `fieldUnderValidation` does not exist on the schema', async () => {
       await expect(
-        validatorConstraint.validate(userData[0].email, {
+        validatorConstraint.validate(userData[0].username, {
           constraints: [
             User,
             'nonExistentFieldName',
@@ -99,10 +97,10 @@ describe(ExistenceValidatorConstraint.name, () => {
 
     it('throws an `InternalServerErrorException` if the `existenceConstraint` is invalid', async () => {
       await expect(
-        validatorConstraint.validate(userData[0].email, {
+        validatorConstraint.validate(userData[0].username, {
           constraints: [
             User,
-            'email',
+            'username',
             ConnectionName.DEFAULT,
             'invalid-existence-constraint',
           ],
@@ -127,8 +125,13 @@ describe(ExistenceValidatorConstraint.name, () => {
       ({ constraint, documentShouldExist }) => {
         it(`returns '${documentShouldExist}' if a document matching the specified criteria exists`, async () => {
           await expect(
-            validatorConstraint.validate(userData[0].email, {
-              constraints: [User, 'email', ConnectionName.DEFAULT, constraint],
+            validatorConstraint.validate(userData[0].username, {
+              constraints: [
+                User,
+                'username',
+                ConnectionName.DEFAULT,
+                constraint,
+              ],
             } as unknown as ValidationArguments),
           ).resolves.toBe(documentShouldExist);
         });
@@ -136,7 +139,12 @@ describe(ExistenceValidatorConstraint.name, () => {
         it(`returns '${!documentShouldExist}' if no document matching the specified criteria exists`, async () => {
           await expect(
             validatorConstraint.validate('non-existent-user@email.com', {
-              constraints: [User, 'email', ConnectionName.DEFAULT, constraint],
+              constraints: [
+                User,
+                'username',
+                ConnectionName.DEFAULT,
+                constraint,
+              ],
             } as unknown as ValidationArguments),
           ).resolves.toBe(!documentShouldExist);
         });

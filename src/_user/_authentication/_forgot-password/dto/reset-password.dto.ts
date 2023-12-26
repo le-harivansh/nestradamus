@@ -12,7 +12,7 @@ import { User } from '@/_user/_user/schema/user.schema';
 
 export class ResetPasswordDto {
   @IsEmail(undefined, { message: 'A valid email address should be provided.' })
-  @ShouldExist(User)
+  @ShouldExist(User, 'username')
   readonly email!: string;
 
   @IsStrongPassword(

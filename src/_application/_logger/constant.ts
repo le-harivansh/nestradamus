@@ -17,7 +17,7 @@ export const LOG_COLORS: Record<keyof typeof LOG_LEVELS, string> = {
 };
 
 /**
- * This symbol is used as the DI key for the configured `winston.Logger` being
- * used in `WinstonLoggerService`.
+ * This symbol is used as the DI key for the configured `winston.Logger` that
+ * is used in `WinstonLoggerService`.
  */
 export const WINSTON_LOGGER = Symbol('winston-logger');

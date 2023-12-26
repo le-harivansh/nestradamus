@@ -1,10 +1,20 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { FilterQuery, Model, Types } from 'mongoose';
+import {
+  Document,
+  FilterQuery,
+  HydratedDocument,
+  Model,
+  Types,
+} from 'mongoose';
 
 import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
 
-import { User, UserDocument } from '../schema/user.schema';
+import { User, UserSchema } from '../schema/user.schema';
 
 @Injectable()
 export class UserService {
@@ -15,20 +25,22 @@ export class UserService {
     this.loggerService.setContext(UserService.name);
   }
 
-  async create(email: string, password: string): Promise<UserDocument> {
-    const newUser = await this.userModel.create({ email, password });
+  async create(userData: User): Promise<HydratedDocument<User>> {
+    const newUser = await this.userModel.create(userData);
 
     this.loggerService.log('Created user', newUser);
 
     return newUser;
   }
 
-  async findOne(id: Types.ObjectId): Promise<UserDocument>;
-  async findOne(filterQuery: FilterQuery<User>): Promise<UserDocument>;
+  async findOne(id: Types.ObjectId): Promise<HydratedDocument<User>>;
+  async findOne(
+    filterQuery: FilterQuery<User>,
+  ): Promise<HydratedDocument<User>>;
   async findOne(
     criteria: FilterQuery<User> | Types.ObjectId,
-  ): Promise<UserDocument> {
-    let retrievedUser: UserDocument | null;
+  ): Promise<HydratedDocument<User>> {
+    let retrievedUser: HydratedDocument<User> | null;
 
     if (criteria instanceof Types.ObjectId) {
       retrievedUser = await this.userModel.findById(criteria).exec();
@@ -50,21 +62,30 @@ export class UserService {
   }
 
   async update(
-    id: Types.ObjectId,
+    user: HydratedDocument<User>,
     updates: Partial<User>,
-  ): Promise<UserDocument>;
+  ): Promise<HydratedDocument<User>>;
   async update(
     filterQuery: FilterQuery<User>,
     updates: Partial<User>,
-  ): Promise<UserDocument>;
+  ): Promise<HydratedDocument<User>>;
   async update(
-    criteria: FilterQuery<User> | Types.ObjectId,
+    documentOrFilterQuery: HydratedDocument<User> | FilterQuery<User>,
     updates: Partial<User>,
-  ): Promise<UserDocument> {
-    const user = await this.findOne(criteria);
+  ): Promise<HydratedDocument<User>> {
+    let user: HydratedDocument<User> | null;
+
+    if (
+      documentOrFilterQuery instanceof Document &&
+      documentOrFilterQuery.schema === UserSchema
+    ) {
+      user = documentOrFilterQuery;
+    } else {
+      user = await this.findOne(documentOrFilterQuery as FilterQuery<User>);
+    }
 
     for (const [property, value] of Object.entries(updates)) {
-      user.set({ [property]: value });
+      user.set(property, value);
     }
 
     const updatedUser = await user.save();
@@ -78,7 +99,7 @@ export class UserService {
     const { deletedCount } = await this.userModel.deleteOne({ _id: id });
 
     if (deletedCount === 0) {
-      throw new NotFoundException(
+      throw new BadRequestException(
         `Could not delete the user with id: '${id.toString()}'.`,
       );
     }

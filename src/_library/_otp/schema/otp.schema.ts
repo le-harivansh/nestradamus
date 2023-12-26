@@ -1,17 +1,16 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { argon2id, hash } from 'argon2';
-import { HydratedDocument } from 'mongoose';
 
-import type { OtpTypeName } from '../type';
-
-@Schema()
+@Schema({ timestamps: true })
 export class Otp {
   /**
    * This property refers to the feature the OTP is being used for;
    * e.g.: Registration, ...
+   *
+   * It is used to discriminate against other OTP types during validation.
    */
   @Prop({ required: true })
-  type!: OtpTypeName;
+  type!: string;
 
   @Prop({ required: true })
   destination!: string;
@@ -30,5 +29,3 @@ OtpSchema.pre('save', async function (): Promise<void> {
     this.password = await hash(this.password, { type: argon2id });
   }
 });
-
-export type OtpDocument = HydratedDocument<Otp>;

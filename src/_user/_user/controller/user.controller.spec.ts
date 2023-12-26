@@ -1,11 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { HydratedDocument } from 'mongoose';
 
 import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
-import { newDocument } from '@/_library/helper';
+import { newDocument } from '@/_library/test.helper';
 import { TokenService } from '@/_user/_authentication/_token/service/token.service';
 
 import { UpdateUserDto } from '../dto/update-user.dto';
-import { User, UserDocument, UserSchema } from '../schema/user.schema';
+import { User, UserSchema } from '../schema/user.schema';
 import { UserService } from '../service/user.service';
 import { UserController } from './user.controller';
 
@@ -15,7 +16,7 @@ jest.mock('@/_application/_logger/service/winston-logger.service');
 
 describe(UserController.name, () => {
   const user = newDocument<User>(User, UserSchema, {
-    email: 'user@email.com',
+    username: 'user@email.com',
     password: 'P@ssw0rd',
   });
 
@@ -26,11 +27,7 @@ describe(UserController.name, () => {
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UserController],
-      providers: [
-        WinstonLoggerService,
-        UserService,
-        TokenService, // needed for: `RequiresUserAccessToken` guard.
-      ],
+      providers: [WinstonLoggerService, UserService, TokenService],
     }).compile();
 
     loggerService = module.get(WinstonLoggerService);
@@ -47,13 +44,13 @@ describe(UserController.name, () => {
   });
 
   describe('get', () => {
-    let currentlyAuthenticatedUser: UserDocument;
+    let currentlyAuthenticatedUser: HydratedDocument<User>;
 
     beforeEach(() => {
       currentlyAuthenticatedUser = userController.get(user);
     });
 
-    it('returns the authenticated user', () => {
+    it('returns the authenticated user from the request', () => {
       expect(currentlyAuthenticatedUser).toStrictEqual(user);
     });
 
@@ -73,7 +70,7 @@ describe(UserController.name, () => {
     };
     const updatedUser = user
       .$clone()
-      .set('email', updateUserDto.email)
+      .set('username', updateUserDto.email)
       .set('password', updateUserDto.password);
 
     beforeAll(() => {
@@ -88,7 +85,10 @@ describe(UserController.name, () => {
 
     it('calls `UserService::update`', () => {
       expect(userService.update).toHaveBeenCalledTimes(1);
-      expect(userService.update).toHaveBeenCalledWith(user._id, updateUserDto);
+      expect(userService.update).toHaveBeenCalledWith(user, {
+        username: updateUserDto.email,
+        password: updateUserDto.password,
+      });
     });
 
     it("returns the updated user's data", () => {

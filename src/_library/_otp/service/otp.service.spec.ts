@@ -3,17 +3,14 @@ import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { verify } from 'argon2';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import { Model } from 'mongoose';
+import { HydratedDocument, Model } from 'mongoose';
 
 import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
 
-import { Otp, OtpDocument, OtpSchema } from '../schema/otp.schema';
-import type { OtpTypeName } from '../type';
+import { Otp, OtpSchema } from '../schema/otp.schema';
 import { OtpService } from './otp.service';
 
 jest.mock('@/_application/_logger/service/winston-logger.service');
-
-type OtpData = { type: OtpTypeName; destination: string; ttlSeconds: number };
 
 describe(OtpService.name, () => {
   let application: INestApplication;
@@ -63,24 +60,14 @@ describe(OtpService.name, () => {
     expect(otpService).toBeDefined();
   });
 
-  describe('generateNumericPassword', () => {
-    it('returns a numeric string of the specified length', () => {
-      const passwordLength = 8;
-
-      expect(OtpService.generateNumericPassword(passwordLength)).toMatch(
-        new RegExp(`^[0-9]{${passwordLength}}$`),
-      );
-    });
-  });
-
   describe('create', () => {
-    const otpData: OtpData = {
+    const otpData = {
       type: 'user.registration',
       destination: 'user@email.com',
       ttlSeconds: 1 * 60,
-    };
+    } as const;
 
-    let createdOtp: OtpDocument;
+    let createdOtp: HydratedDocument<Otp>;
 
     beforeEach(async () => {
       createdOtp = await otpService.create(
@@ -133,13 +120,13 @@ describe(OtpService.name, () => {
   });
 
   describe('isValid', () => {
-    const otpData: OtpData = {
+    const otpData = {
       type: 'user.registration',
       destination: 'user-1@email.com',
       ttlSeconds: 1 * 60,
-    };
+    } as const;
 
-    let otp: OtpDocument;
+    let otp: HydratedDocument<Otp>;
 
     beforeEach(async () => {
       otp = await otpService.create(
@@ -215,7 +202,7 @@ describe(OtpService.name, () => {
       );
 
       const validationResult = await otpService.isValid(otp.get('password'), {
-        type: otp.get('type') as OtpTypeName,
+        type: otp.get('type'),
         destination: otp.get('destination'),
       });
 
@@ -259,7 +246,7 @@ describe(OtpService.name, () => {
 
     it('returns false if there are no matching OTP documents', async () => {
       const validationResult = await otpService.isValid('123456', {
-        type: 'non-existent-type' as OtpTypeName,
+        type: 'non-existent-type',
         destination: 'non-existent@email.com',
       });
 
@@ -268,7 +255,7 @@ describe(OtpService.name, () => {
 
     it('logs data when the OTP validation state is falsy', async () => {
       await otpService.isValid('123456', {
-        type: 'non-existent-type' as OtpTypeName,
+        type: 'non-existent-type',
         destination: 'non-existent@email.com',
       });
 

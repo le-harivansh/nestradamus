@@ -4,7 +4,7 @@ import { OtpModule } from './_otp/otp.module';
 import { ExistenceValidatorConstraint } from './validator/constraint/existence.constraint';
 
 @Module({
-  providers: [ExistenceValidatorConstraint],
   imports: [OtpModule],
+  providers: [ExistenceValidatorConstraint],
 })
 export class LibraryModule {}

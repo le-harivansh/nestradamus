@@ -27,13 +27,13 @@ describe('ConfigurationService', () => {
   });
 
   describe('getOrThrow', () => {
-    it('calls `ConfigService::getOrThrow` with the specified key', () => {
-      const key = 'application.environment';
+    const configurationKey = 'application.environment';
 
-      configurationService.getOrThrow(key);
+    it('calls `ConfigService::getOrThrow` with the specified key', () => {
+      configurationService.getOrThrow(configurationKey);
 
       expect(configService.getOrThrow).toHaveBeenCalledTimes(1);
-      expect(configService.getOrThrow).toHaveBeenCalledWith(key);
+      expect(configService.getOrThrow).toHaveBeenCalledWith(configurationKey);
     });
   });
 });

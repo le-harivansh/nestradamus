@@ -1,5 +1,6 @@
 import { registerAs } from '@nestjs/config';
 import ms from 'ms';
+import { env } from 'node:process';
 import { z } from 'zod';
 
 import { MS_DURATION_PATTERN } from '@/_library/constant';
@@ -35,12 +36,12 @@ export type ApplicationConfiguration = z.infer<
 
 export default registerAs(CONFIGURATION_NAMESPACE, () =>
   applicationConfigurationValidationSchema.parse({
-    environment: process.env.NODE_ENV,
-    name: process.env.APPLICATION_NAME,
-    port: process.env.APPLICATION_PORT,
+    environment: env.NODE_ENV,
+    name: env.APPLICATION_NAME,
+    port: env.APPLICATION_PORT,
     rateLimiter: {
-      ttl: process.env.APPLICATION_THROTTLER_TTL,
-      limit: process.env.APPLICATION_THROTTLER_REQUEST_LIMIT,
+      ttl: env.APPLICATION_THROTTLER_TTL,
+      limit: env.APPLICATION_THROTTLER_REQUEST_LIMIT,
     },
   }),
 );

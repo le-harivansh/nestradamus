@@ -13,7 +13,7 @@ import { ConfigurationService } from '@/_application/_configuration/service/conf
 import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
 import { QueueOf } from '@/_application/_queue/helper';
 
-import { MAIL_QUEUE, MailQueue, TRANSPORTER } from '../constant';
+import { MAIL_QUEUE, MailJob, TRANSPORTER } from '../constant';
 import { TemplateOptions } from '../helper';
 import { MailProcessor } from '../processor/mail.processor';
 
@@ -89,7 +89,7 @@ export class MailService {
 
     this.loggerService.log('Queuing mail to send', { ...mailOptionsToLog });
 
-    return this.mailQueue.add(MailQueue.SEND_MAIL, {
+    return this.mailQueue.add(MailJob.SEND_MAIL, {
       options: mailOptions,
       html,
       text,

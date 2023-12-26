@@ -2,10 +2,9 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
-import { newDocument } from '@/_library/helper';
+import { newDocument } from '@/_library/test.helper';
 import { User, UserSchema } from '@/_user/_user/schema/user.schema';
 
-import { Event } from '../type';
 import { EventService } from './event.service';
 
 jest.mock('@nestjs/event-emitter');
@@ -39,9 +38,9 @@ describe(EventService.name, () => {
   });
 
   describe('emit', () => {
-    const event = Event.User.PASSWORD_RESET;
+    const event = Symbol('event-description');
     const user = newDocument<User>(User, UserSchema, {
-      email: 'user@email.com',
+      username: 'user@email.com',
       password: 'P@ssw0rd',
     });
 

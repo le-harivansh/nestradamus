@@ -62,7 +62,7 @@ export default function winstonLoggerFactory(
       break;
 
     case 'production':
-      // @todo: add winston transport(s)
+      // @todo: add winston transport(s) for production.
       break;
   }
 

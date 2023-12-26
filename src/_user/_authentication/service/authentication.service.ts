@@ -1,55 +1,25 @@
-import {
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { verify } from 'argon2';
+import { Injectable } from '@nestjs/common';
+import { HydratedDocument } from 'mongoose';
 
 import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
-import { UserDocument } from '@/_user/_user/schema/user.schema';
+import { AuthenticationService as AbstractAuthenticationService } from '@/_library/authentication/service/authentication.service';
+import { User } from '@/_user/_user/schema/user.schema';
 import { UserService } from '@/_user/_user/service/user.service';
 
 @Injectable()
-export class AuthenticationService {
+export class AuthenticationService extends AbstractAuthenticationService<User> {
   constructor(
+    loggerService: WinstonLoggerService,
     private readonly userService: UserService,
-    private readonly loggerService: WinstonLoggerService,
   ) {
-    this.loggerService.setContext(AuthenticationService.name);
+    loggerService.setContext(`${AuthenticationService.name}[${User.name}]`);
+
+    super(loggerService);
   }
 
-  async authenticateUserUsingCredentials(
+  override async retrieveAuthenticatableEntity(
     username: string,
-    password: string,
-  ): Promise<UserDocument> {
-    let retrievedUser: UserDocument | null = null;
-
-    try {
-      retrievedUser = await this.userService.findOne({ email: username });
-    } catch (error) {
-      /**
-       * We want to re-throw any exception that is **NOT** a `NotFoundException`,
-       * since `findOne` only throws `NotFoundException`s. Any other exception
-       * caught here would most likely have been thrown by the framework; and
-       * we **DO NOT** want to catch those.
-       */
-      if (!(error instanceof NotFoundException)) {
-        throw error;
-      }
-    }
-
-    if (
-      retrievedUser &&
-      (await verify(retrievedUser.get('password'), password))
-    ) {
-      this.loggerService.log(
-        'Valid credentials provided for user',
-        retrievedUser,
-      );
-
-      return retrievedUser;
-    }
-
-    throw new UnauthorizedException('Invalid credentials.');
+  ): Promise<HydratedDocument<User>> {
+    return this.userService.findOne({ username });
   }
 }

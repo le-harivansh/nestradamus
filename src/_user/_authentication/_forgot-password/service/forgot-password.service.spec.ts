@@ -3,16 +3,15 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { ConfigurationService } from '@/_application/_configuration/service/configuration.service';
 import { EventService } from '@/_application/_event/service/event.service';
-import { Event } from '@/_application/_event/type';
 import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
 import { MailService } from '@/_application/_mail/service/mail.service';
 import { Otp, OtpSchema } from '@/_library/_otp/schema/otp.schema';
 import { OtpService } from '@/_library/_otp/service/otp.service';
-import { OtpType } from '@/_library/_otp/type';
-import { newDocument } from '@/_library/helper';
+import { newDocument } from '@/_library/test.helper';
 import { User, UserSchema } from '@/_user/_user/schema/user.schema';
 import { UserService } from '@/_user/_user/service/user.service';
 
+import { USER_PASSWORD_RESET } from '../event';
 import { ForgotPasswordService } from './forgot-password.service';
 
 jest.mock('@/_application/_configuration/service/configuration.service');
@@ -63,7 +62,7 @@ describe(ForgotPasswordService.name, () => {
 
   describe('resetPassword', () => {
     const user = newDocument<User>(User, UserSchema, {
-      email: 'user@email.com',
+      username: 'user@email.com',
       password: 'P@ssw0rd',
     });
 
@@ -89,7 +88,7 @@ describe(ForgotPasswordService.name, () => {
         userResetPasswordData.otp,
         {
           destination: userResetPasswordData.email,
-          type: OtpType.userRegistration.name,
+          type: ForgotPasswordService.OTP.TYPE,
         },
       );
     });
@@ -116,7 +115,7 @@ describe(ForgotPasswordService.name, () => {
 
       expect(userService.update).toHaveBeenCalledTimes(1);
       expect(userService.update).toHaveBeenCalledWith(
-        { email: user.get('email') },
+        { username: userResetPasswordData.email },
         {
           password: userResetPasswordData.password,
         },
@@ -138,7 +137,7 @@ describe(ForgotPasswordService.name, () => {
 
       expect(eventService.emit).toHaveBeenCalledTimes(1);
       expect(eventService.emit).toHaveBeenCalledWith(
-        Event.User.PASSWORD_RESET,
+        USER_PASSWORD_RESET,
         updatedUser,
       );
     });
@@ -165,11 +164,11 @@ describe(ForgotPasswordService.name, () => {
 
     beforeEach(async () => {
       const otp = newDocument<Otp>(Otp, OtpSchema, {
-        type: OtpType.userRegistration.name,
+        type: ForgotPasswordService.OTP.TYPE,
         destination,
         password: '987654',
         expiresAt: new Date(
-          Date.now() + OtpType.userRegistration.ttlSeconds * 1000,
+          Date.now() + ForgotPasswordService.OTP.TTL_SECONDS * 1000,
         ),
       });
 
@@ -181,9 +180,9 @@ describe(ForgotPasswordService.name, () => {
     it('calls `MailService::queueSend` with the appropriate arguments', async () => {
       expect(otpService.create).toHaveBeenCalledTimes(1);
       expect(otpService.create).toHaveBeenCalledWith(
-        OtpType.userRegistration.name,
+        ForgotPasswordService.OTP.TYPE,
         destination,
-        OtpType.userRegistration.ttlSeconds,
+        ForgotPasswordService.OTP.TTL_SECONDS,
       );
 
       expect(configurationService.getOrThrow).toHaveBeenCalledTimes(1);

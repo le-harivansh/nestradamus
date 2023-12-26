@@ -9,7 +9,7 @@ import Mail from 'nodemailer/lib/mailer';
 import { ConfigurationService } from '@/_application/_configuration/service/configuration.service';
 import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
 
-import { MAIL_QUEUE, MailQueue, TRANSPORTER } from '../constant';
+import { MAIL_QUEUE, MailJob, TRANSPORTER } from '../constant';
 import { TemplateOptions } from '../helper';
 import { MailService } from './mail.service';
 
@@ -252,7 +252,7 @@ describe(MailService.name, () => {
       await mailService.queueSend(mailOptions, html, text);
 
       expect(mailQueue.add).toHaveBeenCalledTimes(1);
-      expect(mailQueue.add).toHaveBeenCalledWith(MailQueue.SEND_MAIL, {
+      expect(mailQueue.add).toHaveBeenCalledWith(MailJob.SEND_MAIL, {
         options: mailOptions,
         html,
         text,

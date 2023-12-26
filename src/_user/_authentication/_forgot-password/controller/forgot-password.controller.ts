@@ -13,14 +13,14 @@ export class ForgotPasswordController {
     private readonly forgotPasswordService: ForgotPasswordService,
     private readonly loggerService: WinstonLoggerService,
   ) {
-    this.loggerService.setContext(ForgotPasswordController.name);
+    this.loggerService.setContext(`${ForgotPasswordController.name}[User]`);
   }
 
   @Post('send-otp')
   @Throttle({ default: { limit: 1, ttl: seconds(30) } })
   @HttpCode(HttpStatus.NO_CONTENT)
   async sendOtp(@Body() { destination }: SendOtpDto): Promise<void> {
-    this.loggerService.log('Received forgot-password OTP request', {
+    this.loggerService.log('Received user forgot-password OTP request', {
       destination,
     });
 
@@ -32,7 +32,7 @@ export class ForgotPasswordController {
   async resetPassword(
     @Body() { email, password, otp }: ResetPasswordDto,
   ): Promise<void> {
-    this.loggerService.log('Received password-reset request', { email });
+    this.loggerService.log('Received user password-reset request', { email });
 
     await this.forgotPasswordService.resetPassword(email, password, otp);
   }

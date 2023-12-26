@@ -20,7 +20,7 @@
     "test:debug": "yarn node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest.config.ts --runInBand",
     "test:all": "yarn run test:unit && yarn run test:cli:unit && yarn run test:e2e",
-    "key:generate": "yarn run ts-node ./cli/script/generate-keys/script.ts --length 64 --env-file .env --env-vars USER_JWT_ACCESS_TOKEN_SECRET USER_JWT_REFRESH_TOKEN_SECRET",
+    "key:generate": "yarn run ts-node ./cli/script/generate-keys/script.ts --length 64 --env-file .env --env-vars USER_JWT_ACCESS_TOKEN_SECRET USER_JWT_REFRESH_TOKEN_SECRET ADMINISTRATOR_JWT_ACCESS_TOKEN_SECRET ADMINISTRATOR_JWT_REFRESH_TOKEN_SECRET",
     "db:seed": "yarn run ts-node --files --require tsconfig-paths/register ./cli/script/seeder/script.ts",
     "postinstall": "husky install"
   },

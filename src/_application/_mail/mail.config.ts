@@ -1,4 +1,5 @@
 import { registerAs } from '@nestjs/config';
+import { env } from 'node:process';
 import { z } from 'zod';
 
 export const CONFIGURATION_NAMESPACE = 'mail';
@@ -17,10 +18,10 @@ export type MailConfiguration = z.infer<
 
 export default registerAs(CONFIGURATION_NAMESPACE, () =>
   mailConfigurationValidationSchema.parse({
-    host: process.env.MAIL_SMTP_HOST,
-    port: process.env.MAIL_SMTP_PORT,
+    host: env.MAIL_SMTP_HOST,
+    port: env.MAIL_SMTP_PORT,
     default: {
-      from: process.env.MAIL_FROM_ADDRESS,
+      from: env.MAIL_FROM_ADDRESS,
     },
   }),
 );

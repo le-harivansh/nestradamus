@@ -1,11 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
-import { newDocument } from '@/_library/helper';
+import { newDocument } from '@/_library/test.helper';
 import { User, UserSchema } from '@/_user/_user/schema/user.schema';
 import { UserService } from '@/_user/_user/service/user.service';
 
-import { Type } from '../constant';
 import { TokenService } from '../service/token.service';
 import { RefreshController } from './refresh.controller';
 
@@ -48,15 +47,15 @@ describe(RefreshController.name, () => {
   describe.each([
     {
       controllerMethod: 'regenerateAccessToken',
-      tokenType: Type.USER_ACCESS_TOKEN,
+      tokenType: 'access-token',
     },
     {
       controllerMethod: 'regenerateRefreshToken',
-      tokenType: Type.USER_REFRESH_TOKEN,
+      tokenType: 'refresh-token',
     },
   ] as const)('$controllerMethod', ({ controllerMethod, tokenType }) => {
     const authenticatedUser = newDocument<User>(User, UserSchema, {
-      email: 'user@email.com',
+      username: 'user@email.com',
       password: 'P@ssw0rd',
     });
 
@@ -81,7 +80,7 @@ describe(RefreshController.name, () => {
     it('logs the request to generate the specified token', () => {
       expect(loggerService.log).toHaveBeenCalledTimes(1);
       expect(loggerService.log).toHaveBeenCalledWith(
-        expect.stringMatching(/^Request to generate (access|refresh)-token$/),
+        expect.stringMatching(`Request to generate ${tokenType}`),
         authenticatedUser,
       );
     });

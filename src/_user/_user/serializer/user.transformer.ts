@@ -10,7 +10,7 @@ export class UserTransformer extends User {
   readonly id!: string;
 
   @Expose()
-  declare readonly email: string;
+  declare readonly username: string;
 
   @Exclude()
   declare readonly password: string;

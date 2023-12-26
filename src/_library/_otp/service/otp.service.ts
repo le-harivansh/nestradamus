@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { verify } from 'argon2';
-import { Model } from 'mongoose';
+import { HydratedDocument, Model } from 'mongoose';
 
 import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
+import { generateNumericPasswordOfLength } from '@/_library/helper';
 
-import { Otp, OtpDocument } from '../schema/otp.schema';
-import type { OtpTypeName } from '../type';
+import { Otp } from '../schema/otp.schema';
 
 @Injectable()
 export class OtpService {
@@ -20,11 +20,11 @@ export class OtpService {
   }
 
   async create(
-    type: OtpTypeName,
+    type: string,
     destination: string,
     ttlSeconds: number,
-  ): Promise<OtpDocument> {
-    const password = OtpService.generateNumericPassword(
+  ): Promise<HydratedDocument<Otp>> {
+    const password = generateNumericPasswordOfLength(
       OtpService.PASSWORD_LENGTH,
     );
 
@@ -46,7 +46,7 @@ export class OtpService {
 
   async isValid(
     password: string,
-    { type, destination }: { type: OtpTypeName; destination: string },
+    { type, destination }: { type: string; destination: string },
   ): Promise<boolean> {
     const retrievedOtps = await this.otpModel
       .find({ type, destination, expiresAt: { $gt: new Date() } })
@@ -67,7 +67,7 @@ export class OtpService {
 
     /**
      * If an OTP has been validated, it - and similar ones
-     * (i.e.: ones having the same `type` & `destination`) - are removed to
+     * (i.e.: ones having the same `type` & `destination`) - is removed to
      * prevent replay attacks.
      */
     if (atLeastOneMatchingOtpIsValid) {
@@ -87,13 +87,5 @@ export class OtpService {
     );
 
     return atLeastOneMatchingOtpIsValid;
-  }
-
-  static generateNumericPassword(length: number): string {
-    const numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
-
-    return [...Array(length)]
-      .map(() => numbers[Math.floor(Math.random() * numbers.length)])
-      .join('');
   }
 }

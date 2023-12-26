@@ -1,4 +1,8 @@
 import {
+  AdministratorAuthenticationTokensConfiguration,
+  CONFIGURATION_NAMESPACE as administratorTokensConfigurationNamespace,
+} from '@/_administration/_authentication/_token/token.config';
+import {
   DatabaseConfiguration,
   CONFIGURATION_NAMESPACE as databaseConfigurationNamespace,
 } from '@/_application/_database/database.config';
@@ -15,8 +19,8 @@ import {
   CONFIGURATION_NAMESPACE as applicationConfigurationNamespace,
 } from '@/_application/application.config';
 import {
-  AuthenticationTokensConfiguration,
-  CONFIGURATION_NAMESPACE as authenticationTokensConfigurationNamespace,
+  UserAuthenticationTokensConfiguration,
+  CONFIGURATION_NAMESPACE as userAuthenticationTokensConfigurationNamespace,
 } from '@/_user/_authentication/_token/token.config';
 
 /**
@@ -39,10 +43,15 @@ export type NamespacedConfiguration =
       typeof queueConfigurationNamespace,
       QueueConfiguration
     > &
-    // Authentication (JWT)
+    // [User] Authentication (JWT)
     FlattenedPrefixedConfiguration<
-      typeof authenticationTokensConfigurationNamespace,
-      AuthenticationTokensConfiguration
+      typeof userAuthenticationTokensConfigurationNamespace,
+      UserAuthenticationTokensConfiguration
+    > &
+    // [Administrator] Authentication (JWT)
+    FlattenedPrefixedConfiguration<
+      typeof administratorTokensConfigurationNamespace,
+      AdministratorAuthenticationTokensConfiguration
     > &
     // Mail
     FlattenedPrefixedConfiguration<

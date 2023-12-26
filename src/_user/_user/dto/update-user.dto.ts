@@ -16,7 +16,7 @@ import { User } from '../schema/user.schema';
 export class UpdateUserDto {
   @IsOptional()
   @IsEmail(undefined, { message: 'A valid email address should be provided.' })
-  @ShouldNotExist(User)
+  @ShouldNotExist(User, 'username')
   readonly email?: string;
 
   @IsOptional()
@@ -52,7 +52,7 @@ export class UpdateUserDto {
   @ValidateIf(({ email, password }: UpdateUserDto) => !(email || password))
   @Transform(() => null)
   @IsNotEmpty({
-    message: 'Provide either an email or a password to be updated.',
+    message: 'Provide either the email or password to be updated.',
   })
   readonly _?: never;
 }

@@ -2,6 +2,8 @@ import { plainToClass } from 'class-transformer';
 import { Document } from 'mongoose';
 import { format } from 'winston';
 
+import { AdministratorSchema } from '@/_administration/_administrator/schema/administrator.schema';
+import { AdministratorTransformer } from '@/_administration/_administrator/serializer/administrator.transformer';
 import { OtpSchema } from '@/_library/_otp/schema/otp.schema';
 import { OtpTransformer } from '@/_library/_otp/serializer/otp.transformer';
 import { UserSchema } from '@/_user/_user/schema/user.schema';
@@ -44,13 +46,18 @@ export function transformParameter(
           excludeExtraneousValues: true,
         });
 
+      case AdministratorSchema:
+        return plainToClass(AdministratorTransformer, parameter.toObject(), {
+          excludeExtraneousValues: true,
+        });
+
       case OtpSchema:
         return plainToClass(OtpTransformer, parameter.toObject(), {
           excludeExtraneousValues: true,
         });
 
       /**
-       * Add cases for other documents that are logged - here.
+       * Add cases for other document schemas that are logged - here.
        */
 
       default:

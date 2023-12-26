@@ -2,6 +2,13 @@ import mailhog, { API, Message, Options } from 'mailhog';
 import { nextTick } from 'node:process';
 
 export class Mailhog {
+  /**
+   * This combination of characters is used as the newline in (Mailhog) emails.
+   *
+   * They are used when querying emails through Mailhog's API.
+   */
+  static readonly NEWLINE = '=\r\n';
+
   readonly api: API;
 
   constructor(options?: Options) {

@@ -12,7 +12,7 @@ import { User } from '@/_user/_user/schema/user.schema';
 
 export class RegistrationDto {
   @IsEmail(undefined, { message: 'A valid email address should be provided.' })
-  @ShouldNotExist(User)
+  @ShouldNotExist(User, 'username')
   readonly email!: string;
 
   @IsStrongPassword(

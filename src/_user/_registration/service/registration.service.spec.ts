@@ -3,16 +3,15 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { ConfigurationService } from '@/_application/_configuration/service/configuration.service';
 import { EventService } from '@/_application/_event/service/event.service';
-import { Event } from '@/_application/_event/type';
 import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
 import { MailService } from '@/_application/_mail/service/mail.service';
 import { Otp, OtpSchema } from '@/_library/_otp/schema/otp.schema';
 import { OtpService } from '@/_library/_otp/service/otp.service';
-import { OtpType } from '@/_library/_otp/type';
-import { newDocument } from '@/_library/helper';
+import { newDocument } from '@/_library/test.helper';
 import { User, UserSchema } from '@/_user/_user/schema/user.schema';
 import { UserService } from '@/_user/_user/service/user.service';
 
+import { USER_REGISTERED } from '../event';
 import { RegistrationService } from './registration.service';
 
 jest.mock('@/_application/_configuration/service/configuration.service');
@@ -24,7 +23,7 @@ jest.mock('@/_library/_otp/service/otp.service');
 
 describe(RegistrationService.name, () => {
   const newUser = newDocument<User>(User, UserSchema, {
-    email: 'user@email.com',
+    username: 'user@email.com',
     password: 'P@ssw0rd',
   });
 
@@ -88,7 +87,7 @@ describe(RegistrationService.name, () => {
         userRegistrationData.otp,
         {
           destination: userRegistrationData.email,
-          type: OtpType.userRegistration.name,
+          type: RegistrationService.OTP.TYPE,
         },
       );
     });
@@ -101,10 +100,10 @@ describe(RegistrationService.name, () => {
       );
 
       expect(userService.create).toHaveBeenCalledTimes(1);
-      expect(userService.create).toHaveBeenCalledWith(
-        userRegistrationData.email,
-        userRegistrationData.password,
-      );
+      expect(userService.create).toHaveBeenCalledWith({
+        username: userRegistrationData.email,
+        password: userRegistrationData.password,
+      });
     });
 
     it('throws a `BadRequestException` if the provided OTP is invalid', async () => {
@@ -119,16 +118,6 @@ describe(RegistrationService.name, () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('returns the created user document', async () => {
-      await expect(
-        registrationService.registerUser(
-          userRegistrationData.email,
-          userRegistrationData.password,
-          userRegistrationData.otp,
-        ),
-      ).resolves.toBe(newUser);
-    });
-
     it('calls `EventService::emit` with the proper arguments', async () => {
       const newUser = await registrationService.registerUser(
         userRegistrationData.email,
@@ -137,10 +126,7 @@ describe(RegistrationService.name, () => {
       );
 
       expect(eventService.emit).toHaveBeenCalledTimes(1);
-      expect(eventService.emit).toHaveBeenCalledWith(
-        Event.User.REGISTERED,
-        newUser,
-      );
+      expect(eventService.emit).toHaveBeenCalledWith(USER_REGISTERED, newUser);
     });
 
     it('logs data about the newly created user', async () => {
@@ -158,22 +144,33 @@ describe(RegistrationService.name, () => {
         newUser,
       );
     });
+
+    it('returns the created user document', async () => {
+      await expect(
+        registrationService.registerUser(
+          userRegistrationData.email,
+          userRegistrationData.password,
+          userRegistrationData.otp,
+        ),
+      ).resolves.toBe(newUser);
+    });
   });
 
   describe('sendVerificationOtpEmail', () => {
     const destination = 'user@email.com';
+    const oneTimePassword = '987654';
 
     beforeEach(async () => {
       const otp = newDocument<Otp>(Otp, OtpSchema, {
-        type: OtpType.userRegistration.name,
+        type: RegistrationService.OTP.TYPE,
         destination,
-        password: '987654',
+        password: oneTimePassword,
         expiresAt: new Date(
-          Date.now() + OtpType.userRegistration.ttlSeconds * 1000,
+          Date.now() + RegistrationService.OTP.TTL_SECONDS * 1000,
         ),
       });
 
-      otpService.create.mockResolvedValueOnce(otp);
+      otpService.create.mockResolvedValue(otp);
 
       await registrationService.sendVerificationOtpEmail(destination);
     });
@@ -181,9 +178,9 @@ describe(RegistrationService.name, () => {
     it('calls `MailService::queueSend` with the appropriate arguments', () => {
       expect(otpService.create).toHaveBeenCalledTimes(1);
       expect(otpService.create).toHaveBeenCalledWith(
-        OtpType.userRegistration.name,
+        RegistrationService.OTP.TYPE,
         destination,
-        OtpType.userRegistration.ttlSeconds,
+        RegistrationService.OTP.TTL_SECONDS,
       );
 
       expect(configurationService.getOrThrow).toHaveBeenCalledTimes(1);
@@ -200,7 +197,7 @@ describe(RegistrationService.name, () => {
         {
           path: expect.any(String),
           variables: {
-            otp: expect.any(String),
+            otp: oneTimePassword,
           },
         },
       );
@@ -223,11 +220,6 @@ describe(RegistrationService.name, () => {
     });
 
     it('calls `MailService::queueSend` with the appropriate arguments', async () => {
-      expect(configurationService.getOrThrow).toHaveBeenCalledTimes(1);
-      expect(configurationService.getOrThrow).toHaveBeenCalledWith(
-        'application.name',
-      );
-
       expect(mailService.queueSend).toHaveBeenCalledTimes(1);
       expect(mailService.queueSend).toHaveBeenCalledWith(
         {
@@ -238,8 +230,6 @@ describe(RegistrationService.name, () => {
           path: expect.any(String),
           variables: {
             email: destination,
-            applicationName:
-              configurationService.getOrThrow('application.name'),
           },
         },
       );

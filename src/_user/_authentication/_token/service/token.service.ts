@@ -1,109 +1,92 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { JwtService, JwtSignOptions } from '@nestjs/jwt';
+import { JwtService } from '@nestjs/jwt';
+import { HydratedDocument } from 'mongoose';
 
 import { ConfigurationService } from '@/_application/_configuration/service/configuration.service';
+import { NamespacedConfiguration } from '@/_application/_configuration/type';
 import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
-import { UserDocument } from '@/_user/_user/schema/user.schema';
-
-import { Type } from '../constant';
-import {
-  AuthenticationJwtPayload,
-  JwtDurationConfigurationKey,
-  JwtSecretConfigurationKey,
-} from '../type';
+import { TokenService as AbstractTokenService } from '@/_library/authentication/service/token.service';
+import { JwtType } from '@/_library/authentication/type';
+import { AuthenticationJwtPayload } from '@/_library/authentication/type';
+import { User } from '@/_user/_user/schema/user.schema';
 
 @Injectable()
-export class TokenService {
-  public readonly JWT_ALGORITHM: Exclude<
-    JwtSignOptions['algorithm'],
-    undefined
-  > = 'HS512';
-  public readonly JWT_ISSUER: string;
-  public readonly JWT_AUDIENCE: string;
-
+export class TokenService extends AbstractTokenService<User> {
   constructor(
+    jwtService: JwtService,
+    loggerService: WinstonLoggerService,
     private readonly configurationService: ConfigurationService,
-    private readonly loggerService: WinstonLoggerService,
-    private readonly jwtService: JwtService,
   ) {
-    this.loggerService.setContext(TokenService.name);
+    loggerService.setContext(`${TokenService.name}[${User.name}]`);
 
-    this.JWT_AUDIENCE = this.JWT_ISSUER = this.configurationService
-      .getOrThrow('application.name')
-      .toLowerCase();
+    const applicationName = configurationService.getOrThrow('application.name');
+
+    super(
+      jwtService,
+      {
+        issuer: applicationName,
+        audience: applicationName,
+      },
+      loggerService,
+    );
   }
 
-  public generateAuthenticationJwt(
-    type: Type,
-    user: UserDocument,
+  override generateAuthenticationJwt(
+    type: JwtType,
+    authenticatableEntity: HydratedDocument<User>,
   ): { token: string; expiresAt: number } {
-    const { jwtDurationConfigurationKey, jwtSecretConfigurationKey } =
-      this.getConfigurationKeysForTokenType(type);
-    const payload: AuthenticationJwtPayload = { id: user._id.toString() };
+    const { durationMs, secret } =
+      this.getConfigurationValuesForTokenOfType(type);
 
-    const durationSeconds = Math.floor(
-      this.configurationService.getOrThrow(jwtDurationConfigurationKey) / 1000,
+    return this.generateJwt(
+      { id: authenticatableEntity._id.toString() },
+      {
+        durationMs,
+        secret,
+      },
     );
-    const secret = this.configurationService.getOrThrow(
-      jwtSecretConfigurationKey,
-    );
-
-    const token = this.jwtService.sign(payload, {
-      algorithm: this.JWT_ALGORITHM,
-      issuer: this.JWT_ISSUER,
-      audience: this.JWT_AUDIENCE,
-      secret: secret,
-      notBefore: 0,
-      expiresIn: durationSeconds,
-    });
-
-    this.loggerService.log('JWT generated', { type, user });
-
-    const expiresAt = Date.now() + durationSeconds * 1000;
-
-    return { token, expiresAt };
   }
 
-  public validateAuthenticationJwt(
-    type: Type,
+  override validateAuthenticationJwt(
+    type: JwtType,
     jwt: string,
   ): AuthenticationJwtPayload {
-    const { jwtSecretConfigurationKey } =
-      this.getConfigurationKeysForTokenType(type);
+    const { secret } = this.getConfigurationValuesForTokenOfType(type);
 
-    const payload = this.jwtService.verify<
-      AuthenticationJwtPayload & { [key: string]: unknown }
-    >(jwt, {
-      algorithms: [this.JWT_ALGORITHM],
-      issuer: this.JWT_ISSUER,
-      audience: this.JWT_AUDIENCE,
-      secret: this.configurationService.getOrThrow(jwtSecretConfigurationKey),
-    });
+    const decryptedJwt = this.validateJwt(
+      jwt,
+      secret,
+    ) as AuthenticationJwtPayload & { [key: string]: unknown };
 
-    this.loggerService.log('Validated authentication JWT', {
-      type,
-      payload,
-    });
-
-    return { id: payload.id };
+    return {
+      id: decryptedJwt.id,
+    };
   }
 
-  private getConfigurationKeysForTokenType(type: Type): {
-    jwtDurationConfigurationKey: JwtDurationConfigurationKey;
-    jwtSecretConfigurationKey: JwtSecretConfigurationKey;
+  private getConfigurationValuesForTokenOfType(type: JwtType): {
+    durationMs: number;
+    secret: string;
   } {
-    let jwtDurationConfigurationKey: JwtDurationConfigurationKey;
-    let jwtSecretConfigurationKey: JwtSecretConfigurationKey;
+    let jwtDurationConfigurationKey: Extract<
+      keyof NamespacedConfiguration,
+      | 'user.authentication.jwt.accessToken.duration'
+      | 'user.authentication.jwt.refreshToken.duration'
+    >;
+    let jwtSecretConfigurationKey: Extract<
+      keyof NamespacedConfiguration,
+      | 'user.authentication.jwt.accessToken.secret'
+      | 'user.authentication.jwt.refreshToken.secret'
+    >;
 
     switch (type) {
-      case Type.USER_ACCESS_TOKEN:
+      case 'access-token':
         jwtDurationConfigurationKey =
           'user.authentication.jwt.accessToken.duration';
         jwtSecretConfigurationKey =
           'user.authentication.jwt.accessToken.secret';
         break;
 
-      case Type.USER_REFRESH_TOKEN:
+      case 'refresh-token':
         jwtDurationConfigurationKey =
           'user.authentication.jwt.refreshToken.duration';
         jwtSecretConfigurationKey =
@@ -112,13 +95,15 @@ export class TokenService {
 
       default:
         throw new InternalServerErrorException(
-          `Invalid JWT type '${type}' provided.`,
+          `Invalid type: '${type}' provided.`,
         );
     }
 
     return {
-      jwtDurationConfigurationKey,
-      jwtSecretConfigurationKey,
+      durationMs: this.configurationService.getOrThrow(
+        jwtDurationConfigurationKey,
+      ),
+      secret: this.configurationService.getOrThrow(jwtSecretConfigurationKey),
     };
   }
 }

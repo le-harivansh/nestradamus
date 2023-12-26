@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
-import { newDocument } from '@/_library/helper';
+import { newDocument } from '@/_library/test.helper';
 import { User, UserSchema } from '@/_user/_user/schema/user.schema';
 
 import { ForgotPasswordService } from '../service/forgot-password.service';
@@ -35,7 +35,7 @@ describe(PasswordResetListener.name, () => {
 
   describe('handleUserPasswordReset', () => {
     const user = newDocument<User>(User, UserSchema, {
-      email: 'user@email.com',
+      username: 'user@email.com',
       password: 'P@ssw0rd',
     });
 
@@ -52,14 +52,14 @@ describe(PasswordResetListener.name, () => {
         forgotPasswordService.sendPasswordResetEmail,
       ).toHaveBeenCalledTimes(1);
       expect(forgotPasswordService.sendPasswordResetEmail).toHaveBeenCalledWith(
-        user.get('email'),
+        user.get('username'),
       );
     });
 
     it('calls `WinstonLoggerService::log` with the passed in user', async () => {
       expect(loggerService.log).toHaveBeenCalledTimes(1);
       expect(loggerService.log).toHaveBeenCalledWith(
-        'Handling password-reset',
+        'Handling user password-reset',
         user,
       );
     });

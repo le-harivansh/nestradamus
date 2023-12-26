@@ -1,4 +1,5 @@
 import { registerAs } from '@nestjs/config';
+import { env } from 'node:process';
 import { z } from 'zod';
 
 export const CONFIGURATION_NAMESPACE = 'queue';
@@ -17,10 +18,10 @@ export type QueueConfiguration = z.infer<
 
 export default registerAs(CONFIGURATION_NAMESPACE, () =>
   queueConfigurationValidationSchema.parse({
-    prefix: process.env.QUEUE_PREFIX,
+    prefix: env.QUEUE_PREFIX,
     redis: {
-      host: process.env.QUEUE_REDIS_HOST,
-      port: process.env.QUEUE_REDIS_PORT,
+      host: env.QUEUE_REDIS_HOST,
+      port: env.QUEUE_REDIS_PORT,
     },
   }),
 );

@@ -48,7 +48,7 @@ describe(ForgotPasswordController.name, () => {
     it('logs the forgot-password OTP request data', () => {
       expect(loggerService.log).toHaveBeenCalledTimes(1);
       expect(loggerService.log).toHaveBeenCalledWith(
-        'Received forgot-password OTP request',
+        'Received user forgot-password OTP request',
         { destination },
       );
     });
@@ -77,7 +77,7 @@ describe(ForgotPasswordController.name, () => {
     it('logs the password-reset request data', () => {
       expect(loggerService.log).toHaveBeenCalledTimes(1);
       expect(loggerService.log).toHaveBeenCalledWith(
-        'Received password-reset request',
+        'Received user password-reset request',
         {
           email: resetPasswordDto.email,
         },

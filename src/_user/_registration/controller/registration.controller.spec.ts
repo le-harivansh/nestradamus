@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
-import { newDocument } from '@/_library/helper';
+import { newDocument } from '@/_library/test.helper';
 import { User, UserSchema } from '@/_user/_user/schema/user.schema';
 
 import { RegistrationDto } from '../dto/registration.dto';
@@ -42,18 +42,18 @@ describe(RegistrationController.name, () => {
       await registrationController.sendOtp({ destination });
     });
 
+    it('logs the registration OTP request', () => {
+      expect(loggerService.log).toHaveBeenCalledTimes(1);
+      expect(loggerService.log).toHaveBeenCalledWith(
+        'Request to send user-registration OTP',
+        { destination },
+      );
+    });
+
     it('calls `RegistrationService::sendOtpEmail` with the provided destination', () => {
       expect(registrationService.sendVerificationOtpEmail).toBeCalledTimes(1);
       expect(registrationService.sendVerificationOtpEmail).toBeCalledWith(
         destination,
-      );
-    });
-
-    it('logs the registration OTP request', () => {
-      expect(loggerService.log).toHaveBeenCalledTimes(1);
-      expect(loggerService.log).toHaveBeenCalledWith(
-        'Request to send registration OTP',
-        { destination },
       );
     });
   });
@@ -76,9 +76,19 @@ describe(RegistrationController.name, () => {
       );
     });
 
+    it('logs the user registration requeest', async () => {
+      await registrationController.register(registrationDto);
+
+      expect(loggerService.log).toHaveBeenCalledTimes(1);
+      expect(loggerService.log).toHaveBeenCalledWith(
+        'Request to register user',
+        { email: registrationDto.email },
+      );
+    });
+
     it('returns the created user document', async () => {
       const newUser = newDocument<User>(User, UserSchema, {
-        email: 'user@email.com',
+        username: 'user@email.com',
         password: 'P@ssw0rd',
       });
 
@@ -88,16 +98,6 @@ describe(RegistrationController.name, () => {
         await registrationController.register(registrationDto);
 
       expect(newUserDocument).toBe(newUser);
-    });
-
-    it('logs the user registration requeest', async () => {
-      await registrationController.register(registrationDto);
-
-      expect(loggerService.log).toHaveBeenCalledTimes(1);
-      expect(loggerService.log).toHaveBeenCalledWith(
-        'Request to register user',
-        { email: registrationDto.email },
-      );
     });
   });
 });

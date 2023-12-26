@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
-import { newDocument } from '@/_library/helper';
+import { newDocument } from '@/_library/test.helper';
 import { User, UserSchema } from '@/_user/_user/schema/user.schema';
 
 import { RegistrationService } from '../service/registration.service';
@@ -39,7 +39,7 @@ describe(RegistrationListener.name, () => {
 
   describe('handleUserRegistration', () => {
     const user = newDocument<User>(User, UserSchema, {
-      email: 'user@email.com',
+      username: 'user@email.com',
       password: 'P@ssw0rd',
     });
 
@@ -50,7 +50,7 @@ describe(RegistrationListener.name, () => {
     it('calls `RegistrationService::sendWelcomeEmail` with the newly registered `User`', async () => {
       expect(registrationService.sendWelcomeEmail).toHaveBeenCalledTimes(1);
       expect(registrationService.sendWelcomeEmail).toHaveBeenCalledWith(
-        user.get('email'),
+        user.get('username'),
       );
     });
 

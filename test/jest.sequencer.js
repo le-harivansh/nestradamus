@@ -18,7 +18,29 @@ const Sequencer = require('@jest/test-sequencer').default;
  */
 class CustomSequencer extends Sequencer {
   sort(tests) {
-    return [...tests].sort((a, b) => (a.path < b.path ? -1 : 1));
+    return [...tests].sort(({ path: a }, { path: b }) => {
+      a = CustomSequencer.#parsePath(a);
+      b = CustomSequencer.#parsePath(b);
+
+      return a < b ? -1 : a > b ? 1 : 0;
+    });
+  }
+
+  static #parsePath(path) {
+    path = path.replace(`${__dirname}/`, '');
+
+    /**
+     * If the test files are in the `helper` directory, we want to run them
+     * first. Hence the `00_` prefix on the path.
+     *
+     * We don't care about the order of the tests in that directory. That's why
+     * the tests in the `helper` directory are not prefixed with a number.
+     */
+    if (path.startsWith('helper/')) {
+      path = `00_${path}`;
+    }
+
+    return path;
   }
 }
 

@@ -1,5 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { env } from 'node:process';
 
 import { ConfigurationService } from './service/configuration.service';
 
@@ -8,8 +9,8 @@ import { ConfigurationService } from './service/configuration.service';
   imports: [
     ConfigModule.forRoot({
       expandVariables: true,
-      envFilePath: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
-      cache: process.env.NODE_ENV === 'production',
+      envFilePath: env.NODE_ENV === 'test' ? '.env.test' : '.env',
+      cache: env.NODE_ENV === 'production',
     }),
   ],
   providers: [ConfigurationService],

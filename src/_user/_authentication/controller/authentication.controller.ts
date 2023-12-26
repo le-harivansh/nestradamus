@@ -2,12 +2,11 @@ import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 
 import { WinstonLoggerService } from '@/_application/_logger/service/winston-logger.service';
 
-import { Type } from '../_token/constant';
 import { TokenService } from '../_token/service/token.service';
 import { LoginDto } from '../dto/login.dto';
 import { AuthenticationService } from '../service/authentication.service';
 
-@Controller()
+@Controller('login')
 export class AuthenticationController {
   constructor(
     private readonly tokenService: TokenService,
@@ -17,12 +16,12 @@ export class AuthenticationController {
     this.loggerService.setContext(AuthenticationController.name);
   }
 
-  @Post('login')
+  @Post()
   @HttpCode(HttpStatus.OK)
-  async login(@Body() { email, password }: LoginDto) {
+  async login(@Body() { email: username, password }: LoginDto) {
     const authenticatedUser =
-      await this.authenticationService.authenticateUserUsingCredentials(
-        email,
+      await this.authenticationService.authenticateUsingCredentials(
+        username,
         password,
       );
 
@@ -30,11 +29,11 @@ export class AuthenticationController {
 
     return {
       accessToken: this.tokenService.generateAuthenticationJwt(
-        Type.USER_ACCESS_TOKEN,
+        'access-token',
         authenticatedUser,
       ),
       refreshToken: this.tokenService.generateAuthenticationJwt(
-        Type.USER_REFRESH_TOKEN,
+        'refresh-token',
         authenticatedUser,
       ),
     };

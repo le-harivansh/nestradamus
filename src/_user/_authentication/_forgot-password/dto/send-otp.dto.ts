@@ -5,6 +5,6 @@ import { User } from '@/_user/_user/schema/user.schema';
 
 export class SendOtpDto {
   @IsEmail(undefined, { message: 'A valid email address should be provided.' })
-  @ShouldExist(User, 'email')
+  @ShouldExist(User, 'username')
   readonly destination!: string;
 }
