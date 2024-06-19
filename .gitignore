@@ -1,15 +1,8 @@
 # Compiled output
 /dist
+/build
 
-# Environment variables
-.env
-.env.test
-
-# Cache files
-.eslintcache
-.prettiercache
-
-# Yarn
+# Yarn (berry)
 .yarn/*
 !.yarn/cache
 !.yarn/patches
@@ -32,17 +25,7 @@ lerna-debug.log*
 
 # Tests
 /coverage
-/cli/coverage
 /.nyc_output
-
-# IDEs and editors
-/.idea
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
 
 # IDE - VSCode
 .vscode/*
@@ -50,3 +33,32 @@ lerna-debug.log*
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+
+# dotenv environment variable files
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+# temp directory
+.temp
+.tmp
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Diagnostic reports (https://nodejs.org/api/report.html)
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Eslint
+.eslintcache
+
+# Prettier
+.prettiercache
+
+# Todo
+todo.md

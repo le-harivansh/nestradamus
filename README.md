@@ -21,7 +21,13 @@ The following features are provided in this project:
 Package management is done using the [Plug 'n' Play](https://yarnpkg.com/features/pnp) feature of [Yarn berry](https://yarnpkg.com).
 
 Therefore, the dependencies of the project are commited with the project. In essence, to install the application, the project need only be
-cloned, and the dependencies - built. i.e.: `git clone ...`; `cd` into the project directory; then `yarn`.
+cloned, and the dependencies - built. i.e.:
+
+```shell
+git clone
+cd nestradamus
+yarn
+```
 
 ### Development environment
 

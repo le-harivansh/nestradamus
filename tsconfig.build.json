@@ -1,11 +1,12 @@
 {
   "extends": "./tsconfig.json",
   "exclude": [
-    "cli",
     "test",
     "dist",
     "**/*.spec.ts",
     "**/*.test.ts",
-    "jest.config.ts"
+    "jest.config.ts",
+    "jest.e2e-config.ts",
+    "jest.e2e-sequencer.js"
   ]
 }

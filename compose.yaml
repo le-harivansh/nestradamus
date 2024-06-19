@@ -1,34 +1,15 @@
 services:
   database:
     image: mongo:latest
-    restart: always
+    restart: unless-stopped
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${DATABASE_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${DATABASE_PASSWORD}
-      MONGO_INITDB_DATABASE: ${DATABASE_NAME}
+      MONGO_INITDB_ROOT_USERNAME: ${__MONGODB_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${__MONGODB_PASSWORD}
+      MONGO_INITDB_DATABASE: ${__MONGODB_DATABASE_NAME}
     ports:
-      - '${DATABASE_PORT}:27017'
+      - '${__MONGODB_PORT}:27017'
     volumes:
       - database:/data/db
 
-  redis:
-    image: redis
-    restart: always
-    ports:
-      - '${REDIS_PORT}:6379'
-    volumes:
-      - redis:/data
-
-  mail:
-    image: mailhog/mailhog:latest
-    restart: always
-    ports:
-      - '${MAIL_SMTP_PORT}:1025'
-      - '8025:8025'
-    volumes:
-      - mail:/maildir
-
 volumes:
   database:
-  redis:
-  mail:

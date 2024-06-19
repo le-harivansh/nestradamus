@@ -1,7 +1,8 @@
 module.exports = {
   '*.{js,ts}': [
-    'eslint --fix',
-    'prettier --write --cache-location ./.prettiercache',
+    'eslint --cache --ignore-pattern .husky,.vscode,.yarn --fix',
+    'prettier --cache --cache-location ./.prettiercache --write',
   ],
-  '*.{json,md}': 'prettier --write --cache-location ./.prettiercache',
+  '*.{json,md,yml,yaml}':
+    'prettier --cache --cache-location ./.prettiercache --write',
 };

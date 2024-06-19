@@ -1,9 +1,6 @@
 # compiled output
 /dist
 
-# IDE - VSCode
-.vscode
-
 # Yarn Berry
 .yarn
 .pnp.*
@@ -11,3 +8,6 @@ yarn.lock
 
 # Husky
 .husky
+
+# IDE - VSCode
+.vscode

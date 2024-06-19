@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "declaration": false,
+    "outDir": "../../dist/apps/administration"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["**/*.spec.ts"]
+}

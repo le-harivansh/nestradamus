@@ -1,14 +1,10 @@
 {
   "compilerOptions": {
-    "paths": {
-      "@/*": ["./src/*"],
-      "@cli/*": ["./cli/*"]
-    },
     "module": "commonjs",
     "declaration": true,
     "removeComments": true,
-    "esModuleInterop": true,
     "emitDecoratorMetadata": true,
+    "esModuleInterop": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
     "target": "ESNext",
@@ -17,18 +13,25 @@
     "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": false,
+    "forceConsistentCasingInFileNames": true,
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
-    "noPropertyAccessFromIndexSignature": true,
+    "exactOptionalPropertyTypes": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": true,
-    "noUnusedParameters": true,
     "noImplicitOverride": true,
     "noImplicitReturns": true,
-    "noImplicitThis": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noUncheckedIndexedAccess": true,
     "noUnusedLocals": true,
-    "noImplicitAny": true,
-    "strict": true
+    "noUnusedParameters": true,
+    "strict": true,
+    "paths": {
+      "@application/authentication": ["libs/authentication/src"],
+      "@application/authentication/*": ["libs/authentication/src/*"],
+      "@application/configuration": ["libs/configuration/src"],
+      "@application/configuration/*": ["libs/configuration/src/*"],
+      "@application/database": ["libs/database/src"],
+      "@application/database/*": ["libs/database/src/*"]
+    }
   }
 }
