@@ -25,7 +25,7 @@ describe(`${TokenRefreshController.name} (e2e)`, () => {
         password: authenticatedUser.password,
       },
       application,
-      `/${authenticationModuleConfiguration.routes.login}`,
+      `/${authenticationModuleConfiguration.routes.login.withCredentials}`,
       authenticationModuleConfiguration.accessToken.cookieName,
       authenticationModuleConfiguration.refreshToken.cookieName,
     );

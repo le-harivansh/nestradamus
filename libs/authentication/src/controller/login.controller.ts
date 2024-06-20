@@ -35,14 +35,14 @@ export class LoginController {
      */
 
     // Login route
-    Post(this.authenticationModuleOptions.routes.login)(
+    Post(this.authenticationModuleOptions.routes.login.withCredentials)(
       this,
       LoginController.prototype.login.name,
       Object.getOwnPropertyDescriptor(Object.getPrototypeOf(this), LoginController.prototype.login.name)!,
     );
 
     // Logout route
-    Delete(this.authenticationModuleOptions.routes.login)(
+    Delete(this.authenticationModuleOptions.routes.login.withCredentials)(
       this,
       LoginController.prototype.logout.name,
       Object.getOwnPropertyDescriptor(Object.getPrototypeOf(this), LoginController.prototype.logout.name)!,

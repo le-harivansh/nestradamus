@@ -64,7 +64,7 @@ export class AuthenticationModule
          * using the user credentials to generate an access-token for the user.
          */
         {
-          path: this.authenticationModuleOptions.routes.login,
+          path: this.authenticationModuleOptions.routes.login.withCredentials,
           method: RequestMethod.POST,
         },
 

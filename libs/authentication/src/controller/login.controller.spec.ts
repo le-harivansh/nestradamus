@@ -15,7 +15,7 @@ describe(LoginController.name, () => {
   const response = {} as Response;
 
   const authenticationModuleOptions = {
-    routes: { login: 'login' },
+    routes: { login: { withCredentials: 'login' } },
   };
 
   let loginController: LoginController;

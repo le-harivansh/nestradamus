@@ -14,7 +14,9 @@ export const authenticatedUser = {
 
 export const authenticationModuleConfiguration: AuthenticationModuleOptions = {
   routes: {
-    login: 'login',
+    login: {
+      withCredentials: 'login',
+    },
     refresh: {
       accessToken: 'token-refresh/access-token',
       refreshToken: 'token-refresh/refresh-token',

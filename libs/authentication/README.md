@@ -53,7 +53,9 @@ AuthenticationLibraryModule.forRootAsync({
   inject: [ConfigurationService],
   useFactory: (configurationService: ConfigurationService) => ({
     routes: {
-      login: 'login',
+      login: {
+        withCredentials: 'login',
+      },
       refresh: {
         accessToken: 'token-refresh/access-token',
         refreshToken: 'token-refresh/refresh-token',

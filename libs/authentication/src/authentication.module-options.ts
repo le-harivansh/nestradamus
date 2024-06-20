@@ -21,13 +21,20 @@ export const authenticationModuleOptionsValidationSchema = z.object({
    */
   routes: z.object({
     /**
-     * This is the route where the user credentials in the form of a POST
-     * request with a body having the shape:
-     * `{ "username": "...", "password": "***" }`.
-     *
-     * A DELETE request can also be used on this route to "logout" the user.
+     * This configuration block defines all the "login" routes for the
+     * application.
      */
-    login: z.string().min(1),
+    login: z.object({
+      /**
+       * This is the route where the user credentials in the form of a POST
+       * request with a body having the shape:
+       * `{ "username": "...", "password": "***" }`
+       * is sent to login/authenticate the user.
+       *
+       * A DELETE request can also be used on this route to logout/deauthenticate the user.
+       */
+      withCredentials: z.string().min(1),
+    }),
 
     /**
      * This configuration block defines the "token-refresh" routes of the
