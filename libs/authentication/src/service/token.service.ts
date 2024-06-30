@@ -4,6 +4,8 @@ import { CookieOptions } from 'express';
 
 import { AUTHENTICATION_MODULE_OPTIONS_TOKEN } from '../authentication.module-definition';
 import { AuthenticationModuleOptions } from '../authentication.module-options';
+import { JwtPayload } from '../interface/jwt-payload.interface';
+import { UserIdExtractorService } from './user-id-extractor.service';
 
 @Injectable()
 export class TokenService {
@@ -21,12 +23,13 @@ export class TokenService {
     @Inject(AUTHENTICATION_MODULE_OPTIONS_TOKEN)
     private readonly authenticationModuleOptions: AuthenticationModuleOptions,
 
+    private readonly userIdExtractorService: UserIdExtractorService,
     private readonly jwtService: JwtService,
   ) {}
 
-  createAccessTokenForUserWithId(id: string): string {
+  createAccessTokenForUser(user: unknown): string {
     return this.jwtService.sign(
-      { id },
+      { id: this.userIdExtractorService.extractId(user) } as JwtPayload,
       {
         algorithm: this.authenticationModuleOptions.jwt.algorithm,
         issuer: this.authenticationModuleOptions.jwt.issuer,
@@ -40,23 +43,23 @@ export class TokenService {
     );
   }
 
-  validateAccessToken(jwt: string): string {
+  validateAccessToken(jwt: string): JwtPayload {
     try {
-      return this.jwtService.verify<{ id: string }>(jwt, {
+      return this.jwtService.verify<JwtPayload>(jwt, {
         algorithms: [this.authenticationModuleOptions.jwt.algorithm],
         issuer: this.authenticationModuleOptions.jwt.issuer,
         audience: this.authenticationModuleOptions.jwt.audience,
         subject: TokenService.ACCESS_TOKEN_JWT_SUBJECT,
         secret: this.authenticationModuleOptions.jwt.secret,
-      }).id;
+      });
     } catch {
       throw new UnauthorizedException('Invalid access-token.');
     }
   }
 
-  createRefreshTokenForUserWithId(id: string): string {
+  createRefreshTokenForUser(user: unknown): string {
     return this.jwtService.sign(
-      { id },
+      { id: this.userIdExtractorService.extractId(user) } as JwtPayload,
       {
         algorithm: this.authenticationModuleOptions.jwt.algorithm,
         issuer: this.authenticationModuleOptions.jwt.issuer,
@@ -70,15 +73,15 @@ export class TokenService {
     );
   }
 
-  validateRefreshToken(jwt: string): string {
+  validateRefreshToken(jwt: string): JwtPayload {
     try {
-      return this.jwtService.verify<{ id: string }>(jwt, {
+      return this.jwtService.verify<JwtPayload>(jwt, {
         algorithms: [this.authenticationModuleOptions.jwt.algorithm],
         issuer: this.authenticationModuleOptions.jwt.issuer,
         audience: this.authenticationModuleOptions.jwt.audience,
         subject: TokenService.REFRESH_TOKEN_JWT_SUBJECT,
         secret: this.authenticationModuleOptions.jwt.secret,
-      }).id;
+      });
     } catch {
       throw new UnauthorizedException('Invalid refresh-token.');
     }

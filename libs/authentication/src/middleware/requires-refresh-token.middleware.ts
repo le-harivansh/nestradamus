@@ -22,7 +22,7 @@ export class RequiresRefreshTokenMiddleware implements NestMiddleware {
   ) {}
 
   async use(request: Request, _response: Response, next: () => void) {
-    const authenticatedUserId = this.tokenService.validateRefreshToken(
+    const { id: authenticatedUserId } = this.tokenService.validateRefreshToken(
       request.signedCookies[
         this.authenticationModuleOptions.refreshToken.cookieName
       ],

@@ -7,6 +7,7 @@ import { AuthenticationModuleOptions } from '../authentication.module-options';
 import { TokenService } from '../service/token.service';
 import { UserResolverService } from '../service/user-resolver.service';
 import { RequiresAccessTokenMiddleware } from './requires-access-token.middleware';
+import { ObjectId } from 'mongodb';
 
 jest.mock('../service/user-resolver.service');
 jest.mock('../service/token.service');
@@ -53,7 +54,7 @@ describe(RequiresAccessTokenMiddleware.name, () => {
 
   describe(RequiresAccessTokenMiddleware.prototype.use.name, () => {
     const resolvedUser = Symbol('Resolved user');
-    const authenticatedUserId = 'User-Id';
+    const accessTokenPayload = { id: new ObjectId().toString() }
     const jwtStoredInCookie = 'JWT access-token';
     const request = {
       signedCookies: {
@@ -65,7 +66,7 @@ describe(RequiresAccessTokenMiddleware.name, () => {
 
     beforeAll(() => {
       userResolverService.resolveById.mockResolvedValue(resolvedUser);
-      tokenService.validateAccessToken.mockReturnValue(authenticatedUserId);
+      tokenService.validateAccessToken.mockReturnValue(accessTokenPayload);
     });
 
     afterEach(() => {
@@ -83,13 +84,11 @@ describe(RequiresAccessTokenMiddleware.name, () => {
       );
     });
 
-    it(`calls '${UserResolverService.name}::${UserResolverService.prototype.resolveById.name}' to retrieve the user from the database - with the provided "id" from the request`, async () => {
+    it(`calls '${UserResolverService.name}::${UserResolverService.prototype.resolveById.name}' to retrieve the user from the database - with the "id" from the JWT`, async () => {
       await accessTokenMiddleware.use(request, response, next);
 
       expect(userResolverService.resolveById).toHaveBeenCalledTimes(1);
-      expect(userResolverService.resolveById).toHaveBeenCalledWith(
-        authenticatedUserId,
-      );
+      expect(userResolverService.resolveById).toHaveBeenCalledWith(accessTokenPayload.id);
     });
 
     it(`adds the resolved user to the '${REQUEST_PROPERTY_HOLDING_AUTHENTICATED_USER}' property of the 'request' object`, async () => {

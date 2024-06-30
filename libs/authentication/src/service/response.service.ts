@@ -1,6 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { Response } from "express";
-import { UserIdExtractorService } from "./user-id-extractor.service";
 import { AuthenticationModuleOptions } from "../authentication.module-options";
 import { TokenService } from "./token.service";
 import { AUTHENTICATION_MODULE_OPTIONS_TOKEN } from "../authentication.module-definition";
@@ -11,16 +10,13 @@ export class ResponseService {
     @Inject(AUTHENTICATION_MODULE_OPTIONS_TOKEN)
     private readonly authenticationModuleOptions: AuthenticationModuleOptions,
 
-    private readonly userIdExtractorService: UserIdExtractorService,
     private readonly tokenService: TokenService
   ) {}
 
   setAccessTokenCookieForUserInResponse(user: unknown, response: Response): void {
-    const userId = this.userIdExtractorService.extractId(user);
-
     response.cookie(
       this.authenticationModuleOptions.accessToken.cookieName,
-      this.tokenService.createAccessTokenForUserWithId(userId),
+      this.tokenService.createAccessTokenForUser(user),
       {
         ...TokenService.COOKIE_OPTIONS,
         maxAge:
@@ -30,11 +26,9 @@ export class ResponseService {
   }
 
   setRefreshTokenCookieForUserInResponse(user: unknown, response: Response): void {
-    const userId = this.userIdExtractorService.extractId(user);
-
     response.cookie(
       this.authenticationModuleOptions.refreshToken.cookieName,
-      this.tokenService.createRefreshTokenForUserWithId(userId),
+      this.tokenService.createRefreshTokenForUser(user),
       {
         ...TokenService.COOKIE_OPTIONS,
         maxAge:

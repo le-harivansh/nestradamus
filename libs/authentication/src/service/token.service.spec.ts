@@ -5,7 +5,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AUTHENTICATION_MODULE_OPTIONS_TOKEN } from '../authentication.module-definition';
 import { AuthenticationModuleOptions } from '../authentication.module-options';
 import { TokenService } from './token.service';
+import { UserIdExtractorService } from './user-id-extractor.service';
+import { ObjectId } from 'mongodb';
 
+jest.mock('./user-id-extractor.service');
 jest.mock('@nestjs/jwt');
 
 describe(TokenService.name, () => {
@@ -30,22 +33,26 @@ describe(TokenService.name, () => {
   };
 
   let tokenService: TokenService;
+  let userIdExtractorService: jest.Mocked<UserIdExtractorService>;
   let jwtService: jest.Mocked<JwtService>;
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        UserIdExtractorService,
         JwtService,
         {
           provide: AUTHENTICATION_MODULE_OPTIONS_TOKEN,
           useValue: authenticationModuleOptions,
         },
+
         TokenService,
       ],
     }).compile();
 
-    tokenService = module.get(TokenService);
+    userIdExtractorService = module.get(UserIdExtractorService);
     jwtService = module.get(JwtService);
+    tokenService = module.get(TokenService);
   });
 
   it('should be defined', () => {
@@ -53,17 +60,18 @@ describe(TokenService.name, () => {
   });
 
   describe(
-    TokenService.prototype['createAccessTokenForUserWithId'].name,
+    TokenService.prototype.createAccessTokenForUser.name,
     () => {
-      const userId = 'User-Id';
+      const user = { id: new ObjectId().toString() };
       const accessToken = 'Access-Token';
 
       let result: string;
 
       beforeAll(() => {
+        userIdExtractorService.extractId.mockReturnValue(user.id);
         jwtService.sign.mockReturnValueOnce(accessToken);
 
-        result = tokenService['createAccessTokenForUserWithId'](userId);
+        result = tokenService.createAccessTokenForUser(user);
       });
 
       afterAll(() => {
@@ -77,7 +85,7 @@ describe(TokenService.name, () => {
       it(`calls '${JwtService.name}::${JwtService.prototype.sign.name}' with the appropriate payload & options`, () => {
         expect(jwtService.sign).toHaveBeenCalledTimes(1);
         expect(jwtService.sign).toHaveBeenCalledWith(
-          { id: userId },
+          { id: user.id },
           {
             algorithm: authenticationModuleOptions.jwt.algorithm,
             issuer: authenticationModuleOptions.jwt.issuer,
@@ -97,7 +105,7 @@ describe(TokenService.name, () => {
       const jwt = 'JWT to validate';
       const payload = { id: 'User-Id' };
 
-      let result: string;
+      let result: unknown;
 
       beforeAll(() => {
         jwtService.verify.mockReturnValueOnce(payload);
@@ -109,8 +117,8 @@ describe(TokenService.name, () => {
         jest.clearAllMocks();
       });
 
-      it("returns the 'id' within the payload", () => {
-        expect(result).toBe(payload.id);
+      it("returns the payload", () => {
+        expect(result).toBe(payload);
       });
 
       it(`calls '${JwtService.name}::${JwtService.prototype.verify.name}' with the appropriate JWT & options`, () => {
@@ -145,17 +153,18 @@ describe(TokenService.name, () => {
   });
 
   describe(
-    TokenService.prototype['createRefreshTokenForUserWithId'].name,
+    TokenService.prototype.createRefreshTokenForUser.name,
     () => {
-      const userId = 'User-Id';
+      const user = { id: new ObjectId().toString() };
       const refreshToken = 'Refresh-Token';
 
       let result: string;
 
       beforeAll(() => {
+        userIdExtractorService.extractId.mockReturnValue(user.id);
         jwtService.sign.mockReturnValueOnce(refreshToken);
 
-        result = tokenService['createRefreshTokenForUserWithId'](userId);
+        result = tokenService.createRefreshTokenForUser(user);
       });
 
       afterAll(() => {
@@ -169,7 +178,7 @@ describe(TokenService.name, () => {
       it(`calls '${JwtService.name}::${JwtService.prototype.sign.name}' with the appropriate payload & options`, () => {
         expect(jwtService.sign).toHaveBeenCalledTimes(1);
         expect(jwtService.sign).toHaveBeenCalledWith(
-          { id: userId },
+          { id: user.id },
           {
             algorithm: authenticationModuleOptions.jwt.algorithm,
             issuer: authenticationModuleOptions.jwt.issuer,
@@ -190,7 +199,7 @@ describe(TokenService.name, () => {
       const jwt = 'JWT to validate';
       const payload = { id: 'User-Id' };
 
-      let result: string;
+      let result: unknown;
 
       beforeAll(() => {
         jwtService.verify.mockReturnValueOnce(payload);
@@ -202,8 +211,8 @@ describe(TokenService.name, () => {
         jest.clearAllMocks();
       });
 
-      it("returns the 'id' within the payload", () => {
-        expect(result).toBe(payload.id);
+      it("returns the payload", () => {
+        expect(result).toBe(payload);
       });
 
       it(`calls '${JwtService.name}::${JwtService.prototype.verify.name}' with the appropriate JWT & options`, () => {

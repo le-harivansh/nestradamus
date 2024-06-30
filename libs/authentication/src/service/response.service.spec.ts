@@ -3,11 +3,9 @@ import { AUTHENTICATION_MODULE_OPTIONS_TOKEN } from "../authentication.module-de
 import { AuthenticationModuleOptions } from "../authentication.module-options";
 import { ResponseService } from "./response.service";
 import { TokenService } from "./token.service";
-import { UserIdExtractorService } from "./user-id-extractor.service";
 import { ObjectId } from "mongodb";
 import { Response } from "express";
 
-jest.mock('../service/user-id-extractor.service');
 jest.mock('../service/token.service');
 
 describe(ResponseService.name, () => {
@@ -36,7 +34,6 @@ describe(ResponseService.name, () => {
 
   let responseService: ResponseService;
 
-  let userIdExtractorService: jest.Mocked<UserIdExtractorService>;
   let tokenService: jest.Mocked<TokenService>;
 
   beforeAll(async () => {
@@ -48,24 +45,17 @@ describe(ResponseService.name, () => {
         },
         ResponseService, 
 
-        UserIdExtractorService,
         TokenService,
       ],
     }).compile();
 
     responseService = module.get(ResponseService);
 
-    userIdExtractorService = module.get(UserIdExtractorService);
     tokenService = module.get(TokenService);
 
     // Mocks
-
-    userIdExtractorService.extractId.mockReturnValue(
-      authenticatedUser._id.toString(),
-    );
-
-    tokenService.createAccessTokenForUserWithId.mockReturnValue(ACCESS_TOKEN);
-    tokenService.createRefreshTokenForUserWithId.mockReturnValue(REFRESH_TOKEN);
+    tokenService.createAccessTokenForUser.mockReturnValue(ACCESS_TOKEN);
+    tokenService.createRefreshTokenForUser.mockReturnValue(REFRESH_TOKEN);
   });
 
   it('should be defined', () => {
@@ -81,20 +71,11 @@ describe(ResponseService.name, () => {
       jest.clearAllMocks();
     });
 
-    it(`calls '${UserIdExtractorService.name}::${UserIdExtractorService.prototype.extractId.name}' with the authenticated user`, () => {
-      expect(userIdExtractorService.extractId).toHaveBeenCalledTimes(1);
-      expect(userIdExtractorService.extractId).toHaveBeenCalledWith(
-        authenticatedUser,
-      );
-    });
-
-    it(`calls '${TokenService.name}::${TokenService.prototype.createAccessTokenForUserWithId.name}' with the authenticated user's id`, () => {
-      expect(tokenService.createAccessTokenForUserWithId).toHaveBeenCalledTimes(
+    it(`calls '${TokenService.name}::${TokenService.prototype.createAccessTokenForUser.name}' with the authenticated user`, () => {
+      expect(tokenService.createAccessTokenForUser).toHaveBeenCalledTimes(
         1,
       );
-      expect(tokenService.createAccessTokenForUserWithId).toHaveBeenCalledWith(
-        authenticatedUser._id.toString(),
-      );
+      expect(tokenService.createAccessTokenForUser).toHaveBeenCalledWith(authenticatedUser);
     });
 
     it(`calls '${Response.name}::cookie' with the appropriate arguments`, () => {
@@ -122,20 +103,11 @@ describe(ResponseService.name, () => {
       jest.clearAllMocks();
     });
 
-    it(`calls '${UserIdExtractorService.name}::${UserIdExtractorService.prototype.extractId.name}' with the authenticated user`, () => {
-      expect(userIdExtractorService.extractId).toHaveBeenCalledTimes(1);
-      expect(userIdExtractorService.extractId).toHaveBeenCalledWith(
-        authenticatedUser,
-      );
-    });
-
-    it(`calls '${TokenService.name}::${TokenService.prototype.createRefreshTokenForUserWithId.name}' with the authenticated user's id`, () => {
-      expect(tokenService.createRefreshTokenForUserWithId).toHaveBeenCalledTimes(
+    it(`calls '${TokenService.name}::${TokenService.prototype.createRefreshTokenForUser.name}' with the authenticated user`, () => {
+      expect(tokenService.createRefreshTokenForUser).toHaveBeenCalledTimes(
         1,
       );
-      expect(tokenService.createRefreshTokenForUserWithId).toHaveBeenCalledWith(
-        authenticatedUser._id.toString(),
-      );
+      expect(tokenService.createRefreshTokenForUser).toHaveBeenCalledWith(authenticatedUser);
     });
 
     it(`calls '${Response.name}::cookie' with the appropriate arguments`, () => {

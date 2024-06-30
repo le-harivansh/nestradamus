@@ -22,7 +22,7 @@ export class RequiresAccessTokenMiddleware implements NestMiddleware {
   ) {}
 
   async use(request: Request, _response: Response, next: () => void) {
-    const authenticatedUserId = this.tokenService.validateAccessToken(
+    const { id: authenticatedUserId } = this.tokenService.validateAccessToken(
       request.signedCookies[
         this.authenticationModuleOptions.accessToken.cookieName
       ],

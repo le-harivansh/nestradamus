@@ -7,6 +7,7 @@ import { AuthenticationModuleOptions } from '../authentication.module-options';
 import { TokenService } from '../service/token.service';
 import { UserResolverService } from '../service/user-resolver.service';
 import { RequiresRefreshTokenMiddleware } from './requires-refresh-token.middleware';
+import { ObjectId } from 'mongodb';
 
 jest.mock('../service/user-resolver.service');
 jest.mock('../service/token.service');
@@ -56,7 +57,7 @@ describe(RequiresRefreshTokenMiddleware.name, () => {
 
   describe(RequiresRefreshTokenMiddleware.prototype.use.name, () => {
     const resolvedUser = Symbol('Resolved user');
-    const authenticatedUserId = 'User-Id';
+    const refreshTokenPayload = { id: new ObjectId().toString() }
     const jwtStoredInCookie = 'JWT refresh-token';
     const request = {
       signedCookies: {
@@ -69,7 +70,7 @@ describe(RequiresRefreshTokenMiddleware.name, () => {
 
     beforeAll(() => {
       userResolverService.resolveById.mockResolvedValue(resolvedUser);
-      tokenService.validateRefreshToken.mockReturnValue(authenticatedUserId);
+      tokenService.validateRefreshToken.mockReturnValue(refreshTokenPayload);
     });
 
     afterEach(() => {
@@ -87,12 +88,12 @@ describe(RequiresRefreshTokenMiddleware.name, () => {
       );
     });
 
-    it(`calls '${UserResolverService.name}::${UserResolverService.prototype.resolveById.name}' to retrieve the user from the database - with the provided "id" from the request`, async () => {
+    it(`calls '${UserResolverService.name}::${UserResolverService.prototype.resolveById.name}' to retrieve the user from the database - with the provided "id" from the JWT`, async () => {
       await refreshTokenMiddleware.use(request, response, next);
 
       expect(userResolverService.resolveById).toHaveBeenCalledTimes(1);
       expect(userResolverService.resolveById).toHaveBeenCalledWith(
-        authenticatedUserId,
+        refreshTokenPayload.id,
       );
     });
 
