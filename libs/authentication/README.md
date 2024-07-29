@@ -49,25 +49,29 @@ e.g.:
 
 ```js
 AuthenticationLibraryModule.forRootAsync({
-  imports: [ConfigurationModule],
-  inject: [ConfigurationService],
-  useFactory: (configurationService: ConfigurationService) => ({
-    routes: {
-      login: {
-        withCredentials: 'login',
-      },
-      refresh: {
+  imports: [ConfigurationModule, UserModule],
+  inject: [ConfigurationService, UserRepository],
+  useFactory: (
+    configurationService: ConfigurationService,
+    userRepository: UserRepository,
+  ) => ({
+    route: {
+      login: 'login',
+      tokenRefresh: {
         accessToken: 'token-refresh/access-token',
         refreshToken: 'token-refresh/refresh-token',
       },
     },
 
-    authenticateUser: {
-      forRoutes: ['*'],
-      except: [],
+    middleware: {
+      requiresAccessToken: {
+        forRoutes: ['*'],
+        except: [],
+      },
     },
 
-    requestPropertyHoldingAuthenticatedUser: 'user',
+    requestPropertyHoldingAuthenticatedUser:
+      REQUEST_PROPERTY_HOLDING_AUTHENTICATED_USER,
 
     jwt: {
       algorithm: 'HS512',
@@ -76,26 +80,41 @@ AuthenticationLibraryModule.forRootAsync({
       secret: configurationService.getOrThrow('application.secret'),
     },
 
-    accessToken: {
-      cookieName: 'client.access-token',
-      expiresInSeconds: 15 * 60, // 15 minutes
-    },
-
-    refreshToken: {
-      cookieName: 'client.refresh-token',
-      expiresInSeconds: 7 * 24 * 60 * 60, // 1 week
-    },
-
-    callbacks: {
-      userResolver: {
-        byUsername: (username: string) => (userRepository as UserRepository).findByEmail(username),
-        byId: (id: string) => (userRepository as UserRepository).findById(id),
+    cookie: {
+      accessToken: {
+        name: ACCESS_TOKEN_COOKIE_NAME,
+        expiresInSeconds: 15 * 60, // 15 minutes
       },
 
-      userIdExtractor: ({ _id }: WithId<User>) => _id.toString(),
+      refreshToken: {
+        name: REFRESH_TOKEN_COOKIE_NAME,
+        expiresInSeconds: 7 * 24 * 60 * 60, // 1 week
+      },
+    },
 
-      passwordValidator: (user: WithId<User>, password: string) => verify(user.password, password),
-    }
+    callback: {
+      validateCredentials: async (username: string, password: string) => {
+        const user = await userRepository.findByEmail(username);
+
+        if (!user || !(await verify(user.password, password))) {
+          return null;
+        }
+
+        return user;
+      },
+
+      accessToken: {
+        createJwtPayload: (user: WithId<User>) => Promise.resolve({ id: user._id.toString() }),
+        validateJwtPayload: (payload: Record<string, unknown>) => Promise.resolve(Boolean(payload['id'])),
+        resolveUserFromJwtPayload: (payload: Record<string, unknown>) => userRepository.findById(payload['id'] as string),
+      },
+
+      refreshToken: {
+        createJwtPayload: (user: WithId<User>) => Promise.resolve({ id: user._id.toString() }),
+        validateJwtPayload: (payload: Record<string, unknown>) => Promise.resolve(Boolean(payload['id'])),
+        resolveUserFromJwtPayload: (payload: Record<string, unknown>) => userRepository.findById(payload['id'] as string),
+      },
+    },
   }),
 }),
 ```
