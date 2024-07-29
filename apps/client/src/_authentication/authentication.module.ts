@@ -24,19 +24,19 @@ import {
         configurationService: ConfigurationService,
         userRepository: UserRepository,
       ) => ({
-        routes: {
-          login: {
-            withCredentials: 'login',
-          },
-          refresh: {
+        route: {
+          login: 'login',
+          tokenRefresh: {
             accessToken: 'token-refresh/access-token',
             refreshToken: 'token-refresh/refresh-token',
           },
         },
 
-        authenticateUser: {
-          forRoutes: ['*'],
-          except: [],
+        middleware: {
+          requiresAccessToken: {
+            forRoutes: ['*'],
+            except: [],
+          },
         },
 
         requestPropertyHoldingAuthenticatedUser:
@@ -49,27 +49,46 @@ import {
           secret: configurationService.getOrThrow('application.secret'),
         },
 
-        accessToken: {
-          cookieName: ACCESS_TOKEN_COOKIE_NAME,
-          expiresInSeconds: 15 * 60, // 15 minutes
-        },
-
-        refreshToken: {
-          cookieName: REFRESH_TOKEN_COOKIE_NAME,
-          expiresInSeconds: 7 * 24 * 60 * 60, // 1 week
-        },
-
-        callbacks: {
-          resolveUser: {
-            byUsername: (username: string) =>
-              userRepository.findByEmail(username),
-            byId: (id: string) => userRepository.findById(id),
+        cookie: {
+          accessToken: {
+            name: ACCESS_TOKEN_COOKIE_NAME,
+            expiresInSeconds: 15 * 60, // 15 minutes
           },
 
-          extractUserId: ({ _id }: WithId<User>) => _id.toString(),
+          refreshToken: {
+            name: REFRESH_TOKEN_COOKIE_NAME,
+            expiresInSeconds: 7 * 24 * 60 * 60, // 1 week
+          },
+        },
 
-          validatePassword: (user: WithId<User>, password: string) =>
-            verify(user.password, password),
+        callback: {
+          validateCredentials: async (username: string, password: string) => {
+            const user = await userRepository.findByEmail(username);
+
+            if (!user || !(await verify(user.password, password))) {
+              return null;
+            }
+
+            return user;
+          },
+
+          accessToken: {
+            createJwtPayload: (user: WithId<User>) =>
+              Promise.resolve({ id: user._id.toString() }),
+            validateJwtPayload: (payload: Record<string, unknown>) =>
+              Promise.resolve(Boolean(payload['id'])),
+            resolveUserFromJwtPayload: (payload: Record<string, unknown>) =>
+              userRepository.findById(payload['id'] as string),
+          },
+
+          refreshToken: {
+            createJwtPayload: (user: WithId<User>) =>
+              Promise.resolve({ id: user._id.toString() }),
+            validateJwtPayload: (payload: Record<string, unknown>) =>
+              Promise.resolve(Boolean(payload['id'])),
+            resolveUserFromJwtPayload: (payload: Record<string, unknown>) =>
+              userRepository.findById(payload['id'] as string),
+          },
         },
       }),
     }),

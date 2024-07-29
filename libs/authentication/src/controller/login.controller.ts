@@ -35,17 +35,23 @@ export class LoginController {
      */
 
     // Login route
-    Post(this.authenticationModuleOptions.routes.login.withCredentials)(
+    Post(this.authenticationModuleOptions.route.login)(
       this,
       LoginController.prototype.login.name,
-      Object.getOwnPropertyDescriptor(Object.getPrototypeOf(this), LoginController.prototype.login.name)!,
+      Object.getOwnPropertyDescriptor(
+        Object.getPrototypeOf(this),
+        LoginController.prototype.login.name,
+      )!,
     );
 
     // Logout route
-    Delete(this.authenticationModuleOptions.routes.login.withCredentials)(
+    Delete(this.authenticationModuleOptions.route.login)(
       this,
       LoginController.prototype.logout.name,
-      Object.getOwnPropertyDescriptor(Object.getPrototypeOf(this), LoginController.prototype.logout.name)!,
+      Object.getOwnPropertyDescriptor(
+        Object.getPrototypeOf(this),
+        LoginController.prototype.logout.name,
+      )!,
     );
   }
 
@@ -59,13 +65,19 @@ export class LoginController {
     @Response({ passthrough: true }) response: ExpressResponse,
   ) {
     const authenticatedUser =
-      await this.credentialValidationService.validateUsernameAndPassword(
+      await this.credentialValidationService.validateCredentials(
         username,
         password,
       );
 
-    this.responseService.setAccessTokenCookieForUserInResponse(authenticatedUser, response);
-    this.responseService.setRefreshTokenCookieForUserInResponse(authenticatedUser, response);
+    this.responseService.setAccessTokenCookieForUserInResponse(
+      authenticatedUser,
+      response,
+    );
+    this.responseService.setRefreshTokenCookieForUserInResponse(
+      authenticatedUser,
+      response,
+    );
   }
 
   /**

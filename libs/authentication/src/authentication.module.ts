@@ -19,11 +19,11 @@ import { LoginController } from './controller/login.controller';
 import { TokenRefreshController } from './controller/token-refresh.controller';
 import { RequiresAccessTokenMiddleware } from './middleware/requires-access-token.middleware';
 import { RequiresRefreshTokenMiddleware } from './middleware/requires-refresh-token.middleware';
+import { AccessTokenCallbackService } from './service/access-token-callback.service';
 import { CredentialValidationService } from './service/credential-validation.service';
-import { TokenService } from './service/token.service';
-import { UserIdExtractorService } from './service/user-id-extractor.service';
-import { UserResolverService } from './service/user-resolver.service';
+import { RefreshTokenCallbackService } from './service/refresh-token-callback.service';
 import { ResponseService } from './service/response.service';
+import { TokenService } from './service/token.service';
 
 @Module({
   imports: [JwtModule.register({})],
@@ -31,8 +31,8 @@ import { ResponseService } from './service/response.service';
   providers: [
     TokenService,
     CredentialValidationService,
-    UserResolverService,
-    UserIdExtractorService,
+    AccessTokenCallbackService,
+    RefreshTokenCallbackService,
     ResponseService,
   ],
 })
@@ -64,7 +64,7 @@ export class AuthenticationModule
          * using the user credentials to generate an access-token for the user.
          */
         {
-          path: this.authenticationModuleOptions.routes.login.withCredentials,
+          path: this.authenticationModuleOptions.route.login,
           method: RequestMethod.POST,
         },
 
@@ -74,28 +74,31 @@ export class AuthenticationModule
          * a refresh-token to create a new access-token for the user.
          */
         {
-          path: this.authenticationModuleOptions.routes.refresh.accessToken,
+          path: this.authenticationModuleOptions.route.tokenRefresh.accessToken,
           method: RequestMethod.POST,
         },
 
         /**
          * Routes where an access-token is not required.
          */
-        ...this.authenticationModuleOptions.authenticateUser.except,
+        ...this.authenticationModuleOptions.middleware.requiresAccessToken
+          .except,
       )
       .forRoutes(
         /**
          * We require an access-token to refresh a refresh-token.
          */
         {
-          path: this.authenticationModuleOptions.routes.refresh.refreshToken,
+          path: this.authenticationModuleOptions.route.tokenRefresh
+            .refreshToken,
           method: RequestMethod.POST,
         },
 
         /**
          * Routes where a valid access-token is required.
          */
-        ...this.authenticationModuleOptions.authenticateUser.forRoutes,
+        ...this.authenticationModuleOptions.middleware.requiresAccessToken
+          .forRoutes,
       );
 
     /*****************
@@ -106,7 +109,7 @@ export class AuthenticationModule
        * We need a refresh-token to refresh an access-token.
        */
       {
-        path: this.authenticationModuleOptions.routes.refresh.accessToken,
+        path: this.authenticationModuleOptions.route.tokenRefresh.accessToken,
         method: RequestMethod.POST,
       },
     );

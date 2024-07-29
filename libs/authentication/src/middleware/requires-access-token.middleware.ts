@@ -8,8 +8,8 @@ import { Request, Response } from 'express';
 
 import { AUTHENTICATION_MODULE_OPTIONS_TOKEN } from '../authentication.module-definition';
 import { AuthenticationModuleOptions } from '../authentication.module-options';
+import { AccessTokenCallbackService } from '../service/access-token-callback.service';
 import { TokenService } from '../service/token.service';
-import { UserResolverService } from '../service/user-resolver.service';
 
 @Injectable()
 export class RequiresAccessTokenMiddleware implements NestMiddleware {
@@ -17,25 +17,29 @@ export class RequiresAccessTokenMiddleware implements NestMiddleware {
     @Inject(AUTHENTICATION_MODULE_OPTIONS_TOKEN)
     private readonly authenticationModuleOptions: AuthenticationModuleOptions,
 
-    private readonly userResolverService: UserResolverService,
+    private readonly accessTokenCallbackService: AccessTokenCallbackService,
     private readonly tokenService: TokenService,
   ) {}
 
   async use(request: Request, _response: Response, next: () => void) {
-    const { id: authenticatedUserId } = this.tokenService.validateAccessToken(
+    const jwtPayload = await this.tokenService.validateAccessToken(
       request.signedCookies[
-        this.authenticationModuleOptions.accessToken.cookieName
+        this.authenticationModuleOptions.cookie.accessToken.name
       ],
     );
 
     const authenticatedUser =
-      await this.userResolverService.resolveById(authenticatedUserId);
+      await this.accessTokenCallbackService.resolveUserFromJwtPayload(
+        jwtPayload,
+      );
 
     if (authenticatedUser === null) {
-      throw new UnauthorizedException('Invalid user-id in access-token.');
+      throw new UnauthorizedException(
+        'Could not resolve user from access-token.',
+      );
     }
 
-    (request as any)[
+    (request as unknown as Record<string, unknown>)[
       this.authenticationModuleOptions.requestPropertyHoldingAuthenticatedUser
     ] = authenticatedUser;
 

@@ -3,10 +3,11 @@ import { Response } from 'express';
 import { ObjectId } from 'mongodb';
 
 import { AUTHENTICATION_MODULE_OPTIONS_TOKEN } from '../authentication.module-definition';
+import { AuthenticationModuleOptions } from '../authentication.module-options';
 import { LoginDto } from '../dto/login.dto';
 import { CredentialValidationService } from '../service/credential-validation.service';
-import { LoginController } from './login.controller';
 import { ResponseService } from '../service/response.service';
+import { LoginController } from './login.controller';
 
 jest.mock('../service/credential-validation.service');
 jest.mock('../service/response.service');
@@ -14,8 +15,10 @@ jest.mock('../service/response.service');
 describe(LoginController.name, () => {
   const response = {} as Response;
 
-  const authenticationModuleOptions = {
-    routes: { login: { withCredentials: 'login' } },
+  const authenticationModuleOptions: {
+    route: Pick<AuthenticationModuleOptions['route'], 'login'>;
+  } = {
+    route: { login: 'login' },
   };
 
   let loginController: LoginController;
@@ -62,7 +65,7 @@ describe(LoginController.name, () => {
     };
 
     beforeAll(() => {
-      credentialValidationService.validateUsernameAndPassword.mockResolvedValue(
+      credentialValidationService.validateCredentials.mockResolvedValue(
         authenticatedUser,
       );
     });
@@ -75,27 +78,31 @@ describe(LoginController.name, () => {
       jest.clearAllMocks();
     });
 
-    it(`calls '${CredentialValidationService.name}::${CredentialValidationService.prototype.validateUsernameAndPassword.name}' with the credentials from the request - to retrieve the authenticated user`, () => {
+    it(`calls '${CredentialValidationService.name}::${CredentialValidationService.prototype.validateCredentials.name}' with the credentials from the request - to retrieve the authenticated user`, () => {
       expect(
-        credentialValidationService.validateUsernameAndPassword,
+        credentialValidationService.validateCredentials,
       ).toHaveBeenCalledTimes(1);
       expect(
-        credentialValidationService.validateUsernameAndPassword,
+        credentialValidationService.validateCredentials,
       ).toHaveBeenCalledWith(credentials.username, credentials.password);
     });
 
     it(`calls '${ResponseService.name}::${ResponseService.prototype.setAccessTokenCookieForUserInResponse.name}' with the authenticated user`, () => {
-      expect(responseService.setAccessTokenCookieForUserInResponse).toHaveBeenCalledTimes(1);
-      expect(responseService.setAccessTokenCookieForUserInResponse).toHaveBeenCalledWith(
-        authenticatedUser, response
-      );
+      expect(
+        responseService.setAccessTokenCookieForUserInResponse,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        responseService.setAccessTokenCookieForUserInResponse,
+      ).toHaveBeenCalledWith(authenticatedUser, response);
     });
 
     it(`calls '${ResponseService.name}::${ResponseService.prototype.setRefreshTokenCookieForUserInResponse.name}' with the authenticated user`, () => {
-      expect(responseService.setRefreshTokenCookieForUserInResponse).toHaveBeenCalledTimes(1);
-      expect(responseService.setRefreshTokenCookieForUserInResponse).toHaveBeenCalledWith(
-        authenticatedUser, response
-      );
+      expect(
+        responseService.setRefreshTokenCookieForUserInResponse,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        responseService.setRefreshTokenCookieForUserInResponse,
+      ).toHaveBeenCalledWith(authenticatedUser, response);
     });
   });
 
@@ -110,12 +117,16 @@ describe(LoginController.name, () => {
 
     it(`calls '${ResponseService.name}::${ResponseService.prototype.clearAccessTokenCookie.name}' with the authenticated user`, () => {
       expect(responseService.clearAccessTokenCookie).toHaveBeenCalledTimes(1);
-      expect(responseService.clearAccessTokenCookie).toHaveBeenCalledWith(response);
+      expect(responseService.clearAccessTokenCookie).toHaveBeenCalledWith(
+        response,
+      );
     });
 
     it(`calls '${ResponseService.name}::${ResponseService.prototype.clearRefreshTokenCookie.name}' with the authenticated user`, () => {
       expect(responseService.clearRefreshTokenCookie).toHaveBeenCalledTimes(1);
-      expect(responseService.clearRefreshTokenCookie).toHaveBeenCalledWith(response);
+      expect(responseService.clearRefreshTokenCookie).toHaveBeenCalledWith(
+        response,
+      );
     });
   });
 });

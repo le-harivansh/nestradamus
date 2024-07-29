@@ -4,8 +4,8 @@ import { CookieOptions } from 'express';
 
 import { AUTHENTICATION_MODULE_OPTIONS_TOKEN } from '../authentication.module-definition';
 import { AuthenticationModuleOptions } from '../authentication.module-options';
-import { JwtPayload } from '../interface/jwt-payload.interface';
-import { UserIdExtractorService } from './user-id-extractor.service';
+import { AccessTokenCallbackService } from './access-token-callback.service';
+import { RefreshTokenCallbackService } from './refresh-token-callback.service';
 
 @Injectable()
 export class TokenService {
@@ -23,13 +23,15 @@ export class TokenService {
     @Inject(AUTHENTICATION_MODULE_OPTIONS_TOKEN)
     private readonly authenticationModuleOptions: AuthenticationModuleOptions,
 
-    private readonly userIdExtractorService: UserIdExtractorService,
     private readonly jwtService: JwtService,
+
+    private readonly accessTokenCallbackService: AccessTokenCallbackService,
+    private readonly refreshTokenCallbackService: RefreshTokenCallbackService,
   ) {}
 
-  createAccessTokenForUser(user: unknown): string {
+  async createAccessToken(user: unknown): Promise<string> {
     return this.jwtService.sign(
-      { id: this.userIdExtractorService.extractId(user) } as JwtPayload,
+      await this.accessTokenCallbackService.createJwtPayload(user),
       {
         algorithm: this.authenticationModuleOptions.jwt.algorithm,
         issuer: this.authenticationModuleOptions.jwt.issuer,
@@ -38,28 +40,36 @@ export class TokenService {
         secret: this.authenticationModuleOptions.jwt.secret,
         notBefore: 0,
         expiresIn:
-          this.authenticationModuleOptions.accessToken.expiresInSeconds,
+          this.authenticationModuleOptions.cookie.accessToken.expiresInSeconds,
       },
     );
   }
 
-  validateAccessToken(jwt: string): JwtPayload {
+  async validateAccessToken(jwt: string): Promise<Record<string, unknown>> {
     try {
-      return this.jwtService.verify<JwtPayload>(jwt, {
+      const payload = this.jwtService.verify<Record<string, unknown>>(jwt, {
         algorithms: [this.authenticationModuleOptions.jwt.algorithm],
         issuer: this.authenticationModuleOptions.jwt.issuer,
         audience: this.authenticationModuleOptions.jwt.audience,
         subject: TokenService.ACCESS_TOKEN_JWT_SUBJECT,
         secret: this.authenticationModuleOptions.jwt.secret,
       });
+
+      if (
+        !(await this.accessTokenCallbackService.validateJwtPayload(payload))
+      ) {
+        throw new Error();
+      }
+
+      return payload;
     } catch {
       throw new UnauthorizedException('Invalid access-token.');
     }
   }
 
-  createRefreshTokenForUser(user: unknown): string {
+  async createRefreshToken(user: unknown): Promise<string> {
     return this.jwtService.sign(
-      { id: this.userIdExtractorService.extractId(user) } as JwtPayload,
+      await this.refreshTokenCallbackService.createJwtPayload(user),
       {
         algorithm: this.authenticationModuleOptions.jwt.algorithm,
         issuer: this.authenticationModuleOptions.jwt.issuer,
@@ -68,20 +78,27 @@ export class TokenService {
         secret: this.authenticationModuleOptions.jwt.secret,
         notBefore: 0,
         expiresIn:
-          this.authenticationModuleOptions.refreshToken.expiresInSeconds,
+          this.authenticationModuleOptions.cookie.refreshToken.expiresInSeconds,
       },
     );
   }
 
-  validateRefreshToken(jwt: string): JwtPayload {
+  async validateRefreshToken(jwt: string): Promise<Record<string, unknown>> {
     try {
-      return this.jwtService.verify<JwtPayload>(jwt, {
+      const payload = this.jwtService.verify<Record<string, unknown>>(jwt, {
         algorithms: [this.authenticationModuleOptions.jwt.algorithm],
         issuer: this.authenticationModuleOptions.jwt.issuer,
         audience: this.authenticationModuleOptions.jwt.audience,
         subject: TokenService.REFRESH_TOKEN_JWT_SUBJECT,
         secret: this.authenticationModuleOptions.jwt.secret,
       });
+      if (
+        !(await this.refreshTokenCallbackService.validateJwtPayload(payload))
+      ) {
+        throw new UnauthorizedException();
+      }
+
+      return payload;
     } catch {
       throw new UnauthorizedException('Invalid refresh-token.');
     }

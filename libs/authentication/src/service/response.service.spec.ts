@@ -1,34 +1,40 @@
-import { TestingModule, Test } from "@nestjs/testing";
-import { AUTHENTICATION_MODULE_OPTIONS_TOKEN } from "../authentication.module-definition";
-import { AuthenticationModuleOptions } from "../authentication.module-options";
-import { ResponseService } from "./response.service";
-import { TokenService } from "./token.service";
-import { ObjectId } from "mongodb";
-import { Response } from "express";
+import { Test, TestingModule } from '@nestjs/testing';
+import { Response } from 'express';
+import { ObjectId } from 'mongodb';
+
+import { AUTHENTICATION_MODULE_OPTIONS_TOKEN } from '../authentication.module-definition';
+import { AuthenticationModuleOptions } from '../authentication.module-options';
+import { ResponseService } from './response.service';
+import { TokenService } from './token.service';
 
 jest.mock('../service/token.service');
 
 describe(ResponseService.name, () => {
   const authenticatedUser = {
     _id: new ObjectId(),
-  }
+  };
 
   const ACCESS_TOKEN = 'test-access-token';
   const REFRESH_TOKEN = 'test-refresh-token';
 
-  const response = { cookie: jest.fn(), clearCookie: jest.fn() } as unknown as Response;
+  const response = {
+    cookie: jest.fn(),
+    clearCookie: jest.fn(),
+  } as unknown as Response;
 
   const authenticationModuleOptions: Pick<
     AuthenticationModuleOptions,
-    'accessToken' | 'refreshToken'
+    'cookie'
   > = {
-    accessToken: {
-      cookieName: 'authentication.access-token',
-      expiresInSeconds: 15 * 60, // 15 minutes
-    },
-    refreshToken: {
-      cookieName: 'authentication.refresh-token',
-      expiresInSeconds: 7 * 24 * 60 * 60, // 1 week
+    cookie: {
+      accessToken: {
+        name: 'access-token',
+        expiresInSeconds: 15 * 60, // 15 minutes
+      },
+      refreshToken: {
+        name: 'refresh-token',
+        expiresInSeconds: 24 * 60 * 60, // 1 day
+      },
     },
   };
 
@@ -43,7 +49,7 @@ describe(ResponseService.name, () => {
           provide: AUTHENTICATION_MODULE_OPTIONS_TOKEN,
           useValue: authenticationModuleOptions,
         },
-        ResponseService, 
+        ResponseService,
 
         TokenService,
       ],
@@ -54,115 +60,129 @@ describe(ResponseService.name, () => {
     tokenService = module.get(TokenService);
 
     // Mocks
-    tokenService.createAccessTokenForUser.mockReturnValue(ACCESS_TOKEN);
-    tokenService.createRefreshTokenForUser.mockReturnValue(REFRESH_TOKEN);
+    tokenService.createAccessToken.mockResolvedValue(ACCESS_TOKEN);
+    tokenService.createRefreshToken.mockResolvedValue(REFRESH_TOKEN);
   });
 
   it('should be defined', () => {
     expect(responseService).toBeDefined();
   });
 
-  describe(ResponseService.prototype.setAccessTokenCookieForUserInResponse.name, () => {
-    beforeAll(() => {
-      responseService.setAccessTokenCookieForUserInResponse(authenticatedUser, response)
-    });
+  describe(
+    ResponseService.prototype.setAccessTokenCookieForUserInResponse.name,
+    () => {
+      beforeAll(() => {
+        responseService.setAccessTokenCookieForUserInResponse(
+          authenticatedUser,
+          response,
+        );
+      });
 
-    afterAll(() => {
-      jest.clearAllMocks();
-    });
+      afterAll(() => {
+        jest.clearAllMocks();
+      });
 
-    it(`calls '${TokenService.name}::${TokenService.prototype.createAccessTokenForUser.name}' with the authenticated user`, () => {
-      expect(tokenService.createAccessTokenForUser).toHaveBeenCalledTimes(
-        1,
-      );
-      expect(tokenService.createAccessTokenForUser).toHaveBeenCalledWith(authenticatedUser);
-    });
+      it(`calls '${TokenService.name}::${TokenService.prototype.createAccessToken.name}' with the authenticated user`, () => {
+        expect(tokenService.createAccessToken).toHaveBeenCalledTimes(1);
+        expect(tokenService.createAccessToken).toHaveBeenCalledWith(
+          authenticatedUser,
+        );
+      });
 
-    it(`calls '${Response.name}::cookie' with the appropriate arguments`, () => {
-      expect(response.cookie).toHaveBeenCalledTimes(1);
+      it(`calls '${Response.name}::cookie' with the appropriate arguments`, () => {
+        expect(response.cookie).toHaveBeenCalledTimes(1);
 
-      expect(response.cookie).toHaveBeenNthCalledWith(
-        1,
-        authenticationModuleOptions.accessToken.cookieName,
-        ACCESS_TOKEN,
-        {
-          ...TokenService.COOKIE_OPTIONS,
-          maxAge:
-            authenticationModuleOptions.accessToken.expiresInSeconds * 1000,
-        },
-      );
-    });
-  })
+        expect(response.cookie).toHaveBeenNthCalledWith(
+          1,
+          authenticationModuleOptions.cookie.accessToken.name,
+          ACCESS_TOKEN,
+          {
+            ...TokenService.COOKIE_OPTIONS,
+            maxAge:
+              authenticationModuleOptions.cookie.accessToken.expiresInSeconds *
+              1000,
+          },
+        );
+      });
+    },
+  );
 
-  describe(ResponseService.prototype.setRefreshTokenCookieForUserInResponse.name, () => {
-    beforeAll(() => {
-      responseService.setRefreshTokenCookieForUserInResponse(authenticatedUser, response)
-    });
+  describe(
+    ResponseService.prototype.setRefreshTokenCookieForUserInResponse.name,
+    () => {
+      beforeAll(() => {
+        responseService.setRefreshTokenCookieForUserInResponse(
+          authenticatedUser,
+          response,
+        );
+      });
 
-    afterAll(() => {
-      jest.clearAllMocks();
-    });
+      afterAll(() => {
+        jest.clearAllMocks();
+      });
 
-    it(`calls '${TokenService.name}::${TokenService.prototype.createRefreshTokenForUser.name}' with the authenticated user`, () => {
-      expect(tokenService.createRefreshTokenForUser).toHaveBeenCalledTimes(
-        1,
-      );
-      expect(tokenService.createRefreshTokenForUser).toHaveBeenCalledWith(authenticatedUser);
-    });
+      it(`calls '${TokenService.name}::${TokenService.prototype.createRefreshToken.name}' with the authenticated user`, () => {
+        expect(tokenService.createRefreshToken).toHaveBeenCalledTimes(1);
+        expect(tokenService.createRefreshToken).toHaveBeenCalledWith(
+          authenticatedUser,
+        );
+      });
 
-    it(`calls '${Response.name}::cookie' with the appropriate arguments`, () => {
-      expect(response.cookie).toHaveBeenCalledTimes(1);
+      it(`calls '${Response.name}::cookie' with the appropriate arguments`, () => {
+        expect(response.cookie).toHaveBeenCalledTimes(1);
 
-      expect(response.cookie).toHaveBeenNthCalledWith(
-        1,
-        authenticationModuleOptions.refreshToken.cookieName,
-        REFRESH_TOKEN,
-        {
-          ...TokenService.COOKIE_OPTIONS,
-          maxAge:
-            authenticationModuleOptions.refreshToken.expiresInSeconds * 1000,
-        },
-      );
-    });
-  })
+        expect(response.cookie).toHaveBeenNthCalledWith(
+          1,
+          authenticationModuleOptions.cookie.refreshToken.name,
+          REFRESH_TOKEN,
+          {
+            ...TokenService.COOKIE_OPTIONS,
+            maxAge:
+              authenticationModuleOptions.cookie.refreshToken.expiresInSeconds *
+              1000,
+          },
+        );
+      });
+    },
+  );
 
   describe(ResponseService.prototype.clearAccessTokenCookie.name, () => {
     beforeAll(() => {
       responseService.clearAccessTokenCookie(response);
-    })
+    });
 
     afterAll(() => {
-      jest.clearAllMocks()
-    })
+      jest.clearAllMocks();
+    });
 
     it(`calls '${Response.name}::clearCookie' with the appropriate arguments`, () => {
       expect(response.clearCookie).toHaveBeenCalledTimes(1);
 
       expect(response.clearCookie).toHaveBeenNthCalledWith(
         1,
-        authenticationModuleOptions.accessToken.cookieName,
+        authenticationModuleOptions.cookie.accessToken.name,
         TokenService.COOKIE_OPTIONS,
       );
     });
-  })
+  });
 
   describe(ResponseService.prototype.clearRefreshTokenCookie.name, () => {
     beforeAll(() => {
       responseService.clearRefreshTokenCookie(response);
-    })
+    });
 
     afterAll(() => {
-      jest.clearAllMocks()
-    })
+      jest.clearAllMocks();
+    });
 
     it(`calls '${Response.name}::clearCookie' with the appropriate arguments`, () => {
       expect(response.clearCookie).toHaveBeenCalledTimes(1);
 
       expect(response.clearCookie).toHaveBeenNthCalledWith(
         1,
-        authenticationModuleOptions.refreshToken.cookieName,
+        authenticationModuleOptions.cookie.refreshToken.name,
         TokenService.COOKIE_OPTIONS,
       );
     });
-  })
-})
+  });
+});

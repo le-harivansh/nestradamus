@@ -2,8 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Response } from 'express';
 
 import { AUTHENTICATION_MODULE_OPTIONS_TOKEN } from '../authentication.module-definition';
-import { TokenRefreshController } from './token-refresh.controller';
+import { AuthenticationModuleOptions } from '../authentication.module-options';
 import { ResponseService } from '../service/response.service';
+import { TokenRefreshController } from './token-refresh.controller';
 
 jest.mock('../service/response.service');
 
@@ -11,13 +12,15 @@ describe(TokenRefreshController.name, () => {
   const user = Symbol('User');
   const response = {} as Response;
 
-  const authenticationModuleOptions = {
-    routes: {
-      refresh: {
+  const authenticationModuleOptions: {
+    route: Pick<AuthenticationModuleOptions['route'], 'tokenRefresh'>;
+  } = {
+    route: {
+      tokenRefresh: {
         accessToken: 'refresh/access-token',
         refreshToken: 'refresh/refresh-token',
       },
-    }
+    },
   };
 
   let tokenRefreshController: TokenRefreshController;
@@ -53,10 +56,12 @@ describe(TokenRefreshController.name, () => {
     });
 
     it(`calls '${ResponseService.name}::${ResponseService.prototype.setAccessTokenCookieForUserInResponse.name}' with the authenticated user`, () => {
-      expect(responseService.setAccessTokenCookieForUserInResponse).toHaveBeenCalledTimes(1);
-      expect(responseService.setAccessTokenCookieForUserInResponse).toHaveBeenCalledWith(
-        user, response
-      );
+      expect(
+        responseService.setAccessTokenCookieForUserInResponse,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        responseService.setAccessTokenCookieForUserInResponse,
+      ).toHaveBeenCalledWith(user, response);
     });
   });
 
@@ -70,10 +75,12 @@ describe(TokenRefreshController.name, () => {
     });
 
     it(`calls '${ResponseService.name}::${ResponseService.prototype.setRefreshTokenCookieForUserInResponse.name}' with the authenticated user`, () => {
-      expect(responseService.setRefreshTokenCookieForUserInResponse).toHaveBeenCalledTimes(1);
-      expect(responseService.setRefreshTokenCookieForUserInResponse).toHaveBeenCalledWith(
-        user, response
-      );
+      expect(
+        responseService.setRefreshTokenCookieForUserInResponse,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        responseService.setRefreshTokenCookieForUserInResponse,
+      ).toHaveBeenCalledWith(user, response);
     });
   });
 });

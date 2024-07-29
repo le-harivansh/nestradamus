@@ -10,7 +10,7 @@ import { Response as ExpressResponse } from 'express';
 
 import { AUTHENTICATION_MODULE_OPTIONS_TOKEN } from '../authentication.module-definition';
 import { AuthenticationModuleOptions } from '../authentication.module-options';
-import { AuthenticatedUserDecoratoryFactory } from '../decorator/authenticated-user.decorator-factory';
+import { AuthenticatedUserDecoratorFactory } from '../decorator/authenticated-user.decorator-factory';
 import { ResponseService } from '../service/response.service';
 
 @Controller()
@@ -19,7 +19,7 @@ export class TokenRefreshController {
     @Inject(AUTHENTICATION_MODULE_OPTIONS_TOKEN)
     private readonly authenticationModuleOptions: AuthenticationModuleOptions,
 
-    private readonly responseService: ResponseService
+    private readonly responseService: ResponseService,
   ) {
     /**
      * Setup 'Dynamic' routing.
@@ -29,7 +29,7 @@ export class TokenRefreshController {
      */
 
     // Refresh `Access-Token` route
-    Post(this.authenticationModuleOptions.routes.refresh.accessToken)(
+    Post(this.authenticationModuleOptions.route.tokenRefresh.accessToken)(
       this,
       TokenRefreshController.prototype.refreshAccessToken.name,
       Object.getOwnPropertyDescriptor(
@@ -39,23 +39,31 @@ export class TokenRefreshController {
     );
 
     // Refresh `Refresh-Token` route
-    Post(this.authenticationModuleOptions.routes.refresh.refreshToken)(
+    Post(this.authenticationModuleOptions.route.tokenRefresh.refreshToken)(
       this,
       TokenRefreshController.prototype.refreshRefreshToken.name,
       Object.getOwnPropertyDescriptor(
         Object.getPrototypeOf(this),
-          TokenRefreshController.prototype.refreshRefreshToken.name,
+        TokenRefreshController.prototype.refreshRefreshToken.name,
       )!,
     );
 
     // Setup decorator that will retrieve the authenticated user from the request.
-    const AuthenticatedUser = AuthenticatedUserDecoratoryFactory(
+    const AuthenticatedUser = AuthenticatedUserDecoratorFactory(
       this.authenticationModuleOptions.requestPropertyHoldingAuthenticatedUser,
     );
 
     // Apply parameter-decorators that will inject the authenticated user into the controller method.
-    AuthenticatedUser()(this, TokenRefreshController.prototype.refreshAccessToken.name, 0);
-    AuthenticatedUser()(this, TokenRefreshController.prototype.refreshRefreshToken.name, 0);
+    AuthenticatedUser()(
+      this,
+      TokenRefreshController.prototype.refreshAccessToken.name,
+      0,
+    );
+    AuthenticatedUser()(
+      this,
+      TokenRefreshController.prototype.refreshRefreshToken.name,
+      0,
+    );
   }
 
   /**

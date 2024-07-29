@@ -1,7 +1,11 @@
 import { RequestMethod } from '@nestjs/common';
 import { z } from 'zod';
 
-const routeInfoValidationSchema = z.array(
+/**
+ * This object provides the schema for validating a "route" which is used when
+ * configuring the authentication middleware.
+ */
+const routeValidationSchema = z.array(
   z.union([
     /**
      * Route can be a string.
@@ -19,28 +23,22 @@ export const authenticationModuleOptionsValidationSchema = z.object({
   /**
    * This configuration block defines the authentication routes of the module.
    */
-  routes: z.object({
+  route: z.object({
     /**
-     * This configuration block defines all the "login" routes for the
-     * application.
+     * This is the route where the user credentials in the form of a POST
+     * request with a body having the shape:
+     * `{ "username": "...", "password": "***" }`
+     * is sent to login/authenticate the user.
+     *
+     * A DELETE request can also be used on this route to "logout" / "de-authenticate" the user.
      */
-    login: z.object({
-      /**
-       * This is the route where the user credentials in the form of a POST
-       * request with a body having the shape:
-       * `{ "username": "...", "password": "***" }`
-       * is sent to login/authenticate the user.
-       *
-       * A DELETE request can also be used on this route to logout/deauthenticate the user.
-       */
-      withCredentials: z.string().min(1),
-    }),
+    login: z.string().min(1),
 
     /**
      * This configuration block defines the "token-refresh" routes of the
      * module.
      */
-    refresh: z.object({
+    tokenRefresh: z.object({
       /**
        * This route is used to refresh the "access-token" of the user.
        * A "refresh-token is needed to access this route.
@@ -56,26 +54,34 @@ export const authenticationModuleOptionsValidationSchema = z.object({
   }),
 
   /**
-   * This configuration block defines the routes for which the "access-token"
-   * middleware is applied to.
-   *
-   * This middleware requires the request to have an "access-token" present
-   * in it.
+   * This block defines the configuration options for the authentication
+   * middleware in the application.
    */
-  authenticateUser: z.object({
+  middleware: z.object({
     /**
-     * The routes for which the "access-token" middleware is applied to.
-     */
-    forRoutes: routeInfoValidationSchema.nonempty(),
-
-    /**
-     * The routes for which the "access-token" middleware should not be
-     * applied to.
+     * This configuration block defines the routes for which the "access-token"
+     * middleware is applied to.
      *
-     * Note: The 'login' & 'refresh access-token' routes are automatically
-     * excluded.
+     * The routes for which this middleware is active on requires the request to
+     * have an "access-token" present in it.
      */
-    except: routeInfoValidationSchema,
+    requiresAccessToken: z.object({
+      /**
+       * The routes for which the "access-token" middleware is applied to.
+       *
+       * Note: The "refresh refresh-token" route is automatically included.
+       */
+      forRoutes: routeValidationSchema.nonempty(),
+
+      /**
+       * The routes for which the "access-token" middleware should not be
+       * applied to.
+       *
+       * Note: The "login" & "refresh access-token" routes are automatically
+       * excluded.
+       */
+      except: routeValidationSchema,
+    }),
   }),
 
   /**
@@ -100,113 +106,163 @@ export const authenticationModuleOptionsValidationSchema = z.object({
   }),
 
   /**
-   * This block defines the "access-token" specific configurations.
+   * This block defines the cookie-specific configuration options.
    */
-  accessToken: z.object({
+  cookie: z.object({
     /**
-     * The name of the cookie which will hold the "access-token".
+     * This block defines the "access-token" specific configurations.
      */
-    cookieName: z.string().min(4),
-
-    /**
-     * The duration (in seconds) for which the "access-token" and its
-     * associated cookie are valid.
-     */
-    expiresInSeconds: z.number().safe().positive(),
-  }),
-
-  /**
-   * This block defines the "refresh-token" specific configurations.
-   */
-  refreshToken: z.object({
-    /**
-     * The name of the cookie which will hold the "refresh-token".
-     */
-    cookieName: z.string().min(4),
-
-    /**
-     * The duration (in seconds) for which the "refresh-token" and its
-     * associated cookie are valid.
-     */
-    expiresInSeconds: z.number().safe().positive(),
-  }),
-
-  /**
-   * This configuration block defines the various callbacks pertaining to the
-   * user-resolution, password-validation, and id-extraction required in this
-   * module.
-   */
-  callbacks: z.object({
-    /**
-     * This configuration block defines the various ways through which an
-     * authenticated user is retrieved.
-     */
-    resolveUser: z.object({
+    accessToken: z.object({
       /**
-       * The callback that will be used to retrieve the user by its username.
-       *
-       * It should accept the "username" of the user to retrieve, and return
-       * the resolved user instance or `null` if a user could not be resolved.
-       *
-       * e.g.:
-       * ```
-       * (username: string) => injectedRepository.findByUsername(username);
-       * ```
+       * The name of the cookie which will hold the "access-token".
        */
-      byUsername: z
-        .function()
-        .args(z.string())
-        .returns(z.promise(z.unknown().nullable())),
+      name: z.string().min(4),
 
       /**
-       * The callback that will be used to retrieve the user by its id.
-       *
-       *
-       * It should accept the "id" of the user to retrieve, and return the
-       * resolved user instance or `null` if a user could not be resolved.
-       *
-       * e.g.:
-       * ```
-       * (id: string) => injectedRepository.findById(id);
-       * ```
+       * The duration (in seconds) for which the "access-token" cookie is
+       * valid.
        */
-      byId: z
-        .function()
-        .args(z.string())
-        .returns(z.promise(z.unknown().nullable())),
+      expiresInSeconds: z.number().safe().positive(),
     }),
 
     /**
-     * The callback that will be used to extract the id from a resolved `user`
-     * instance.
+     * This block defines the "refresh-token" specific configurations.
+     */
+    refreshToken: z.object({
+      /**
+       * The name of the cookie which will hold the "refresh-token".
+       */
+      name: z.string().min(4),
+
+      /**
+       * The duration (in seconds) for which the "refresh-token" cookie is
+       * valid.
+       */
+      expiresInSeconds: z.number().safe().positive(),
+    }),
+  }),
+
+  /**
+   * This configuration block defines the various callbacks pertaining to:
+   * credentials-validation, JWT-creation & validation, user resolution,
+   * amongst others; that is used in this module.
+   */
+  callback: z.object({
+    /**
+     * The callback that is used to verify whether the passed-in username &
+     * password are valid.
      *
-     * It should accept the resolved instance of a "user", and return its `id`
-     * as a string.
+     * It should accept the username & password passed-in through the request,
+     * and return the resolved user instance if the validation is successful,
+     * and `null` otherwise.
      *
      * e.g.:
      * ```
-     * (user: any) => '<user-id>';
+     * (username: string, password: string) => { return User(...); };
      * ```
      */
-    extractUserId: z.function().args(z.any()).returns(z.string()),
+    validateCredentials: z
+      .function()
+      .args(z.string(), z.string())
+      .returns(z.promise(z.unknown())),
 
     /**
-     * The callback that will be used to verify whether the passed-in password
-     * is the same as the password of the current user being authenticated.
-     *
-     * It should accept the resolved instance of an authenticated "user" and the
-     * password that needs to be validated, and return `true` if the validation
-     * succeeds and `false` otherwise.
-     *
-     * e.g.:
-     * ```
-     * (user: any, password: string) => validate(user.password, password);
-     * ```
+     * This block defines the "access-token" specific callbacks.
      */
-    validatePassword: z
-      .function()
-      .args(z.any(), z.string())
-      .returns(z.promise(z.boolean())),
+    accessToken: z.object({
+      /**
+       * The callback used to create the JWT payload.
+       *
+       * It accepts a "user" instance, and returns the JWT payload object.
+       *
+       * e.g.:
+       * ```
+       * (user: any) => ({ id: ..., exp: ... });
+       * ```
+       */
+      createJwtPayload: z
+        .function()
+        .args(z.any())
+        .returns(z.promise(z.record(z.unknown()))),
+
+      /**
+       * The callback used to validate the JWT payload.
+       *
+       * It accepts the resolved JWT payload, and returns `true` if it is valid,
+       * and `false` otherwise.
+       */
+      validateJwtPayload: z
+        .function()
+        .args(z.record(z.unknown()))
+        .returns(z.promise(z.boolean())),
+
+      /**
+       * The callback that used to resolve the authenticated user from the data
+       * stored in the JWT payload.
+       *
+       *
+       * It should accept the JWT payload, and return the resolved user instance
+       * or `null` if a user could not be resolved.
+       *
+       * e.g.:
+       * ```
+       * (payload: object) => injectedRepository.findById(payload.id);
+       * ```
+       */
+      resolveUserFromJwtPayload: z
+        .function()
+        .args(z.record(z.unknown()))
+        .returns(z.promise(z.unknown())),
+    }),
+
+    /**
+     * This block defines the "refresh-token" specific callbacks.
+     */
+    refreshToken: z.object({
+      /**
+       * The callback that is used to create the JWT payload.
+       *
+       * It should accept a "user" instance, and return the JWT payload object.
+       *
+       * e.g.:
+       * ```
+       * (user: any) => ({ id: ..., exp: ... });
+       * ```
+       */
+      createJwtPayload: z
+        .function()
+        .args(z.any())
+        .returns(z.promise(z.record(z.unknown()))),
+
+      /**
+       * The callback used to validate the JWT payload.
+       *
+       * It accepts the resolved JWT payload, and returns `true` if it is valid,
+       * and `false` otherwise.
+       */
+      validateJwtPayload: z
+        .function()
+        .args(z.record(z.unknown()))
+        .returns(z.promise(z.boolean())),
+
+      /**
+       * The callback that used to resolve the authenticated user from the data
+       * stored in the JWT payload.
+       *
+       *
+       * It should accept the JWT payload, and return the resolved user instance
+       * or `null` if a user could not be resolved.
+       *
+       * e.g.:
+       * ```
+       * (payload: object) => injectedRepository.findById(payload.id);
+       * ```
+       */
+      resolveUserFromJwtPayload: z
+        .function()
+        .args(z.record(z.unknown()))
+        .returns(z.promise(z.unknown())),
+    }),
   }),
 });
 

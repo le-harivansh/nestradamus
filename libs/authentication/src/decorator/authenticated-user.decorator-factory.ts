@@ -10,21 +10,23 @@ export function getAuthenticatedUserFromPropertyInRequest(
 ) {
   return (property: string | undefined, context: ExecutionContext) => {
     const request = context.switchToHttp().getRequest<Request>();
-    const authenticatedUser = (request as any)[
+    const authenticatedUser = (request as unknown as Record<string, unknown>)[
       requestPropertyHoldingAuthenticatedUser
     ];
 
     if (authenticatedUser === undefined) {
       throw new InternalServerErrorException(
-        `The request property '${requestPropertyHoldingAuthenticatedUser}' is undefined.`
+        `The request property '${requestPropertyHoldingAuthenticatedUser}' is undefined.`,
       );
     }
 
-    return property ? authenticatedUser?.[property] : authenticatedUser;
+    return property
+      ? (authenticatedUser as Record<string, unknown> | null)?.[property]
+      : authenticatedUser;
   };
 }
 
-export function AuthenticatedUserDecoratoryFactory(
+export function AuthenticatedUserDecoratorFactory(
   requestPropertyHoldingAuthenticatedUser: string,
 ) {
   return createParamDecorator(

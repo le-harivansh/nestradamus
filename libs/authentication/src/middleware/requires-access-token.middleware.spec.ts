@@ -1,16 +1,16 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Request, Response } from 'express';
+import { ObjectId } from 'mongodb';
 
 import { AUTHENTICATION_MODULE_OPTIONS_TOKEN } from '../authentication.module-definition';
 import { AuthenticationModuleOptions } from '../authentication.module-options';
+import { AccessTokenCallbackService } from '../service/access-token-callback.service';
 import { TokenService } from '../service/token.service';
-import { UserResolverService } from '../service/user-resolver.service';
 import { RequiresAccessTokenMiddleware } from './requires-access-token.middleware';
-import { ObjectId } from 'mongodb';
 
-jest.mock('../service/user-resolver.service');
 jest.mock('../service/token.service');
+jest.mock('../service/access-token-callback.service');
 
 describe(RequiresAccessTokenMiddleware.name, () => {
   const REQUEST_PROPERTY_HOLDING_AUTHENTICATED_USER = 'user';
@@ -18,15 +18,19 @@ describe(RequiresAccessTokenMiddleware.name, () => {
     AuthenticationModuleOptions,
     'requestPropertyHoldingAuthenticatedUser'
   > & {
-    accessToken: Pick<AuthenticationModuleOptions['accessToken'], 'cookieName'>;
+    cookie: {
+      accessToken: {
+        name: AuthenticationModuleOptions['cookie']['accessToken']['name'];
+      };
+    };
   } = {
     requestPropertyHoldingAuthenticatedUser:
       REQUEST_PROPERTY_HOLDING_AUTHENTICATED_USER,
-    accessToken: { cookieName: 'user.access-token' },
+    cookie: { accessToken: { name: 'user.access-token' } },
   };
 
   let accessTokenMiddleware: RequiresAccessTokenMiddleware;
-  let userResolverService: jest.Mocked<UserResolverService>;
+  let accessTokenCallbackService: jest.Mocked<AccessTokenCallbackService>;
   let tokenService: jest.Mocked<TokenService>;
 
   beforeAll(async () => {
@@ -36,7 +40,7 @@ describe(RequiresAccessTokenMiddleware.name, () => {
           provide: AUTHENTICATION_MODULE_OPTIONS_TOKEN,
           useValue: authenticationModuleOptions,
         },
-        UserResolverService,
+        AccessTokenCallbackService,
         TokenService,
 
         RequiresAccessTokenMiddleware,
@@ -44,7 +48,7 @@ describe(RequiresAccessTokenMiddleware.name, () => {
     }).compile();
 
     accessTokenMiddleware = module.get(RequiresAccessTokenMiddleware);
-    userResolverService = module.get(UserResolverService);
+    accessTokenCallbackService = module.get(AccessTokenCallbackService);
     tokenService = module.get(TokenService);
   });
 
@@ -54,19 +58,22 @@ describe(RequiresAccessTokenMiddleware.name, () => {
 
   describe(RequiresAccessTokenMiddleware.prototype.use.name, () => {
     const resolvedUser = Symbol('Resolved user');
-    const accessTokenPayload = { id: new ObjectId().toString() }
+    const accessTokenPayload = { id: new ObjectId().toString() };
     const jwtStoredInCookie = 'JWT access-token';
     const request = {
       signedCookies: {
-        [authenticationModuleOptions.accessToken.cookieName]: jwtStoredInCookie,
+        [authenticationModuleOptions.cookie.accessToken.name]:
+          jwtStoredInCookie,
       },
     } as unknown as Request & { user: unknown };
     const response = {} as unknown as Response;
     const next = () => undefined;
 
     beforeAll(() => {
-      userResolverService.resolveById.mockResolvedValue(resolvedUser);
-      tokenService.validateAccessToken.mockReturnValue(accessTokenPayload);
+      tokenService.validateAccessToken.mockResolvedValue(accessTokenPayload);
+      accessTokenCallbackService.resolveUserFromJwtPayload.mockResolvedValue(
+        resolvedUser,
+      );
     });
 
     afterEach(() => {
@@ -79,16 +86,20 @@ describe(RequiresAccessTokenMiddleware.name, () => {
       expect(tokenService.validateAccessToken).toHaveBeenCalledTimes(1);
       expect(tokenService.validateAccessToken).toHaveBeenCalledWith(
         request.signedCookies[
-          authenticationModuleOptions.accessToken.cookieName
+          authenticationModuleOptions.cookie.accessToken.name
         ],
       );
     });
 
-    it(`calls '${UserResolverService.name}::${UserResolverService.prototype.resolveById.name}' to retrieve the user from the database - with the "id" from the JWT`, async () => {
+    it(`calls '${AccessTokenCallbackService.name}::${AccessTokenCallbackService.prototype.resolveUserFromJwtPayload.name}' to retrieve the user from the database - with the JWT payload`, async () => {
       await accessTokenMiddleware.use(request, response, next);
 
-      expect(userResolverService.resolveById).toHaveBeenCalledTimes(1);
-      expect(userResolverService.resolveById).toHaveBeenCalledWith(accessTokenPayload.id);
+      expect(
+        accessTokenCallbackService.resolveUserFromJwtPayload,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        accessTokenCallbackService.resolveUserFromJwtPayload,
+      ).toHaveBeenCalledWith(accessTokenPayload);
     });
 
     it(`adds the resolved user to the '${REQUEST_PROPERTY_HOLDING_AUTHENTICATED_USER}' property of the 'request' object`, async () => {
@@ -100,7 +111,9 @@ describe(RequiresAccessTokenMiddleware.name, () => {
     });
 
     it(`throws an '${UnauthorizedException.name}' if the user resolves to be 'null'`, async () => {
-      userResolverService.resolveById.mockResolvedValue(null);
+      accessTokenCallbackService.resolveUserFromJwtPayload.mockResolvedValue(
+        null,
+      );
 
       await expect(
         accessTokenMiddleware.use(request, response, next),

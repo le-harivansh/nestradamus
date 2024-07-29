@@ -1,8 +1,9 @@
-import { Inject, Injectable } from "@nestjs/common";
-import { Response } from "express";
-import { AuthenticationModuleOptions } from "../authentication.module-options";
-import { TokenService } from "./token.service";
-import { AUTHENTICATION_MODULE_OPTIONS_TOKEN } from "../authentication.module-definition";
+import { Inject, Injectable } from '@nestjs/common';
+import { Response } from 'express';
+
+import { AUTHENTICATION_MODULE_OPTIONS_TOKEN } from '../authentication.module-definition';
+import { AuthenticationModuleOptions } from '../authentication.module-options';
+import { TokenService } from './token.service';
 
 @Injectable()
 export class ResponseService {
@@ -10,43 +11,55 @@ export class ResponseService {
     @Inject(AUTHENTICATION_MODULE_OPTIONS_TOKEN)
     private readonly authenticationModuleOptions: AuthenticationModuleOptions,
 
-    private readonly tokenService: TokenService
+    private readonly tokenService: TokenService,
   ) {}
 
-  setAccessTokenCookieForUserInResponse(user: unknown, response: Response): void {
+  async setAccessTokenCookieForUserInResponse(
+    user: unknown,
+    response: Response,
+  ): Promise<void> {
+    const accessTokenJwt = await this.tokenService.createAccessToken(user);
+
     response.cookie(
-      this.authenticationModuleOptions.accessToken.cookieName,
-      this.tokenService.createAccessTokenForUser(user),
+      this.authenticationModuleOptions.cookie.accessToken.name,
+      accessTokenJwt,
       {
         ...TokenService.COOKIE_OPTIONS,
         maxAge:
-          this.authenticationModuleOptions.accessToken.expiresInSeconds * 1000,
+          this.authenticationModuleOptions.cookie.accessToken.expiresInSeconds *
+          1000,
       },
     );
   }
 
-  setRefreshTokenCookieForUserInResponse(user: unknown, response: Response): void {
+  async setRefreshTokenCookieForUserInResponse(
+    user: unknown,
+    response: Response,
+  ): Promise<void> {
+    const refreshTokenJwt = await this.tokenService.createRefreshToken(user);
+
     response.cookie(
-      this.authenticationModuleOptions.refreshToken.cookieName,
-      this.tokenService.createRefreshTokenForUser(user),
+      this.authenticationModuleOptions.cookie.refreshToken.name,
+      refreshTokenJwt,
       {
         ...TokenService.COOKIE_OPTIONS,
         maxAge:
-          this.authenticationModuleOptions.refreshToken.expiresInSeconds * 1000,
+          this.authenticationModuleOptions.cookie.refreshToken
+            .expiresInSeconds * 1000,
       },
     );
   }
 
   clearAccessTokenCookie(response: Response): void {
     response.clearCookie(
-      this.authenticationModuleOptions.accessToken.cookieName,
+      this.authenticationModuleOptions.cookie.accessToken.name,
       TokenService.COOKIE_OPTIONS,
     );
   }
 
   clearRefreshTokenCookie(response: Response): void {
     response.clearCookie(
-      this.authenticationModuleOptions.refreshToken.cookieName,
+      this.authenticationModuleOptions.cookie.refreshToken.name,
       TokenService.COOKIE_OPTIONS,
     );
   }

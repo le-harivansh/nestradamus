@@ -1,57 +1,72 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
+import { ObjectId } from 'mongodb';
 
 import { AUTHENTICATION_MODULE_OPTIONS_TOKEN } from '../authentication.module-definition';
 import { AuthenticationModuleOptions } from '../authentication.module-options';
+import { AccessTokenCallbackService } from './access-token-callback.service';
+import { RefreshTokenCallbackService } from './refresh-token-callback.service';
 import { TokenService } from './token.service';
-import { UserIdExtractorService } from './user-id-extractor.service';
-import { ObjectId } from 'mongodb';
 
-jest.mock('./user-id-extractor.service');
 jest.mock('@nestjs/jwt');
+jest.mock('./access-token-callback.service');
+jest.mock('./refresh-token-callback.service');
 
 describe(TokenService.name, () => {
-  const authenticationModuleOptions: Pick<
-    AuthenticationModuleOptions,
-    'jwt' | 'accessToken' | 'refreshToken'
-  > = {
+  const authenticationModuleOptions: {
+    jwt: AuthenticationModuleOptions['jwt'];
+    cookie: {
+      accessToken: {
+        expiresInSeconds: AuthenticationModuleOptions['cookie']['accessToken']['expiresInSeconds'];
+      };
+      refreshToken: {
+        expiresInSeconds: AuthenticationModuleOptions['cookie']['refreshToken']['expiresInSeconds'];
+      };
+    };
+  } = {
     jwt: {
       algorithm: 'HS512',
       issuer: 'JwtIssuer',
       audience: 'JwtAudience',
       secret: 'JwtSecret',
     },
-    accessToken: {
-      cookieName: 'authentication.access-token',
-      expiresInSeconds: 15 * 60, // 15 minutes
-    },
-    refreshToken: {
-      cookieName: 'authentication.refresh-token',
-      expiresInSeconds: 7 * 24 * 60 * 60, // 1 week
+    cookie: {
+      accessToken: {
+        expiresInSeconds: 15 * 60, // 15 minutes
+      },
+      refreshToken: {
+        expiresInSeconds: 24 * 60 * 60, // 1 day
+      },
     },
   };
 
   let tokenService: TokenService;
-  let userIdExtractorService: jest.Mocked<UserIdExtractorService>;
   let jwtService: jest.Mocked<JwtService>;
+  let accessTokenCallbackService: jest.Mocked<AccessTokenCallbackService>;
+  let refreshTokenCallbackService: jest.Mocked<RefreshTokenCallbackService>;
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        UserIdExtractorService,
-        JwtService,
         {
           provide: AUTHENTICATION_MODULE_OPTIONS_TOKEN,
           useValue: authenticationModuleOptions,
         },
 
+        JwtService,
+        AccessTokenCallbackService,
+        RefreshTokenCallbackService,
+
         TokenService,
       ],
     }).compile();
 
-    userIdExtractorService = module.get(UserIdExtractorService);
     jwtService = module.get(JwtService);
+
+    accessTokenCallbackService = module.get(AccessTokenCallbackService);
+    refreshTokenCallbackService = module.get(RefreshTokenCallbackService);
+
     tokenService = module.get(TokenService);
   });
 
@@ -59,46 +74,52 @@ describe(TokenService.name, () => {
     expect(tokenService).toBeDefined();
   });
 
-  describe(
-    TokenService.prototype.createAccessTokenForUser.name,
-    () => {
-      const user = { id: new ObjectId().toString() };
-      const accessToken = 'Access-Token';
+  describe(TokenService.prototype.createAccessToken.name, () => {
+    const user = { id: new ObjectId().toString() };
+    const payload = { id: user.id };
+    const accessToken = 'Access-Token';
 
-      let result: string;
+    let result: string;
 
-      beforeAll(() => {
-        userIdExtractorService.extractId.mockReturnValue(user.id);
-        jwtService.sign.mockReturnValueOnce(accessToken);
+    beforeAll(async () => {
+      jwtService.sign.mockReturnValueOnce(accessToken);
+      accessTokenCallbackService.createJwtPayload.mockResolvedValueOnce(
+        payload,
+      );
+      result = await tokenService.createAccessToken(user);
+    });
 
-        result = tokenService.createAccessTokenForUser(user);
+    afterAll(() => {
+      jest.clearAllMocks();
+    });
+
+    it(`calls '${AccessTokenCallbackService.prototype.createJwtPayload.name}' with the provided user`, () => {
+      expect(accessTokenCallbackService.createJwtPayload).toHaveBeenCalledTimes(
+        1,
+      );
+      expect(accessTokenCallbackService.createJwtPayload).toHaveBeenCalledWith(
+        user,
+      );
+    });
+
+    it(`calls '${JwtService.name}::${JwtService.prototype.sign.name}' with the appropriate payload & options`, () => {
+      expect(jwtService.sign).toHaveBeenCalledTimes(1);
+      expect(jwtService.sign).toHaveBeenCalledWith(payload, {
+        algorithm: authenticationModuleOptions.jwt.algorithm,
+        issuer: authenticationModuleOptions.jwt.issuer,
+        audience: authenticationModuleOptions.jwt.audience,
+        subject: TokenService['ACCESS_TOKEN_JWT_SUBJECT'],
+        secret: authenticationModuleOptions.jwt.secret,
+        notBefore: 0,
+        expiresIn:
+          authenticationModuleOptions.cookie.accessToken.expiresInSeconds,
       });
+    });
 
-      afterAll(() => {
-        jest.clearAllMocks();
-      });
-
-      it(`returns the JWT generated by '${JwtService.name}::${JwtService.prototype.sign.name}'`, () => {
-        expect(result).toBe(accessToken);
-      });
-
-      it(`calls '${JwtService.name}::${JwtService.prototype.sign.name}' with the appropriate payload & options`, () => {
-        expect(jwtService.sign).toHaveBeenCalledTimes(1);
-        expect(jwtService.sign).toHaveBeenCalledWith(
-          { id: user.id },
-          {
-            algorithm: authenticationModuleOptions.jwt.algorithm,
-            issuer: authenticationModuleOptions.jwt.issuer,
-            audience: authenticationModuleOptions.jwt.audience,
-            subject: TokenService['ACCESS_TOKEN_JWT_SUBJECT'],
-            secret: authenticationModuleOptions.jwt.secret,
-            notBefore: 0,
-            expiresIn: authenticationModuleOptions.accessToken.expiresInSeconds,
-          },
-        );
-      });
-    },
-  );
+    it(`returns the JWT generated by '${JwtService.name}::${JwtService.prototype.sign.name}'`, () => {
+      expect(result).toBe(accessToken);
+    });
+  });
 
   describe(TokenService.prototype.validateAccessToken.name, () => {
     describe('[on success]', () => {
@@ -107,18 +128,17 @@ describe(TokenService.name, () => {
 
       let result: unknown;
 
-      beforeAll(() => {
+      beforeAll(async () => {
         jwtService.verify.mockReturnValueOnce(payload);
+        accessTokenCallbackService.validateJwtPayload.mockResolvedValueOnce(
+          true,
+        );
 
-        result = tokenService.validateAccessToken(jwt);
+        result = await tokenService.validateAccessToken(jwt);
       });
 
       afterAll(() => {
         jest.clearAllMocks();
-      });
-
-      it("returns the payload", () => {
-        expect(result).toBe(payload);
       });
 
       it(`calls '${JwtService.name}::${JwtService.prototype.verify.name}' with the appropriate JWT & options`, () => {
@@ -131,88 +151,113 @@ describe(TokenService.name, () => {
           secret: authenticationModuleOptions.jwt.secret,
         });
       });
+
+      it(`calls '${AccessTokenCallbackService.prototype.validateJwtPayload.name}' with the JWT payload`, () => {
+        expect(
+          accessTokenCallbackService.validateJwtPayload,
+        ).toHaveBeenCalledTimes(1);
+        expect(
+          accessTokenCallbackService.validateJwtPayload,
+        ).toHaveBeenCalledWith(payload);
+      });
+
+      it('returns the payload', () => {
+        expect(result).toBe(payload);
+      });
     });
 
     describe('[on failure]', () => {
-      beforeAll(() => {
-        jwtService.verify.mockImplementationOnce(() => {
-          throw new Error();
-        });
-      });
-
-      afterAll(() => {
+      afterEach(() => {
         jest.clearAllMocks();
       });
 
-      it(`throws an '${UnauthorizedException.name}' when '${JwtService.name}::${JwtService.prototype.sign.name}' fails`, () => {
-        expect(() =>
+      it(`throws an '${UnauthorizedException.name}' when '${JwtService.name}::${JwtService.prototype.sign.name}' fails`, async () => {
+        jwtService.verify.mockImplementationOnce(() => {
+          throw new Error();
+        });
+
+        await expect(() =>
           tokenService.validateAccessToken('JWT to validate'),
-        ).toThrow(UnauthorizedException);
+        ).rejects.toThrow(UnauthorizedException);
+      });
+
+      it(`throws an '${UnauthorizedException.name}' if '${AccessTokenCallbackService.name}::${AccessTokenCallbackService.prototype.validateJwtPayload.name}' returns 'false'`, async () => {
+        accessTokenCallbackService.validateJwtPayload.mockResolvedValueOnce(
+          false,
+        );
+
+        await expect(() =>
+          tokenService.validateAccessToken('JWT to validate'),
+        ).rejects.toThrow(UnauthorizedException);
       });
     });
   });
 
-  describe(
-    TokenService.prototype.createRefreshTokenForUser.name,
-    () => {
-      const user = { id: new ObjectId().toString() };
-      const refreshToken = 'Refresh-Token';
+  describe(TokenService.prototype.createRefreshToken.name, () => {
+    const user = { id: new ObjectId().toString() };
+    const payload = { id: user.id };
+    const refreshToken = 'Refresh-Token';
 
-      let result: string;
+    let result: string;
 
-      beforeAll(() => {
-        userIdExtractorService.extractId.mockReturnValue(user.id);
-        jwtService.sign.mockReturnValueOnce(refreshToken);
+    beforeAll(async () => {
+      jwtService.sign.mockReturnValueOnce(refreshToken);
+      refreshTokenCallbackService.createJwtPayload.mockResolvedValueOnce(
+        payload,
+      );
+      result = await tokenService.createRefreshToken(user);
+    });
 
-        result = tokenService.createRefreshTokenForUser(user);
+    afterAll(() => {
+      jest.clearAllMocks();
+    });
+
+    it(`calls '${RefreshTokenCallbackService.prototype.createJwtPayload.name}' with the provided user`, () => {
+      expect(
+        refreshTokenCallbackService.createJwtPayload,
+      ).toHaveBeenCalledTimes(1);
+      expect(refreshTokenCallbackService.createJwtPayload).toHaveBeenCalledWith(
+        user,
+      );
+    });
+
+    it(`calls '${JwtService.name}::${JwtService.prototype.sign.name}' with the appropriate payload & options`, () => {
+      expect(jwtService.sign).toHaveBeenCalledTimes(1);
+      expect(jwtService.sign).toHaveBeenCalledWith(payload, {
+        algorithm: authenticationModuleOptions.jwt.algorithm,
+        issuer: authenticationModuleOptions.jwt.issuer,
+        audience: authenticationModuleOptions.jwt.audience,
+        subject: TokenService['REFRESH_TOKEN_JWT_SUBJECT'],
+        secret: authenticationModuleOptions.jwt.secret,
+        notBefore: 0,
+        expiresIn:
+          authenticationModuleOptions.cookie.refreshToken.expiresInSeconds,
       });
+    });
 
-      afterAll(() => {
-        jest.clearAllMocks();
-      });
-
-      it(`returns the JWT generated by '${JwtService.name}::${JwtService.prototype.sign.name}'`, () => {
-        expect(result).toBe(refreshToken);
-      });
-
-      it(`calls '${JwtService.name}::${JwtService.prototype.sign.name}' with the appropriate payload & options`, () => {
-        expect(jwtService.sign).toHaveBeenCalledTimes(1);
-        expect(jwtService.sign).toHaveBeenCalledWith(
-          { id: user.id },
-          {
-            algorithm: authenticationModuleOptions.jwt.algorithm,
-            issuer: authenticationModuleOptions.jwt.issuer,
-            audience: authenticationModuleOptions.jwt.audience,
-            subject: TokenService['REFRESH_TOKEN_JWT_SUBJECT'],
-            secret: authenticationModuleOptions.jwt.secret,
-            notBefore: 0,
-            expiresIn:
-              authenticationModuleOptions.refreshToken.expiresInSeconds,
-          },
-        );
-      });
-    },
-  );
+    it(`returns the JWT generated by '${JwtService.name}::${JwtService.prototype.sign.name}'`, () => {
+      expect(result).toBe(refreshToken);
+    });
+  });
 
   describe(TokenService.prototype.validateRefreshToken.name, () => {
-    describe('[on success', () => {
+    describe('[on success]', () => {
       const jwt = 'JWT to validate';
       const payload = { id: 'User-Id' };
 
       let result: unknown;
 
-      beforeAll(() => {
+      beforeAll(async () => {
         jwtService.verify.mockReturnValueOnce(payload);
+        refreshTokenCallbackService.validateJwtPayload.mockResolvedValueOnce(
+          true,
+        );
 
-        result = tokenService.validateRefreshToken(jwt);
+        result = await tokenService.validateRefreshToken(jwt);
       });
 
       afterAll(() => {
         jest.clearAllMocks();
-      });
-
-      it("returns the payload", () => {
-        expect(result).toBe(payload);
       });
 
       it(`calls '${JwtService.name}::${JwtService.prototype.verify.name}' with the appropriate JWT & options`, () => {
@@ -225,23 +270,44 @@ describe(TokenService.name, () => {
           secret: authenticationModuleOptions.jwt.secret,
         });
       });
+
+      it(`calls '${RefreshTokenCallbackService.prototype.validateJwtPayload.name}' with the JWT payload`, () => {
+        expect(
+          refreshTokenCallbackService.validateJwtPayload,
+        ).toHaveBeenCalledTimes(1);
+        expect(
+          refreshTokenCallbackService.validateJwtPayload,
+        ).toHaveBeenCalledWith(payload);
+      });
+
+      it('returns the payload', () => {
+        expect(result).toBe(payload);
+      });
     });
 
     describe('[on failure]', () => {
-      beforeAll(() => {
-        jwtService.verify.mockImplementationOnce(() => {
-          throw new Error();
-        });
-      });
-
-      afterAll(() => {
+      afterEach(() => {
         jest.clearAllMocks();
       });
 
-      it(`throws an '${UnauthorizedException.name}' when '${JwtService.name}::${JwtService.prototype.verify.name}' fails`, () => {
-        expect(() =>
+      it(`throws an '${UnauthorizedException.name}' when '${JwtService.name}::${JwtService.prototype.sign.name}' fails`, async () => {
+        jwtService.verify.mockImplementationOnce(() => {
+          throw new Error();
+        });
+
+        await expect(() =>
           tokenService.validateRefreshToken('JWT to validate'),
-        ).toThrow(UnauthorizedException);
+        ).rejects.toThrow(UnauthorizedException);
+      });
+
+      it(`throws an '${UnauthorizedException.name}' if '${RefreshTokenCallbackService.name}::${RefreshTokenCallbackService.prototype.validateJwtPayload.name}' returns 'false'`, async () => {
+        refreshTokenCallbackService.validateJwtPayload.mockResolvedValueOnce(
+          false,
+        );
+
+        await expect(() =>
+          tokenService.validateRefreshToken('JWT to validate'),
+        ).rejects.toThrow(UnauthorizedException);
       });
     });
   });

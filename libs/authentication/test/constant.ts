@@ -1,3 +1,5 @@
+import { ObjectId } from 'mongodb';
+
 import { AuthenticationModuleOptions } from '@application/authentication/authentication.module-options';
 
 export const enum Configuration {
@@ -7,25 +9,25 @@ export const enum Configuration {
 }
 
 export const authenticatedUser = {
-  id: '1234567890',
+  id: new ObjectId(),
   username: 'user@email.dev',
   password: 'password',
 } as const;
 
 export const authenticationModuleConfiguration: AuthenticationModuleOptions = {
-  routes: {
-    login: {
-      withCredentials: 'login',
-    },
-    refresh: {
+  route: {
+    login: 'login',
+    tokenRefresh: {
       accessToken: 'token-refresh/access-token',
       refreshToken: 'token-refresh/refresh-token',
     },
   },
 
-  authenticateUser: {
-    forRoutes: ['*'],
-    except: [],
+  middleware: {
+    requiresAccessToken: {
+      forRoutes: ['*'],
+      except: [],
+    },
   },
 
   requestPropertyHoldingAuthenticatedUser:
@@ -38,29 +40,45 @@ export const authenticationModuleConfiguration: AuthenticationModuleOptions = {
     secret: Configuration.APPLICATION_SECRET,
   },
 
-  accessToken: {
-    cookieName: 'user.access-token',
-    expiresInSeconds: 15 * 60, // 15 minutes
-  },
-
-  refreshToken: {
-    cookieName: 'user.refresh-token',
-    expiresInSeconds: 7 * 24 * 60 * 60, // 1 week
-  },
-
-  callbacks: {
-    resolveUser: {
-      byUsername: (username: string) =>
-        Promise.resolve(
-          username === authenticatedUser.username ? authenticatedUser : null,
-        ),
-      byId: (id: string) =>
-        Promise.resolve(id === authenticatedUser.id ? authenticatedUser : null),
+  cookie: {
+    accessToken: {
+      name: 'user.access-token',
+      expiresInSeconds: 15 * 60, // 15 minutes
     },
 
-    extractUserId: (user: typeof authenticatedUser) => user.id,
+    refreshToken: {
+      name: 'user.refresh-token',
+      expiresInSeconds: 7 * 24 * 60 * 60, // 1 week
+    },
+  },
 
-    validatePassword: (user: typeof authenticatedUser, password: string) =>
-      Promise.resolve(password === user.password),
+  callback: {
+    validateCredentials: (username: string, password: string) =>
+      Promise.resolve(
+        username === authenticatedUser.username &&
+          password === authenticatedUser.password
+          ? authenticatedUser
+          : null,
+      ),
+
+    accessToken: {
+      createJwtPayload: (user: typeof authenticatedUser) =>
+        Promise.resolve({ id: user.id.toString() }),
+      validateJwtPayload: () => Promise.resolve(true),
+      resolveUserFromJwtPayload: (payload: Record<string, unknown>) =>
+        payload['id'] === authenticatedUser.id.toString()
+          ? Promise.resolve(authenticatedUser)
+          : Promise.reject(new Error()),
+    },
+
+    refreshToken: {
+      createJwtPayload: (user: typeof authenticatedUser) =>
+        Promise.resolve({ id: user.id.toString() }),
+      validateJwtPayload: () => Promise.resolve(true),
+      resolveUserFromJwtPayload: (payload: Record<string, unknown>) =>
+        payload['id'] === authenticatedUser.id.toString()
+          ? Promise.resolve(authenticatedUser)
+          : Promise.reject(new Error()),
+    },
   },
 };

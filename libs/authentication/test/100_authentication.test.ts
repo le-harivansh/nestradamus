@@ -25,7 +25,7 @@ describe(`${LoginController.name} (e2e)`, () => {
     describe('[succeeds because]', () => {
       it(`returns 'HTTP ${HttpStatus.NO_CONTENT}' with the 'access-token' cookie when the correct user-credentials are sent`, async () => {
         const response = await request(application.getHttpServer())
-          .post(`/${authenticationModuleConfiguration.routes.login.withCredentials}`)
+          .post(`/${authenticationModuleConfiguration.route.login}`)
           .send({
             username: authenticatedUser.username,
             password: authenticatedUser.password,
@@ -39,7 +39,7 @@ describe(`${LoginController.name} (e2e)`, () => {
         expect(
           cookies.findIndex((cookie) =>
             cookie.startsWith(
-              authenticationModuleConfiguration.accessToken.cookieName,
+              authenticationModuleConfiguration.cookie.accessToken.name,
             ),
           ),
         ).not.toBe(-1);
@@ -48,7 +48,7 @@ describe(`${LoginController.name} (e2e)`, () => {
         expect(
           cookies.findIndex((cookie) =>
             cookie.startsWith(
-              authenticationModuleConfiguration.refreshToken.cookieName,
+              authenticationModuleConfiguration.cookie.refreshToken.name,
             ),
           ),
         ).not.toBe(-1);
@@ -65,7 +65,7 @@ describe(`${LoginController.name} (e2e)`, () => {
         `returns 'HTTP ${HttpStatus.BAD_REQUEST}' if invalid credentials are sent {username: $username, password: $password}`,
         async ({ username, password }) => {
           const response = await request(application.getHttpServer())
-            .post(`/${authenticationModuleConfiguration.routes.login.withCredentials}`)
+            .post(`/${authenticationModuleConfiguration.route.login}`)
             .send({ username, password });
 
           expect(response.status).toBe(HttpStatus.BAD_REQUEST);
@@ -80,7 +80,7 @@ describe(`${LoginController.name} (e2e)`, () => {
         `returns 'HTTP ${HttpStatus.UNAUTHORIZED}' if wrong credentials are sent {username: '$username', password: '$password'}`,
         async ({ username, password }) => {
           const response = await request(application.getHttpServer())
-            .post(`/${authenticationModuleConfiguration.routes.login.withCredentials}`)
+            .post(`/${authenticationModuleConfiguration.route.login}`)
             .send({ username, password });
 
           expect(response.status).toBe(HttpStatus.UNAUTHORIZED);
@@ -99,16 +99,16 @@ describe(`${LoginController.name} (e2e)`, () => {
           password: authenticatedUser.password,
         },
         application,
-        `/${authenticationModuleConfiguration.routes.login.withCredentials}`,
-        authenticationModuleConfiguration.accessToken.cookieName,
-        authenticationModuleConfiguration.refreshToken.cookieName,
+        `/${authenticationModuleConfiguration.route.login}`,
+        authenticationModuleConfiguration.cookie.accessToken.name,
+        authenticationModuleConfiguration.cookie.refreshToken.name,
       ));
     });
 
     describe('[succeeds because]', () => {
       it(`returns 'HTTP ${HttpStatus.NO_CONTENT}' with the 'access-token' cookie when a valid access-token is sent`, async () => {
         const response = await request(application.getHttpServer())
-          .delete(`/${authenticationModuleConfiguration.routes.login.withCredentials}`)
+          .delete(`/${authenticationModuleConfiguration.route.login}`)
           .set('Cookie', accessToken);
 
         expect(response.status).toBe(HttpStatus.NO_CONTENT);
@@ -116,7 +116,7 @@ describe(`${LoginController.name} (e2e)`, () => {
 
       it("clears the 'access-token' & 'refresh-token' cookies", async () => {
         const response = await request(application.getHttpServer())
-          .delete(`/${authenticationModuleConfiguration.routes.login.withCredentials}`)
+          .delete(`/${authenticationModuleConfiguration.route.login}`)
           .set('Cookie', accessToken);
 
         const tokens = response
@@ -124,10 +124,10 @@ describe(`${LoginController.name} (e2e)`, () => {
           ?.filter(
             (cookie) =>
               cookie.startsWith(
-                `${authenticationModuleConfiguration.accessToken.cookieName}=`,
+                `${authenticationModuleConfiguration.cookie.accessToken.name}=`,
               ) ||
               cookie.startsWith(
-                `${authenticationModuleConfiguration.refreshToken.cookieName}=`,
+                `${authenticationModuleConfiguration.cookie.refreshToken.name}=`,
               ),
           );
 
@@ -144,7 +144,7 @@ describe(`${LoginController.name} (e2e)`, () => {
     describe('[fails because]', () => {
       it(`returns 'HTTP ${HttpStatus.UNAUTHORIZED}' when no access-token is sent`, async () => {
         const response = await request(application.getHttpServer()).delete(
-          `/${authenticationModuleConfiguration.routes.login.withCredentials}`,
+          `/${authenticationModuleConfiguration.route.login}`,
         );
 
         expect(response.status).toBe(HttpStatus.UNAUTHORIZED);
@@ -152,10 +152,10 @@ describe(`${LoginController.name} (e2e)`, () => {
 
       it(`returns 'HTTP ${HttpStatus.UNAUTHORIZED}' when an invalid access-token is sent`, async () => {
         const response = await request(application.getHttpServer())
-          .delete(`/${authenticationModuleConfiguration.routes.login.withCredentials}`)
+          .delete(`/${authenticationModuleConfiguration.route.login}`)
           .set(
             'Cookie',
-            `${authenticationModuleConfiguration.accessToken.cookieName}=invalid-access-token;`,
+            `${authenticationModuleConfiguration.cookie.accessToken.name}=invalid-access-token;`,
           );
 
         expect(response.status).toBe(HttpStatus.UNAUTHORIZED);
