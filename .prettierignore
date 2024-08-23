@@ -1,7 +1,10 @@
-# compiled output
+# Compiled output
 /dist
 
-# Yarn Berry
+# NPM
+/node_modules
+
+# Yarn (berry)
 .yarn
 .pnp.*
 yarn.lock

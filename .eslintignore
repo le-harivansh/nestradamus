@@ -1,9 +1,12 @@
-# compiled output
+# Compiled output
 /dist
+
+# NPM
+/node_modules
+
+# Yarn (berry)
+.yarn
+.pnp.*
 
 # IDE - VSCode
 .vscode
-
-# Yarn Berry
-.yarn
-.pnp.*

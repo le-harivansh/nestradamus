@@ -2,6 +2,9 @@
 /dist
 /build
 
+# NPM
+/node_modules
+
 # Yarn (berry)
 .yarn/*
 !.yarn/cache
