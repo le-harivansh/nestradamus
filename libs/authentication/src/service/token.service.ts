@@ -29,6 +29,8 @@ export class TokenService {
     private readonly refreshTokenCallbackService: RefreshTokenCallbackService,
   ) {}
 
+  // Access-Token
+
   async createAccessToken(user: unknown): Promise<string> {
     return this.jwtService.sign(
       await this.accessTokenCallbackService.createJwtPayload(user),
@@ -58,7 +60,7 @@ export class TokenService {
       if (
         !(await this.accessTokenCallbackService.validateJwtPayload(payload))
       ) {
-        throw new Error();
+        throw new Error('Invalid JWT payload for access-token.');
       }
 
       return payload;
@@ -66,6 +68,8 @@ export class TokenService {
       throw new UnauthorizedException('Invalid access-token.');
     }
   }
+
+  // Refresh-Token
 
   async createRefreshToken(user: unknown): Promise<string> {
     return this.jwtService.sign(
@@ -92,10 +96,11 @@ export class TokenService {
         subject: TokenService.REFRESH_TOKEN_JWT_SUBJECT,
         secret: this.authenticationModuleOptions.jwt.secret,
       });
+
       if (
         !(await this.refreshTokenCallbackService.validateJwtPayload(payload))
       ) {
-        throw new UnauthorizedException();
+        throw new Error('Invalid JWT payload for refresh-token.');
       }
 
       return payload;

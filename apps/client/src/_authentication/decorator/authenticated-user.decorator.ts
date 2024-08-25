@@ -1,4 +1,4 @@
-import { AuthenticatedUserDecoratorFactory } from '@application/authentication/decorator/authenticated-user.decorator-factory';
+import { AuthenticatedUserDecoratorFactory } from '@application/authentication';
 
 import { REQUEST_PROPERTY_HOLDING_AUTHENTICATED_USER } from '../constant';
 

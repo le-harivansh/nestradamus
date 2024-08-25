@@ -1,7 +1,9 @@
+import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { argon2id, hash } from 'argon2';
 import { ObjectId, WithId } from 'mongodb';
 
+import { fakeUserData } from '../../../test/helper';
 import { UserRepository } from '../repository/user.repository';
 import { User } from '../schema/user.schema';
 import { UserService } from './user.service';
@@ -27,13 +29,7 @@ describe(UserService.name, () => {
   });
 
   describe(UserService.prototype.createUser.name, () => {
-    const userData: User = {
-      firstName: 'One',
-      lastName: 'Two',
-      phoneNumber: '1212121212',
-      email: 'user@email.dev',
-      password: 'P@ssw0rd',
-    };
+    const userData: User = fakeUserData();
     const newUserId = new ObjectId();
     const hashedPassword = 'hashed-password';
 
@@ -75,6 +71,76 @@ describe(UserService.name, () => {
         _id: newUserId,
         ...otherUserData,
       });
+    });
+  });
+
+  describe(UserService.prototype.findUserById.name, () => {
+    const userId = new ObjectId().toString();
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it(`calls '${UserRepository.name}::${UserRepository.prototype.findById.name}' with the provided 'id'`, async () => {
+      await userService.findUserById(userId);
+
+      expect(userRepository.findById).toHaveBeenCalledTimes(1);
+      expect(userRepository.findById).toHaveBeenCalledWith(
+        new ObjectId(userId),
+      );
+    });
+
+    it(`returns the value of '${UserRepository.name}::${UserRepository.prototype.findById.name}' if it is not 'null'`, async () => {
+      const user = Symbol('fetched user');
+
+      userRepository.findById.mockResolvedValueOnce(
+        user as unknown as WithId<User>,
+      );
+
+      await expect(
+        userService.findUserById(new ObjectId().toString()),
+      ).resolves.toBe(user);
+    });
+
+    it(`throws '${NotFoundException.name}' if '${UserRepository.name}::${UserRepository.prototype.findById.name}' returns 'null'`, async () => {
+      userRepository.findById.mockResolvedValueOnce(null);
+
+      await expect(
+        userService.findUserById(new ObjectId().toString()),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe(UserService.prototype.findUserByEmail.name, () => {
+    const email = 'user@email.dev';
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it(`calls '${UserRepository.name}::${UserRepository.prototype.findByEmail.name}' with the provided 'email'`, async () => {
+      await userService.findUserByEmail(email);
+
+      expect(userRepository.findByEmail).toHaveBeenCalledTimes(1);
+      expect(userRepository.findByEmail).toHaveBeenCalledWith(email);
+    });
+
+    it(`returns the value of '${UserRepository.name}::${UserRepository.prototype.findByEmail.name}' if it is not 'null'`, async () => {
+      const user = Symbol('fetched user');
+
+      userRepository.findByEmail.mockResolvedValueOnce(
+        user as unknown as WithId<User>,
+      );
+
+      await expect(userService.findUserByEmail(email)).resolves.toBe(user);
+    });
+
+    it(`throws '${NotFoundException.name}' if '${UserRepository.name}::${UserRepository.prototype.findByEmail.name}' returns 'null'`, async () => {
+      userRepository.findByEmail.mockResolvedValueOnce(null);
+
+      await expect(userService.findUserByEmail(email)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

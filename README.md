@@ -61,8 +61,6 @@ _Note_: When setting path aliases; they need to be added to the `paths` section 
 
 The project's tasks & todos are stored in the `todo.md` file, found in the root directory of the project.
 
-@todo: admin + e2e tests
-
 ## Installation
 
 1. Clone the project
@@ -213,3 +211,7 @@ See the associated documentation in the `libs/authentication` library.
 yarn set version stable
 yarn dlx @yarnpkg/sdks vscode
 ```
+
+## Client Application
+
+See the _README_ of the _Client Application_ at `apps/client/README.md`.

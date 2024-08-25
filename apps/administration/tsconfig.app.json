@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "declaration": false,
-    "outDir": "../../dist/apps/administration"
+    "outDir": "../../dist/administration"
   },
   "include": ["src/**/*"],
   "exclude": ["**/*.spec.ts"]

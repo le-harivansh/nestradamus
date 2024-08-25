@@ -8,10 +8,10 @@ import { User, UserSchema } from '../schema/user.schema';
 export class UserRepository {
   constructor(@Inject(DATABASE) private readonly database: Db) {}
 
-  findById(id: string) {
+  findById(id: ObjectId): Promise<WithId<User> | null> {
     return this.database
       .collection<User>(UserSchema.collectionName)
-      .findOne({ _id: new ObjectId(id) });
+      .findOne({ _id: id });
   }
 
   findByEmail(email: string): Promise<WithId<User> | null> {

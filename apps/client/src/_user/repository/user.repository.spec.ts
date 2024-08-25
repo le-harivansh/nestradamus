@@ -65,15 +65,13 @@ describe(UserRepository.name, () => {
     });
 
     it('returns the user with the matching id', async () => {
-      const retrievedUser = await userRepository.findById(userId.toString());
+      const retrievedUser = await userRepository.findById(userId);
 
       expect(retrievedUser?._id).toStrictEqual(userId);
     });
 
     it('returns null if the specified user cannot be found', async () => {
-      await expect(
-        userRepository.findById(new ObjectId().toString()),
-      ).resolves.toBeNull();
+      await expect(userRepository.findById(new ObjectId())).resolves.toBeNull();
     });
   });
 

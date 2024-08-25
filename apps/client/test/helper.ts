@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
@@ -47,8 +48,23 @@ export async function teardownTestApplication(
   await application.close();
 }
 
-export function createUser(userData: User, application: INestApplication) {
+export function fakeUserData(defaults?: Partial<User>): User {
+  const PASSWORD = 'password';
+
+  return new User(
+    defaults?.firstName ?? faker.person.firstName(),
+    defaults?.lastName ?? faker.person.lastName(),
+    defaults?.phoneNumber ?? faker.phone.number(),
+    defaults?.email ?? faker.internet.email(),
+    defaults?.password ?? PASSWORD,
+  );
+}
+
+export function createUser(
+  userData: Partial<User>,
+  application: INestApplication,
+) {
   const userService = application.get(UserService);
 
-  return userService.createUser(userData);
+  return userService.createUser(fakeUserData(userData));
 }

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, NotFoundException } from '@nestjs/common';
 import { verify } from 'argon2';
 import { WithId } from 'mongodb';
 
@@ -6,8 +6,8 @@ import { AuthenticationModule as AuthenticationLibraryModule } from '@applicatio
 
 import { ConfigurationModule } from '../_configuration/configuration.module';
 import { ConfigurationService } from '../_configuration/service/configuration.service';
-import { UserRepository } from '../_user/repository/user.repository';
 import { User } from '../_user/schema/user.schema';
+import { UserService } from '../_user/service/user.service';
 import { UserModule } from '../_user/user.module';
 import {
   ACCESS_TOKEN_COOKIE_NAME,
@@ -19,10 +19,10 @@ import {
   imports: [
     AuthenticationLibraryModule.forRootAsync({
       imports: [ConfigurationModule, UserModule],
-      inject: [ConfigurationService, UserRepository],
+      inject: [ConfigurationService, UserService],
       useFactory: (
         configurationService: ConfigurationService,
-        userRepository: UserRepository,
+        userService: UserService,
       ) => ({
         route: {
           login: 'login',
@@ -62,10 +62,20 @@ import {
         },
 
         callback: {
-          validateCredentials: async (username: string, password: string) => {
-            const user = await userRepository.findByEmail(username);
+          validateCredentials: async (email: string, password: string) => {
+            let user: WithId<User>;
 
-            if (!user || !(await verify(user.password, password))) {
+            try {
+              user = await userService.findUserByEmail(email);
+            } catch (error) {
+              if (error instanceof NotFoundException) {
+                return null;
+              }
+
+              throw error;
+            }
+
+            if (!(await verify(user.password, password))) {
               return null;
             }
 
@@ -75,19 +85,55 @@ import {
           accessToken: {
             createJwtPayload: (user: WithId<User>) =>
               Promise.resolve({ id: user._id.toString() }),
+
             validateJwtPayload: (payload: Record<string, unknown>) =>
               Promise.resolve(Boolean(payload['id'])),
-            resolveUserFromJwtPayload: (payload: Record<string, unknown>) =>
-              userRepository.findById(payload['id'] as string),
+
+            resolveUserFromJwtPayload: async (
+              payload: Record<string, unknown>,
+            ) => {
+              try {
+                /**
+                 * We need to anchor the `Promise` with `await` here
+                 * to be able to catch any error that occurs in
+                 * `UserService::findUserById`.
+                 */
+                return await userService.findUserById(payload['id'] as string);
+              } catch (error) {
+                if (error instanceof NotFoundException) {
+                  return null;
+                }
+
+                throw error;
+              }
+            },
           },
 
           refreshToken: {
             createJwtPayload: (user: WithId<User>) =>
               Promise.resolve({ id: user._id.toString() }),
+
             validateJwtPayload: (payload: Record<string, unknown>) =>
               Promise.resolve(Boolean(payload['id'])),
-            resolveUserFromJwtPayload: (payload: Record<string, unknown>) =>
-              userRepository.findById(payload['id'] as string),
+
+            resolveUserFromJwtPayload: async (
+              payload: Record<string, unknown>,
+            ) => {
+              try {
+                /**
+                 * We need to anchor the `Promise` with `await` here
+                 * to be able to catch any error that occurs in
+                 * `UserService::findUserById`.
+                 */
+                return await userService.findUserById(payload['id'] as string);
+              } catch (error) {
+                if (error instanceof NotFoundException) {
+                  return null;
+                }
+
+                throw error;
+              }
+            },
           },
         },
       }),

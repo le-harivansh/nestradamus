@@ -7,11 +7,13 @@ import { DATABASE } from '@application/database';
  * Model
  */
 export class User {
-  firstName!: string;
-  lastName!: string;
-  phoneNumber!: string;
-  email!: string;
-  password!: string;
+  constructor(
+    public readonly firstName: string,
+    public readonly lastName: string,
+    public readonly phoneNumber: string,
+    public readonly email: string,
+    public readonly password: string,
+  ) {}
 }
 
 /**
