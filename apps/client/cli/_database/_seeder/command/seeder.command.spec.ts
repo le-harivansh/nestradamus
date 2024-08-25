@@ -5,7 +5,7 @@ import { User } from '../../../../src/_user/schema/user.schema';
 import { UserService } from '../../../../src/_user/service/user.service';
 import { SeederCommand } from './seeder.command';
 
-jest.mock('../../../src/_user/service/user.service');
+jest.mock('../../../../src/_user/service/user.service');
 
 describe(SeederCommand.name, () => {
   let databaseSeederCommand: SeederCommand;
