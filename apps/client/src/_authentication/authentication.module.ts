@@ -1,4 +1,4 @@
-import { Module, NotFoundException } from '@nestjs/common';
+import { Module, NotFoundException, RequestMethod } from '@nestjs/common';
 import { verify } from 'argon2';
 import { WithId } from 'mongodb';
 
@@ -35,7 +35,7 @@ import {
         middleware: {
           requiresAccessToken: {
             forRoutes: ['*'],
-            except: [],
+            except: [{ path: 'healthcheck', method: RequestMethod.GET }],
           },
         },
 

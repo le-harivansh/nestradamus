@@ -5,6 +5,7 @@ import { APP_PIPE } from '@nestjs/core';
 import { AuthenticationModule } from './_authentication/authentication.module';
 import { ConfigurationModule } from './_configuration/configuration.module';
 import { DatabaseModule } from './_database/database.module';
+import { HealthCheckModule } from './_health-check/health-check.module';
 import { UserModule } from './_user/user.module';
 import applicationConfiguration from './application.config';
 
@@ -14,6 +15,8 @@ import applicationConfiguration from './application.config';
     ConfigModule.forFeature(applicationConfiguration),
 
     DatabaseModule,
+
+    HealthCheckModule,
 
     UserModule,
 

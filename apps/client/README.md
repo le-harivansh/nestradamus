@@ -27,3 +27,8 @@ To seed the client database, run the following command:
 ```shell
 yarn run cli:client db seed
 ```
+
+### Health-check
+
+A health-check route is available at `/_health-check`. More health-check services can be added to the `HealthCheckController`'s `check` method.
+See [NestJs health-check](https://docs.nestjs.com/recipes/terminus) for more details.
