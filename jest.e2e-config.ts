@@ -20,6 +20,9 @@ const configuration: Config = {
 
     // Database Library
     '^@application/database(|/.*)$': '<rootDir>/libs/database/src/$1',
+
+    // Mail Library
+    '^@application/mail(|/.*)$': '<rootDir>/libs/mail/src/$1',
   },
 };
 

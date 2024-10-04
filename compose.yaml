@@ -11,5 +11,19 @@ services:
     volumes:
       - database:/data/db
 
+  mail:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    environment:
+      MP_DATABASE: /data/mailpit.db
+      MP_SMTP_AUTH: '${__MAILPIT_SMTP_USERNAME}:${__MAILPIT_SMTP_PASSWORD}'
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    volumes:
+      - mail:/data
+    ports:
+      - '${__MAILPIT_SMTP_PORT}:1025'
+      - '${__MAILPIT_WEB_UI_PORT}:8025'
+
 volumes:
   database:
+  mail:

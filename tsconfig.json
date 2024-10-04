@@ -31,7 +31,9 @@
       "@application/configuration": ["libs/configuration/src"],
       "@application/configuration/*": ["libs/configuration/src/*"],
       "@application/database": ["libs/database/src"],
-      "@application/database/*": ["libs/database/src/*"]
+      "@application/database/*": ["libs/database/src/*"],
+      "@application/mail": ["libs/mail/src"],
+      "@application/mail/*": ["libs/mail/src/*"]
     }
   }
 }
