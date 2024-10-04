@@ -7,6 +7,7 @@ declare global {
       APPLICATION_PORT: string;
       APPLICATION_SECRET: string;
 
+      DATABASE_SCHEME: string;
       DATABASE_HOST: string;
       DATABASE_PORT: string;
       DATABASE_USERNAME: string;

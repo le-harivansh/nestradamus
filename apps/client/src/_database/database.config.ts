@@ -5,6 +5,7 @@ import { z } from 'zod';
 export const CONFIGURATION_NAMESPACE = 'database';
 
 const databaseConfigurationValidationSchema = z.object({
+  scheme: z.enum(['mongodb', 'mongodb+srv']),
   host: z.string(),
   port: z.coerce.number().int().positive().max(65535),
   username: z.string(),
@@ -18,6 +19,7 @@ export type DatabaseConfiguration = z.infer<
 
 export default registerAs(CONFIGURATION_NAMESPACE, () =>
   databaseConfigurationValidationSchema.parse({
+    scheme: env['DATABASE_SCHEME'],
     host: env['DATABASE_HOST'],
     port: env['DATABASE_PORT'],
     username: env['DATABASE_USERNAME'],

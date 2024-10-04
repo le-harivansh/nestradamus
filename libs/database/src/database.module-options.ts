@@ -2,7 +2,12 @@ import { z } from 'zod';
 
 export const databaseModuleOptionsValidationSchema = z.object({
   /**
-   * The host of the mongoDB database.
+   * The scheme of the URI of the mongoDB database.
+   */
+  scheme: z.enum(['mongodb', 'mongodb+srv']),
+
+  /**
+   * The host of the URI of the mongoDB database.
    */
   host: z.string().min(1),
 

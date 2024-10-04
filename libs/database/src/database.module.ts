@@ -57,13 +57,14 @@ export class DatabaseModule
           provide: MONGO_CLIENT,
           inject: [DATABASE_MODULE_OPTIONS_TOKEN],
           useFactory: ({
+            scheme,
             host,
             port,
             username,
             password,
             applicationName,
           }: DatabaseModuleOptions): Promise<MongoClient> => {
-            const mongoClient = new MongoClient(`mongodb://${host}:${port}`, {
+            const mongoClient = new MongoClient(`${scheme}://${host}:${port}`, {
               appName: applicationName,
               auth: { username, password },
               authSource: 'admin',

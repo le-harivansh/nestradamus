@@ -13,6 +13,7 @@ import databaseConfiguration from './database.config';
     DatabaseLibraryModule.forRootAsync({
       inject: [ConfigurationService],
       useFactory: (configurationService: ConfigurationService) => ({
+        scheme: configurationService.getOrThrow('database.scheme'),
         host: configurationService.getOrThrow('database.host'),
         port: configurationService.getOrThrow('database.port'),
         username: configurationService.getOrThrow('database.username'),
