@@ -1,28 +1,34 @@
 import { Inject } from '@nestjs/common';
-import { Db, ObjectId, WithId } from 'mongodb';
+import { Collection, Db, ObjectId } from 'mongodb';
 
-import { DATABASE } from '@application/database';
+import { DATABASE } from '@library/database';
 
 import { User, UserSchema } from '../schema/user.schema';
 
 export class UserRepository {
-  constructor(@Inject(DATABASE) private readonly database: Db) {}
+  private readonly collection: Collection<User>;
 
-  findById(id: ObjectId): Promise<WithId<User> | null> {
-    return this.database
-      .collection<User>(UserSchema.collectionName)
-      .findOne({ _id: id });
+  constructor(@Inject(DATABASE) database: Db) {
+    this.collection = database.collection<User>(UserSchema.collectionName);
   }
 
-  findByEmail(email: string): Promise<WithId<User> | null> {
-    return this.database
-      .collection<User>(UserSchema.collectionName)
-      .findOne({ email });
+  findById(id: ObjectId) {
+    return this.collection.findOne({ _id: id });
+  }
+
+  findByEmail(email: string) {
+    return this.collection.findOne({ email });
   }
 
   create(userData: User) {
-    return this.database
-      .collection<User>(UserSchema.collectionName)
-      .insertOne(userData);
+    return this.collection.insertOne(userData);
+  }
+
+  update(id: ObjectId, userData: Partial<User>) {
+    return this.collection.findOneAndUpdate(
+      { _id: id },
+      { $set: userData },
+      { returnDocument: 'after' },
+    );
   }
 }

@@ -6,6 +6,8 @@ import { AuthenticationModule } from './_authentication/authentication.module';
 import { ConfigurationModule } from './_configuration/configuration.module';
 import { DatabaseModule } from './_database/database.module';
 import { HealthCheckModule } from './_health-check/health-check.module';
+import { MailModule } from './_mail/mail.module';
+import { PasswordResetModule } from './_password-reset/password-reset.module';
 import { UserModule } from './_user/user.module';
 import applicationConfiguration from './application.config';
 
@@ -16,11 +18,15 @@ import applicationConfiguration from './application.config';
 
     DatabaseModule,
 
+    MailModule,
+
     HealthCheckModule,
 
     UserModule,
 
     AuthenticationModule,
+
+    PasswordResetModule,
   ],
   providers: [
     {

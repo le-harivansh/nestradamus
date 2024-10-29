@@ -3,12 +3,7 @@ module.exports = {
   singleQuote: true,
   quoteProps: 'consistent',
   trailingComma: 'all',
-  importOrder: [
-    '<THIRD_PARTY_MODULES>',
-    '^@application/(.*)$',
-    '^[../]',
-    '^[./]',
-  ],
+  importOrder: ['<THIRD_PARTY_MODULES>', '^@library/(.*)$', '^[../]', '^[./]'],
   importOrderCaseInsensitive: true,
   importOrderSeparation: true,
   importOrderSortSpecifiers: true,

@@ -2,11 +2,14 @@ import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Db, MongoClient } from 'mongodb';
 import request from 'supertest';
 
-import { getAuthenticationTokens } from '@application/authentication/../test/helper';
+import { getAuthenticationTokens } from '@library/authentication/../test/helper';
 
 import {
   ACCESS_TOKEN_COOKIE_NAME,
+  ACCESS_TOKEN_REFRESH_ROUTE,
+  LOGIN_ROUTE,
   REFRESH_TOKEN_COOKIE_NAME,
+  REFRESH_TOKEN_REFRESH_ROUTE,
 } from '../src/_authentication/constant';
 import {
   createUser,
@@ -47,7 +50,7 @@ describe('Token-Refresh (e2e)', () => {
     authenticationTokens = await getAuthenticationTokens(
       userCredentials,
       application,
-      '/login',
+      `/${LOGIN_ROUTE}`,
       ACCESS_TOKEN_COOKIE_NAME,
       REFRESH_TOKEN_COOKIE_NAME,
     );
@@ -57,11 +60,11 @@ describe('Token-Refresh (e2e)', () => {
     await teardownTestApplication(application, mongoClient, database);
   });
 
-  describe('/token-refresh/access-token (POST)', () => {
+  describe(`POST /${ACCESS_TOKEN_REFRESH_ROUTE}`, () => {
     describe('[succeeds because]', () => {
       it(`returns 'HTTP ${HttpStatus.NO_CONTENT}' with the new access-token when the correct refresh-token is sent`, async () => {
         const response = await request(application.getHttpServer())
-          .post('/token-refresh/access-token')
+          .post(`/${ACCESS_TOKEN_REFRESH_ROUTE}`)
           .set('Cookie', authenticationTokens.refreshToken);
 
         expect(response.status).toBe(HttpStatus.NO_CONTENT);
@@ -77,7 +80,7 @@ describe('Token-Refresh (e2e)', () => {
     describe('[fails because]', () => {
       it(`returns 'HTTP ${HttpStatus.UNAUTHORIZED}' when no refresh-token is sent`, async () => {
         const response = await request(application.getHttpServer()).post(
-          '/token-refresh/access-token',
+          `/${ACCESS_TOKEN_REFRESH_ROUTE}`,
         );
 
         expect(response.status).toBe(HttpStatus.UNAUTHORIZED);
@@ -85,7 +88,7 @@ describe('Token-Refresh (e2e)', () => {
 
       it(`returns 'HTTP ${HttpStatus.UNAUTHORIZED}' when an invalid refresh-token is sent`, async () => {
         const response = await request(application.getHttpServer())
-          .post('/token-refresh/access-token')
+          .post(`/${ACCESS_TOKEN_REFRESH_ROUTE}`)
           .set('Cookie', `${REFRESH_TOKEN_COOKIE_NAME}=invalid-refresh-token;`);
 
         expect(response.status).toBe(HttpStatus.UNAUTHORIZED);
@@ -93,11 +96,11 @@ describe('Token-Refresh (e2e)', () => {
     });
   });
 
-  describe('/token-refresh/refresh-token (POST)', () => {
+  describe(`POST /${REFRESH_TOKEN_REFRESH_ROUTE}`, () => {
     describe('[succeeds because]', () => {
       it(`returns 'HTTP ${HttpStatus.NO_CONTENT}' with the new refresh-token when the correct access-token is sent`, async () => {
         const response = await request(application.getHttpServer())
-          .post('/token-refresh/refresh-token')
+          .post(`/${REFRESH_TOKEN_REFRESH_ROUTE}`)
           .set('Cookie', authenticationTokens.accessToken);
 
         expect(response.status).toBe(HttpStatus.NO_CONTENT);
@@ -113,7 +116,7 @@ describe('Token-Refresh (e2e)', () => {
     describe('[fails because]', () => {
       it(`returns 'HTTP ${HttpStatus.UNAUTHORIZED}' when no access-token is sent`, async () => {
         const response = await request(application.getHttpServer()).post(
-          '/token-refresh/refresh-token',
+          `/${REFRESH_TOKEN_REFRESH_ROUTE}`,
         );
 
         expect(response.status).toBe(HttpStatus.UNAUTHORIZED);
@@ -121,7 +124,7 @@ describe('Token-Refresh (e2e)', () => {
 
       it(`returns 'HTTP ${HttpStatus.UNAUTHORIZED}' when an invalid access-token is sent`, async () => {
         const response = await request(application.getHttpServer())
-          .post('/token-refresh/refresh-token')
+          .post(`/${REFRESH_TOKEN_REFRESH_ROUTE}`)
           .set('Cookie', `${ACCESS_TOKEN_COOKIE_NAME}=invalid-access-token;`);
 
         expect(response.status).toBe(HttpStatus.UNAUTHORIZED);

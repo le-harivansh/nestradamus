@@ -1,9 +1,10 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { MailModule, MailService } from '@application/mail';
+import { MailModule, MailService } from '@library/mail';
 
 import { MailModuleOptions } from '../src/mail.module-options';
+import { MAILPIT_API_PORT } from './helper/constant';
 import { MailPit } from './helper/mailpit';
 
 describe('Mail sending (e2e)', () => {
@@ -21,14 +22,13 @@ describe('Mail sending (e2e)', () => {
       },
     },
   };
-  const MAILPIT_API_PORT = 8025;
 
   let mailPitClient: MailPit;
 
   let application: INestApplication;
   let mailService: MailService;
 
-  let startTime: Date;
+  let start: Date;
 
   beforeAll(async () => {
     mailPitClient = new MailPit(
@@ -44,13 +44,15 @@ describe('Mail sending (e2e)', () => {
 
     await application.init();
 
-    startTime = new Date();
+    start = new Date();
   });
 
   afterAll(async () => {
-    const endTime = new Date();
+    const end = new Date();
 
-    await mailPitClient.deleteMessagesBetween(startTime, endTime);
+    await mailPitClient.deleteMessagesBetween(start, end);
+
+    await application.close();
   });
 
   it('successfully sends an email to the proper recipient', async () => {

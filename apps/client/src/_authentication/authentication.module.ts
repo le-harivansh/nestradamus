@@ -1,17 +1,25 @@
 import { Module, NotFoundException, RequestMethod } from '@nestjs/common';
 import { verify } from 'argon2';
-import { WithId } from 'mongodb';
+import { ObjectId, WithId } from 'mongodb';
 
-import { AuthenticationModule as AuthenticationLibraryModule } from '@application/authentication';
+import { AuthenticationModule as AuthenticationLibraryModule } from '@library/authentication';
 
 import { ConfigurationModule } from '../_configuration/configuration.module';
 import { ConfigurationService } from '../_configuration/service/configuration.service';
+import { HEALTHCHECK_ROUTE } from '../_health-check/constant';
+import {
+  FORGOT_PASSWORD_ROUTE,
+  RESET_PASSWORD_ROUTE,
+} from '../_password-reset/constant';
 import { User } from '../_user/schema/user.schema';
 import { UserService } from '../_user/service/user.service';
 import { UserModule } from '../_user/user.module';
 import {
   ACCESS_TOKEN_COOKIE_NAME,
+  ACCESS_TOKEN_REFRESH_ROUTE,
+  LOGIN_ROUTE,
   REFRESH_TOKEN_COOKIE_NAME,
+  REFRESH_TOKEN_REFRESH_ROUTE,
   REQUEST_PROPERTY_HOLDING_AUTHENTICATED_USER,
 } from './constant';
 
@@ -25,17 +33,24 @@ import {
         userService: UserService,
       ) => ({
         route: {
-          login: 'login',
+          login: LOGIN_ROUTE,
           tokenRefresh: {
-            accessToken: 'token-refresh/access-token',
-            refreshToken: 'token-refresh/refresh-token',
+            accessToken: ACCESS_TOKEN_REFRESH_ROUTE,
+            refreshToken: REFRESH_TOKEN_REFRESH_ROUTE,
           },
         },
 
         middleware: {
           requiresAccessToken: {
             forRoutes: ['*'],
-            except: [{ path: 'healthcheck', method: RequestMethod.GET }],
+            except: [
+              { path: HEALTHCHECK_ROUTE, method: RequestMethod.GET },
+
+              { path: FORGOT_PASSWORD_ROUTE, method: RequestMethod.POST },
+
+              { path: RESET_PASSWORD_ROUTE, method: RequestMethod.GET },
+              { path: RESET_PASSWORD_ROUTE, method: RequestMethod.POST },
+            ],
           },
         },
 
@@ -93,12 +108,14 @@ import {
               payload: Record<string, unknown>,
             ) => {
               try {
+                const userId = new ObjectId(payload['id'] as string);
+
                 /**
                  * We need to anchor the `Promise` with `await` here
                  * to be able to catch any error that occurs in
                  * `UserService::findUserById`.
                  */
-                return await userService.findUserById(payload['id'] as string);
+                return await userService.findUserById(userId);
               } catch (error) {
                 if (error instanceof NotFoundException) {
                   return null;
@@ -120,12 +137,14 @@ import {
               payload: Record<string, unknown>,
             ) => {
               try {
+                const userId = new ObjectId(payload['id'] as string);
+
                 /**
                  * We need to anchor the `Promise` with `await` here
                  * to be able to catch any error that occurs in
                  * `UserService::findUserById`.
                  */
-                return await userService.findUserById(payload['id'] as string);
+                return await userService.findUserById(userId);
               } catch (error) {
                 if (error instanceof NotFoundException) {
                   return null;

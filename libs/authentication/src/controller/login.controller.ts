@@ -22,7 +22,7 @@ import { ResponseService } from '../service/response.service';
 export class LoginController {
   constructor(
     @Inject(AUTHENTICATION_MODULE_OPTIONS_TOKEN)
-    private readonly authenticationModuleOptions: AuthenticationModuleOptions,
+    authenticationModuleOptions: AuthenticationModuleOptions,
 
     private readonly credentialValidationService: CredentialValidationService,
     private readonly responseService: ResponseService,
@@ -35,7 +35,7 @@ export class LoginController {
      */
 
     // Login route
-    Post(this.authenticationModuleOptions.route.login)(
+    Post(authenticationModuleOptions.route.login)(
       this,
       LoginController.prototype.login.name,
       Object.getOwnPropertyDescriptor(
@@ -45,7 +45,7 @@ export class LoginController {
     );
 
     // Logout route
-    Delete(this.authenticationModuleOptions.route.login)(
+    Delete(authenticationModuleOptions.route.login)(
       this,
       LoginController.prototype.logout.name,
       Object.getOwnPropertyDescriptor(

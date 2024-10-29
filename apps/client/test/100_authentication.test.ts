@@ -2,10 +2,11 @@ import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Db, MongoClient } from 'mongodb';
 import request from 'supertest';
 
-import { getAuthenticationTokens } from '@application/authentication/../test/helper';
+import { getAuthenticationTokens } from '@library/authentication/../test/helper';
 
 import {
   ACCESS_TOKEN_COOKIE_NAME,
+  LOGIN_ROUTE,
   REFRESH_TOKEN_COOKIE_NAME,
 } from '../src/_authentication/constant';
 import {
@@ -46,11 +47,11 @@ describe('Authentication (e2e)', () => {
     await teardownTestApplication(application, mongoClient, database);
   });
 
-  describe('/login (POST)', () => {
+  describe(`POST /${LOGIN_ROUTE}`, () => {
     describe('[succeeds because]', () => {
       it(`returns 'HTTP ${HttpStatus.NO_CONTENT}' with the 'access-token' cookie when the correct user-credentials are sent`, async () => {
         const response = await request(application.getHttpServer())
-          .post('/login')
+          .post(`/${LOGIN_ROUTE}`)
           .send(userCredentials);
 
         expect(response.status).toBe(HttpStatus.NO_CONTENT);
@@ -82,7 +83,7 @@ describe('Authentication (e2e)', () => {
         `returns 'HTTP ${HttpStatus.BAD_REQUEST}' if invalid credentials are sent {username: $username, password: $password}`,
         async ({ username, password }) => {
           const response = await request(application.getHttpServer())
-            .post('/login')
+            .post(`/${LOGIN_ROUTE}`)
             .send({ username, password });
 
           expect(response.status).toBe(HttpStatus.BAD_REQUEST);
@@ -97,7 +98,7 @@ describe('Authentication (e2e)', () => {
         `returns 'HTTP ${HttpStatus.UNAUTHORIZED}' if wrong credentials are sent {username: $username, password: $password}`,
         async ({ username, password }) => {
           const response = await request(application.getHttpServer())
-            .post('/login')
+            .post(`/${LOGIN_ROUTE}`)
             .send({ username, password });
 
           expect(response.status).toBe(HttpStatus.UNAUTHORIZED);
@@ -106,14 +107,14 @@ describe('Authentication (e2e)', () => {
     });
   });
 
-  describe('/login (DELETE)', () => {
+  describe(`DELETE /${LOGIN_ROUTE}`, () => {
     let accessToken: string;
 
     beforeAll(async () => {
       ({ accessToken } = await getAuthenticationTokens(
         userCredentials,
         application,
-        '/login',
+        `/${LOGIN_ROUTE}`,
         ACCESS_TOKEN_COOKIE_NAME,
         REFRESH_TOKEN_COOKIE_NAME,
       ));
@@ -122,7 +123,7 @@ describe('Authentication (e2e)', () => {
     describe('[succeeds because]', () => {
       it(`returns 'HTTP ${HttpStatus.NO_CONTENT}' when a valid access-token is sent`, async () => {
         const response = await request(application.getHttpServer())
-          .delete('/login')
+          .delete(`/${LOGIN_ROUTE}`)
           .set('Cookie', accessToken);
 
         expect(response.status).toBe(HttpStatus.NO_CONTENT);
@@ -130,7 +131,7 @@ describe('Authentication (e2e)', () => {
 
       it("clears the 'access-token' & 'refresh-token' cookies", async () => {
         const response = await request(application.getHttpServer())
-          .delete('/login')
+          .delete(`/${LOGIN_ROUTE}`)
           .set('Cookie', accessToken);
 
         const tokens = response
@@ -154,7 +155,7 @@ describe('Authentication (e2e)', () => {
     describe('[fails because]', () => {
       it(`returns 'HTTP ${HttpStatus.UNAUTHORIZED}' when no access-token is sent`, async () => {
         const response = await request(application.getHttpServer()).delete(
-          '/login',
+          `/${LOGIN_ROUTE}`,
         );
 
         expect(response.status).toBe(HttpStatus.UNAUTHORIZED);
@@ -162,7 +163,7 @@ describe('Authentication (e2e)', () => {
 
       it(`returns 'HTTP ${HttpStatus.UNAUTHORIZED}' when an invalid access-token is sent`, async () => {
         const response = await request(application.getHttpServer())
-          .delete('/login')
+          .delete(`/${LOGIN_ROUTE}`)
           .set('Cookie', `${ACCESS_TOKEN_COOKIE_NAME}=invalid-access-token;`);
 
         expect(response.status).toBe(HttpStatus.UNAUTHORIZED);

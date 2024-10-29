@@ -44,6 +44,7 @@ export class MailModule extends MailConfigurableModuleClass {
   ) {
     super();
 
+    // Validate the configuration object passed to the module.
     mailModuleOptionsValidationSchema.parse(mailModuleOptions);
   }
 }

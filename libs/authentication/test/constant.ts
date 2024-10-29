@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb';
 
-import { AuthenticationModuleOptions } from '@application/authentication/authentication.module-options';
+import { AuthenticationModuleOptions } from '@library/authentication/authentication.module-options';
 
 export const enum Configuration {
   APPLICATION_NAME = 'test-application',

@@ -13,6 +13,7 @@ const applicationConfigurationValidationSchema = z.object({
   name: z.string().regex(/^[a-z0-9_-]+$/i),
   port: z.coerce.number().int().positive().max(65535),
   secret: z.string().min(64),
+  frontendUrl: z.string().url(),
 });
 
 export type ApplicationConfiguration = z.infer<
@@ -25,5 +26,6 @@ export default registerAs(CONFIGURATION_NAMESPACE, () =>
     name: env['APPLICATION_NAME'],
     port: env['APPLICATION_PORT'],
     secret: env['APPLICATION_SECRET'],
+    frontendUrl: env['FRONTEND_URL'],
   }),
 );

@@ -26,14 +26,16 @@
     "noUnusedParameters": true,
     "strict": true,
     "paths": {
-      "@application/authentication": ["libs/authentication/src"],
-      "@application/authentication/*": ["libs/authentication/src/*"],
-      "@application/configuration": ["libs/configuration/src"],
-      "@application/configuration/*": ["libs/configuration/src/*"],
-      "@application/database": ["libs/database/src"],
-      "@application/database/*": ["libs/database/src/*"],
-      "@application/mail": ["libs/mail/src"],
-      "@application/mail/*": ["libs/mail/src/*"]
+      "@library/authentication": ["libs/authentication/src"],
+      "@library/authentication/*": ["libs/authentication/src/*"],
+      "@library/configuration": ["libs/configuration/src"],
+      "@library/configuration/*": ["libs/configuration/src/*"],
+      "@library/database": ["libs/database/src"],
+      "@library/database/*": ["libs/database/src/*"],
+      "@library/mail": ["libs/mail/src"],
+      "@library/mail/*": ["libs/mail/src/*"],
+      "@library/password-reset": ["libs/password-reset/src"],
+      "@library/password-reset/*": ["libs/password-reset/src/*"]
     }
   }
 }

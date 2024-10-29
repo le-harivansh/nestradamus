@@ -1,8 +1,8 @@
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
-import { LoginController } from '@application/authentication/controller/login.controller';
-import { LoginDto } from '@application/authentication/dto/login.dto';
+import { LoginController } from '@library/authentication/controller/login.controller';
+import { LoginDto } from '@library/authentication/dto/login.dto';
 
 import {
   authenticatedUser,

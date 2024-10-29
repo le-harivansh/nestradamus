@@ -12,17 +12,19 @@ const configuration: Config = {
   },
   moduleNameMapper: {
     // Authentication Library
-    '^@application/authentication(|/.*)$':
-      '<rootDir>/libs/authentication/src/$1',
+    '^@library/authentication(|/.*)$': '<rootDir>/libs/authentication/src/$1',
+
+    // Password-Reset Library
+    '^@library/password-reset(|/.*)$': '<rootDir>/libs/password-reset/src/$1',
 
     // Configuration Library
-    '^@application/configuration(|/.*)$': '<rootDir>/libs/configuration/src/$1',
+    '^@library/configuration(|/.*)$': '<rootDir>/libs/configuration/src/$1',
 
     // Database Library
-    '^@application/database(|/.*)$': '<rootDir>/libs/database/src/$1',
+    '^@library/database(|/.*)$': '<rootDir>/libs/database/src/$1',
 
     // Mail Library
-    '^@application/mail(|/.*)$': '<rootDir>/libs/mail/src/$1',
+    '^@library/mail(|/.*)$': '<rootDir>/libs/mail/src/$1',
   },
 };
 

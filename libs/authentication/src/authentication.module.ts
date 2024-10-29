@@ -46,7 +46,7 @@ export class AuthenticationModule
   ) {
     super();
 
-    // Validate the authentication options passed to the module.
+    // Validate the configuration object passed to the module.
     authenticationModuleOptionsValidationSchema.parse(
       this.authenticationModuleOptions,
     );

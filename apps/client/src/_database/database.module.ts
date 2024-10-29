@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
-import { DatabaseModule as DatabaseLibraryModule } from '@application/database';
+import { DatabaseModule as DatabaseLibraryModule } from '@library/database';
 
 import { ConfigurationService } from '../_configuration/service/configuration.service';
 import databaseConfiguration from './database.config';

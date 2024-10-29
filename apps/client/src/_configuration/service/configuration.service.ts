@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { ConfigurationService as BaseConfigurationService } from '@application/configuration';
+import { ConfigurationService as BaseConfigurationService } from '@library/configuration';
 
 import { NamespacedConfiguration } from '../type';
 

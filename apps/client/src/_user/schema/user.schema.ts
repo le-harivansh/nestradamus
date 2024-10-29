@@ -1,7 +1,7 @@
 import { Inject, Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { Db } from 'mongodb';
 
-import { DATABASE } from '@application/database';
+import { DATABASE } from '@library/database';
 
 /**
  * Model

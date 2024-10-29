@@ -1,9 +1,17 @@
-import { FlattenedPrefixedConfiguration } from '@application/configuration';
+import { FlattenedPrefixedConfiguration } from '@library/configuration';
 
 import {
   DatabaseConfiguration,
   CONFIGURATION_NAMESPACE as DatabaseConfigurationNamespace,
 } from '../_database/database.config';
+import {
+  MailConfiguration,
+  CONFIGURATION_NAMESPACE as MailConfigurationNamespace,
+} from '../_mail/mail.config';
+import {
+  PasswordResetConfiguration,
+  CONFIGURATION_NAMESPACE as PasswordResetConfigurationNamespace,
+} from '../_password-reset/password-reset.config';
 import {
   ApplicationConfiguration,
   CONFIGURATION_NAMESPACE as ApplicationConfigurationNamespace,
@@ -23,4 +31,14 @@ export type NamespacedConfiguration =
     FlattenedPrefixedConfiguration<
       typeof DatabaseConfigurationNamespace,
       DatabaseConfiguration
+    > &
+    // Mail
+    FlattenedPrefixedConfiguration<
+      typeof MailConfigurationNamespace,
+      MailConfiguration
+    > &
+    // Password-Reset
+    FlattenedPrefixedConfiguration<
+      typeof PasswordResetConfigurationNamespace,
+      PasswordResetConfiguration
     >;

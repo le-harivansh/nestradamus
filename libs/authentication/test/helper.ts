@@ -7,7 +7,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
 
-import { AuthenticationModule } from '@application/authentication';
+import { AuthenticationModule } from '@library/authentication';
 
 import { authenticationModuleConfiguration, Configuration } from './constant';
 

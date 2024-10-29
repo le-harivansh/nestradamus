@@ -1,7 +1,7 @@
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
-import { TokenRefreshController } from '@application/authentication/controller/token-refresh.controller';
+import { TokenRefreshController } from '@library/authentication/controller/token-refresh.controller';
 
 import {
   authenticatedUser,

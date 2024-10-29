@@ -1,4 +1,7 @@
-import { NotFoundException } from '@nestjs/common';
+import {
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { argon2id, hash } from 'argon2';
 import { ObjectId, WithId } from 'mongodb';
@@ -12,10 +15,14 @@ jest.mock('../repository/user.repository');
 jest.mock('argon2');
 
 describe(UserService.name, () => {
+  const hashedPassword = 'hashed-password';
+
   let userService: UserService;
   let userRepository: jest.Mocked<UserRepository>;
 
   beforeAll(async () => {
+    (hash as jest.Mock).mockResolvedValue(hashedPassword);
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [UserRepository, UserService],
     }).compile();
@@ -28,54 +35,8 @@ describe(UserService.name, () => {
     expect(userService).toBeDefined();
   });
 
-  describe(UserService.prototype.createUser.name, () => {
-    const userData: User = fakeUserData();
-    const newUserId = new ObjectId();
-    const hashedPassword = 'hashed-password';
-
-    let result: Omit<WithId<User>, 'password'>;
-
-    beforeAll(async () => {
-      (hash as jest.Mock).mockResolvedValue(hashedPassword);
-
-      userRepository.create.mockResolvedValue({
-        acknowledged: true,
-        insertedId: newUserId,
-      });
-
-      result = await userService.createUser(userData);
-    });
-
-    afterAll(() => {
-      jest.clearAllMocks();
-    });
-
-    it('hashes the passed-in password', () => {
-      expect(hash).toHaveBeenCalledTimes(1);
-      expect(hash).toHaveBeenCalledWith(userData.password, { type: argon2id });
-    });
-
-    it(`calls '${UserRepository.name}::${UserRepository.prototype.create.name}' with the email and the hashed password`, () => {
-      expect(userRepository.create).toHaveBeenCalledTimes(1);
-      expect(userRepository.create).toHaveBeenCalledWith({
-        ...userData,
-        password: hashedPassword,
-      });
-    });
-
-    it("returns the '_id' and the 'email' of the newly created user", () => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password: _, ...otherUserData } = userData;
-
-      expect(result).toEqual({
-        _id: newUserId,
-        ...otherUserData,
-      });
-    });
-  });
-
   describe(UserService.prototype.findUserById.name, () => {
-    const userId = new ObjectId().toString();
+    const userId = new ObjectId();
 
     afterEach(() => {
       jest.clearAllMocks();
@@ -97,17 +58,17 @@ describe(UserService.name, () => {
         user as unknown as WithId<User>,
       );
 
-      await expect(
-        userService.findUserById(new ObjectId().toString()),
-      ).resolves.toBe(user);
+      await expect(userService.findUserById(new ObjectId())).resolves.toBe(
+        user,
+      );
     });
 
     it(`throws '${NotFoundException.name}' if '${UserRepository.name}::${UserRepository.prototype.findById.name}' returns 'null'`, async () => {
       userRepository.findById.mockResolvedValueOnce(null);
 
-      await expect(
-        userService.findUserById(new ObjectId().toString()),
-      ).rejects.toThrow(NotFoundException);
+      await expect(userService.findUserById(new ObjectId())).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -141,6 +102,125 @@ describe(UserService.name, () => {
       await expect(userService.findUserByEmail(email)).rejects.toThrow(
         NotFoundException,
       );
+    });
+  });
+
+  describe(UserService.prototype.createUser.name, () => {
+    const newUserId = new ObjectId();
+    const userData: User = fakeUserData();
+
+    beforeEach(() => {
+      userRepository.create.mockResolvedValue({
+        acknowledged: true,
+        insertedId: newUserId,
+      });
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it(`calls '${UserRepository.name}::${UserRepository.prototype.create.name}' with the email and the hashed password`, async () => {
+      await userService.createUser(userData);
+
+      expect(userRepository.create).toHaveBeenCalledTimes(1);
+      expect(userRepository.create).toHaveBeenCalledWith({
+        ...userData,
+        password: hashedPassword,
+      });
+    });
+
+    it('returns the newly created user without its password', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password: _, ...otherUserData } = userData;
+
+      await expect(userService.createUser(userData)).resolves.toEqual({
+        _id: newUserId,
+        ...otherUserData,
+      });
+    });
+
+    it(`throws an '${InternalServerErrorException.name} if the 'acknowledged' property of the result is false`, async () => {
+      userRepository.create.mockResolvedValue({
+        acknowledged: false,
+        insertedId: undefined as unknown as ObjectId,
+      });
+
+      await expect(() => userService.createUser(userData)).rejects.toThrow(
+        InternalServerErrorException,
+      );
+    });
+  });
+
+  describe(UserService.prototype.updateUser.name, () => {
+    const userId = new ObjectId();
+
+    const user: WithId<User> = {
+      _id: userId,
+      ...fakeUserData(),
+    };
+    const userUpdates: Partial<User> = {
+      firstName: 'Updated Firstname',
+      email: 'updated-user@email.dev',
+      password: 'updated-password',
+    };
+    const updatedUser: WithId<User> = {
+      ...user,
+      ...userUpdates,
+    };
+
+    beforeAll(() => {
+      userRepository.update.mockResolvedValue(updatedUser);
+    });
+
+    afterAll(() => {
+      jest.clearAllMocks();
+    });
+
+    it(`calls '${UserRepository.name}::${UserRepository.prototype.update.name}' with the email and the hashed password`, async () => {
+      await userService.updateUser(user._id, userUpdates);
+
+      expect(userRepository.update).toHaveBeenCalledTimes(1);
+      expect(userRepository.update).toHaveBeenCalledWith(user._id, {
+        ...userUpdates,
+        password: hashedPassword,
+      });
+    });
+
+    it('returns the updated user without its password', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password: _, ...otherUpdatedUserData } = updatedUser;
+
+      await expect(
+        userService.updateUser(user._id, userUpdates),
+      ).resolves.toEqual(otherUpdatedUserData);
+    });
+
+    it(`throws an '${InternalServerErrorException.name} if the returned user is 'null'`, async () => {
+      userRepository.update.mockResolvedValue(null);
+
+      await expect(() =>
+        userService.updateUser(user._id, userUpdates),
+      ).rejects.toThrow(InternalServerErrorException);
+    });
+  });
+
+  describe(UserService['hashPassword'].name, () => {
+    const password = 'password';
+
+    let result: string;
+
+    beforeAll(async () => {
+      result = await UserService['hashPassword'](password);
+    });
+
+    it(`calls '${hash.name}' to hash the passed in password`, () => {
+      expect(hash).toHaveBeenCalledTimes(1);
+      expect(hash).toHaveBeenCalledWith(password, { type: argon2id });
+    });
+
+    it(`returns the result of the '${hash.name}' function`, () => {
+      expect(result).toBe(hashedPassword);
     });
   });
 });
