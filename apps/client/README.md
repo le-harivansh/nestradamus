@@ -2,6 +2,10 @@
 
 This application is the one used by the ultimate end-user of the application - i.e.: the consumer / `User`.
 
+### General
+
+[Helmet](https://docs.nestjs.com/security/helmet) and [CORS](https://docs.nestjs.com/security/cors) have been setup in this application. See the `main.ts` file for more details.
+
 ### Authentication
 
 See the authentication library module, and the client's authentication module for more details.
