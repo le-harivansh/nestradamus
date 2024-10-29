@@ -18,11 +18,16 @@ import { ApplicationModule } from './application.module';
 
   const configurationService = application.get(ConfigurationService);
 
-  // Cookie-parsing
+  // Enable CORS.
+  application.enableCors({
+    origin: configurationService.getOrThrow('application.frontendUrl'),
+    credentials: true,
+  });
+
+  // Setup cookie-parsing
   const cookieSecret = configurationService.getOrThrow('application.secret');
   application.use(cookieParser(cookieSecret));
 
-  // Port
-  const port = configurationService.getOrThrow('application.port');
-  await application.listen(port);
+  // Start listening for requests
+  await application.listen(configurationService.getOrThrow('application.port'));
 })();
