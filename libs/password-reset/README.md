@@ -21,22 +21,26 @@ The above flow is roughly implemented as follows:
 
 ## Configuration
 
-The configuration options are documented in the `password-reset.module-options.ts` file.
+The configuration options are documented in the `password-reset.module-options.ts` file. The module can be configured as follows:
 
-e.g.:
-
-```js
+```ts
 PasswordResetLibraryModule.forRootAsync({
   imports: [UserModule, PasswordResetModule],
-  inject: [UserService, PasswordResetService, MailService],
+  inject: [
+    UserService,
+    PasswordResetService,
+    MailService,
+    ConfigurationService,
+  ],
   useFactory: (
     userService: UserService,
     passwordResetService: PasswordResetService,
     mailService: MailService,
+    configurationService: ConfigurationService,
   ) => ({
     route: {
-      forgotPassword: 'forgot-password',
-      resetPassword: 'reset-password/:id', // <-- this route should end in '/:id'
+      forgotPassword: FORGOT_PASSWORD_ROUTE,
+      resetPassword: RESET_PASSWORD_ROUTE, // <-- this should end in '/:id'
     },
 
     callback: {
@@ -46,11 +50,28 @@ PasswordResetLibraryModule.forRootAsync({
         user: WithId<User>,
         passwordReset: WithId<PasswordReset>,
       ) => {
+        const applicationName =
+          configurationService.getOrThrow('application.name');
+        const mailTemplate = (
+          await readFile(
+            join(__dirname, 'template/forgot-password.mjml.mustache'),
+          )
+        ).toString();
+
+        // todo: this should be throttled to prevent abuse.
         await mailService
           .mail()
           .to(user.email)
-          .subject('forgot password')
-          .text(passwordReset._id.toString())
+          .subject(`Forgot your ${applicationName} password?`)
+          .mjml(
+            mailTemplate,
+            {
+              applicationName,
+              user,
+              passwordResetLink: `${configurationService.getOrThrow('application.frontendUrl')}/password-reset/${passwordReset._id}`,
+              currentYear: new Date().getFullYear(),
+            },
+          )
           .send();
       },
 
@@ -67,7 +88,9 @@ PasswordResetLibraryModule.forRootAsync({
       },
 
       createPasswordReset: ({ _id: userId }: WithId<User>) =>
-        passwordResetService.createPasswordResetRecordForUser(userId),
+        passwordResetService.createOrUpdatePasswordResetRecordForUser(
+          userId,
+        ),
 
       deletePasswordReset: (id: string) => {
         if (!ObjectId.isValid(id)) {
@@ -82,21 +105,33 @@ PasswordResetLibraryModule.forRootAsync({
       },
 
       resetUserPassword: async (
-        passwordReset: string,
+        {
+          user: { _id: userId },
+        }: Awaited<
+          ReturnType<PasswordResetService['findPasswordResetRecordById']>
+        >,
         newPassword: string,
       ) => {
-        if (!ObjectId.isValid(passwordReset)) {
-          throw new BadRequestException(
-            `The provided password-reset record id: '${passwordReset}' - cannot be converted to an ObjectId.`,
-          );
+        class Password {
+          @IsStrongPassword({
+            minLength: PASSWORD_CONSTRAINTS.MIN_LENGTH,
+            minLowercase: PASSWORD_CONSTRAINTS.MIN_LOWERCASE,
+            minUppercase: PASSWORD_CONSTRAINTS.MIN_UPPERCASE,
+            minNumbers: PASSWORD_CONSTRAINTS.MIN_NUMBERS,
+            minSymbols: PASSWORD_CONSTRAINTS.MIN_SYMBOLS,
+          })
+          readonly value: string;
+
+          constructor(value: string) {
+            this.value = value;
+          }
         }
 
-        const { userId } =
-          await passwordResetService.findPasswordResetRecordById(
-            new ObjectId(passwordReset),
-          );
-
-        // @todo: validate that the password fits the required criteria.
+        try {
+          await validateOrReject(new Password(newPassword));
+        } catch (errors) {
+          throw new BadRequestException(errors);
+        }
 
         await userService.updateUser(userId, { password: newPassword });
       },
@@ -111,7 +146,7 @@ PasswordResetLibraryModule.forRootAsync({
 
 This route is used to notify the server that the user has forgotten their password, and that they intend to reset it.
 
-```
+```http
 POST https://localhost:3000/forgot-password HTTP/1.1
 content-type: application/json
 
@@ -126,16 +161,16 @@ content-type: application/json
 
 This route is used to retrieve the password-reset request's data.
 
-```
-GET https://localhost:3000/reset-password/<ID> HTTP/1.1
+```http
+GET https://localhost:3000/reset-password/<PASSWORD-RESET-ID> HTTP/1.1
 ```
 
 #### `POST`
 
 This route is used to reset the user's password.
 
-```
-POST https://localhost:3000/reset-password/<ID> HTTP/1.1
+```http
+POST https://localhost:3000/reset-password/<PASSWORD-RESET-ID> HTTP/1.1
 content-type: application/json
 
 {

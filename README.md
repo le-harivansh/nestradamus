@@ -13,6 +13,7 @@ The following features are provided in this project:
 
 - User registration
 - User authentication
+- Password reset
 
 ### Package management
 
@@ -33,15 +34,16 @@ The following have been set-up in the development environment:
 
 - Containers are managed using [docker compose](https://docs.docker.com/compose)
 - Git hooks are managed using [husky](https://typicode.github.io/husky)
-- Linting & formatting is _managed_ using [lint-staged](https://github.com/lint-staged/lint-staged)
 - Linting is _done_ using [eslint](https://eslint.org)
 - Formatting is _done_ using [prettier](https://prettier.io)
+- Linting & formatting is _managed_ using [lint-staged](https://github.com/lint-staged/lint-staged)
 
 #### Containers
 
 The following containers are provided, and used, by the project:
 
 - [database](https://hub.docker.com/_/mongo) - as the database of the application (using mongodb)
+- [mailpit](https://mailpit.axllent.org) - as the SMTP server (& mail-catcher) of the application
 
 ##### Environment variables
 
@@ -105,10 +107,11 @@ cp .env.example .env
 docker compose up
 ```
 
-5. Start the project
+5. Start the specific application.
 
 ```shell
-yarn run start:dev
+yarn run start:dev client # <-- to start the `client` application
+yarn run start:dev administration # <-- to start the `administration` application
 ```
 
 ## Test
@@ -198,11 +201,6 @@ To add a new module configuration to the application, the following needs to be 
 4. Register the configuration from the newly created configuration file in the module (using `ConfigModule::forFeature`).
 5. Register the configuration types in `apps/<application-name>/src/_configuration/type.ts`.
 
-## Authentication
-
-Authentication in the application is done using [JSON Web Tokens](https://en.wikipedia.org/wiki/JSON_Web_Token).
-See the associated documentation in the `libs/authentication` library.
-
 ## Miscellaneous
 
 1. After upgrading packages in the project (using `yarn upgrade-interactive`) - if you encounter issues (usually after upgrading typescript); you need to upgrade yarn, and its SDK. See [this issue](https://github.com/yarnpkg/berry/issues/4872#issuecomment-1284318301).
@@ -211,7 +209,3 @@ See the associated documentation in the `libs/authentication` library.
 yarn set version stable
 yarn dlx @yarnpkg/sdks vscode
 ```
-
-## Client Application
-
-See the _README_ of the _Client Application_ at `apps/client/README.md`.

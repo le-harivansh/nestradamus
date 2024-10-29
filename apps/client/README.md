@@ -2,13 +2,25 @@
 
 This application is the one used by the ultimate end-user of the application - i.e.: the consumer / `User`.
 
+### Authentication
+
+See the authentication library module, and the client's authentication module for more details.
+
+### Password-Reset
+
+See the password-reset library module, and the client's password-reset module for more details.
+
+### Health-Check
+
+The client's health-check route is located at `/_health-check`. See the health-check controller for more details.
+
+### Commands
+
 A **CLI** script is available at the following command:
 
 ```shell
 yarn run cli:client ...
 ```
-
-### Commands
 
 #### Database
 
