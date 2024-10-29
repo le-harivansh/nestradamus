@@ -13,12 +13,12 @@ import { ApplicationModule } from './application.module';
   // Enable shutdown hooks
   application.enableShutdownHooks();
 
-  // Setup Helmet (should be the 1st middleware registered) [see https://docs.nestjs.com/security/helmet].
+  // Setup Helmet (should be the 1st middleware registered) [see https://docs.nestjs.com/security/helmet]
   application.use(helmet());
 
   const configurationService = application.get(ConfigurationService);
 
-  // Enable CORS.
+  // Enable CORS
   application.enableCors({
     origin: configurationService.getOrThrow('application.frontendUrl'),
     credentials: true,
