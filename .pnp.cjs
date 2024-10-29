@@ -63,6 +63,7 @@ const RAW_RUNTIME_STATE =
           ["eslint-config-prettier", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:9.1.0"],\
           ["eslint-plugin-prettier", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:5.2.1"],\
           ["globals", "npm:15.9.0"],\
+          ["helmet", "npm:8.0.0"],\
           ["html-minifier", "npm:4.0.0"],\
           ["html-to-text", "npm:9.0.5"],\
           ["husky", "npm:9.1.5"],\
@@ -3572,6 +3573,7 @@ const RAW_RUNTIME_STATE =
           ["eslint-config-prettier", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:9.1.0"],\
           ["eslint-plugin-prettier", "virtual:19d7ae26c0d0bb29433d63eb789584c2b5ee11e5fab917589c21c373627a9948c6928e716dd5b39a844379510841146cba26b3bf33328ebb28cae43bef251329#npm:5.2.1"],\
           ["globals", "npm:15.9.0"],\
+          ["helmet", "npm:8.0.0"],\
           ["html-minifier", "npm:4.0.0"],\
           ["html-to-text", "npm:9.0.5"],\
           ["husky", "npm:9.1.5"],\
@@ -6464,6 +6466,15 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "../../../.yarn/berry/cache/he-npm-1.2.0-3b73a2ff07-10c0.zip/node_modules/he/",\
         "packageDependencies": [\
           ["he", "npm:1.2.0"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["helmet", [\
+      ["npm:8.0.0", {\
+        "packageLocation": "../../../.yarn/berry/cache/helmet-npm-8.0.0-ba86ece81a-10c0.zip/node_modules/helmet/",\
+        "packageDependencies": [\
+          ["helmet", "npm:8.0.0"]\
         ],\
         "linkType": "HARD"\
       }]\
