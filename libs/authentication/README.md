@@ -5,7 +5,7 @@ This library is used to authenticate users. It exposes the following classes:
 - `AuthenticationModule`: which is used to import and configure the library within an application;
 - `AuthenticatedUserDecoratorFactory`: which is used to create a decorator - which will be used to get the authenticated user from the configured property in the current `request` object.
 
-### Assumptions
+## Assumptions
 
 This module uses **JSON Web Tokens** in **!SIGNED! _HTTPS_ cookies** to authenticate a user.
 
@@ -125,17 +125,15 @@ AuthenticationLibraryModule.forRootAsync({
         validateJwtPayload: (payload: Record<string, unknown>) =>
           Promise.resolve(Boolean(payload['id'])),
 
-        resolveUserFromJwtPayload: async (
-          payload: Record<string, unknown>,
-        ) => {
+        resolveUserFromJwtPayload: async (payload: Record<string, unknown>) => {
           try {
             const userId = new ObjectId(payload['id'] as string);
 
             /**
-              * We need to anchor the `Promise` with `await` here
-              * to be able to catch any error that occurs in
-              * `UserService::findUserById`.
-              */
+             * We need to anchor the `Promise` with `await` here
+             * to be able to catch any error that occurs in
+             * `UserService::findUserById`.
+             */
             return await userService.findUserById(userId);
           } catch (error) {
             if (error instanceof NotFoundException) {
@@ -154,17 +152,15 @@ AuthenticationLibraryModule.forRootAsync({
         validateJwtPayload: (payload: Record<string, unknown>) =>
           Promise.resolve(Boolean(payload['id'])),
 
-        resolveUserFromJwtPayload: async (
-          payload: Record<string, unknown>,
-        ) => {
+        resolveUserFromJwtPayload: async (payload: Record<string, unknown>) => {
           try {
             const userId = new ObjectId(payload['id'] as string);
 
             /**
-              * We need to anchor the `Promise` with `await` here
-              * to be able to catch any error that occurs in
-              * `UserService::findUserById`.
-              */
+             * We need to anchor the `Promise` with `await` here
+             * to be able to catch any error that occurs in
+             * `UserService::findUserById`.
+             */
             return await userService.findUserById(userId);
           } catch (error) {
             if (error instanceof NotFoundException) {
@@ -177,5 +173,5 @@ AuthenticationLibraryModule.forRootAsync({
       },
     },
   }),
-}),
+});
 ```

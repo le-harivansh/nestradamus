@@ -1,24 +1,13 @@
-import { FlatCompat } from '@eslint/eslintrc';
-import js from '@eslint/js';
-import typescriptEslintPlugin from '@typescript-eslint/eslint-plugin';
-import typescriptEslintParser from '@typescript-eslint/parser';
+import eslint from '@eslint/js';
+import markdown from '@eslint/markdown';
 import globals from 'globals';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const eslintFlatConfigurationCompatibility = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: js.configs.recommended,
-  allConfig: js.configs.all,
-});
+import tseslint from 'typescript-eslint';
 
 export default [
+  // Global ignores
   {
     ignores: [
-      '**/.eslintrc.js',
+      'todo.md',
       'dist',
       'node_modules',
       '**/.yarn',
@@ -26,24 +15,32 @@ export default [
       '**/.vscode',
     ],
   },
-  ...eslintFlatConfigurationCompatibility.extends(
-    'plugin:@typescript-eslint/recommended',
-    'plugin:prettier/recommended',
-  ),
-  {
-    plugins: {
-      '@typescript-eslint': typescriptEslintPlugin,
-    },
 
+  // Markdown code-blocks linting
+  ...markdown.configs.processor,
+
+  // Typescript linting
+  ...tseslint.config(
+    eslint.configs.recommended,
+    ...tseslint.configs.recommended,
+  ),
+
+  // Configuration files
+  {
+    files: [
+      '*.js' // applies to top-level files only
+    ],
     languageOptions: {
       globals: {
         ...globals.node,
-        ...globals.jest,
-      },
+      }
+    }
+  },
 
-      parser: typescriptEslintParser,
-      ecmaVersion: 'latest',
-      sourceType: 'module',
+  // Custom rules
+  {
+    linterOptions: {
+      reportUnusedDisableDirectives: "error"
     },
 
     rules: {

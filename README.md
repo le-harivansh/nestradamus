@@ -125,7 +125,7 @@ The application has the following test suites:
 | `yarn run test:unit` | Unit test | Run unit tests for the application |
 | `yarn run test:e2e`  | E2E test  | Run e2e tests for the application  |
 
-#### Test configuration
+### Test configuration
 
 The E2E test configuration (for every defined application) is expected to be in a `.env.test` file. You create a new `.env.test` file by copying the `.env.example` file, and changing any environment variable as needed.
 

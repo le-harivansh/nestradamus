@@ -4,11 +4,12 @@ This library is used to send e-mails. It exposes the `MailModule`, and `MailServ
 
 [MJML](https://mjml.io) & [mustache](https://github.com/janl/mustache.js) can be used to compose the e-mail; and if so, [html-minifier](https://github.com/kangax/html-minifier) is used to minify the email, and [html-to-text](https://github.com/html-to-text/node-html-to-text) is used to create the text counterpart of the email.
 
-### Configuration
+## Configuration
 
 The configuration options are documented in the `database.module-options.ts` file. The module can be configured as follows:
 
 ```js
+// eslint-disable-next-line no-undef
 MailModule.forRootAsync({
   useFactory: () => ({
     host: 'localhost',
@@ -35,6 +36,7 @@ An e-mail can be sent as follows:
 #### MJML + mustache
 
 ```js
+// eslint-disable-next-line no-undef
 await mailService
   .mail()
   .from('sender@email.dev')
@@ -49,6 +51,7 @@ await mailService
 #### HTML + text
 
 ```js
+// eslint-disable-next-line no-undef
 await mailService
   .mail()
   .from('sender@email.dev')

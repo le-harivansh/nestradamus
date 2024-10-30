@@ -63,15 +63,12 @@ PasswordResetLibraryModule.forRootAsync({
           .mail()
           .to(user.email)
           .subject(`Forgot your ${applicationName} password?`)
-          .mjml(
-            mailTemplate,
-            {
-              applicationName,
-              user,
-              passwordResetLink: `${configurationService.getOrThrow('application.frontendUrl')}/password-reset/${passwordReset._id}`,
-              currentYear: new Date().getFullYear(),
-            },
-          )
+          .mjml(mailTemplate, {
+            applicationName,
+            user,
+            passwordResetLink: `${configurationService.getOrThrow('application.frontendUrl')}/password-reset/${passwordReset._id}`,
+            currentYear: new Date().getFullYear(),
+          })
           .send();
       },
 
@@ -88,9 +85,7 @@ PasswordResetLibraryModule.forRootAsync({
       },
 
       createPasswordReset: ({ _id: userId }: WithId<User>) =>
-        passwordResetService.createOrUpdatePasswordResetRecordForUser(
-          userId,
-        ),
+        passwordResetService.createOrUpdatePasswordResetRecordForUser(userId),
 
       deletePasswordReset: (id: string) => {
         if (!ObjectId.isValid(id)) {
@@ -99,9 +94,7 @@ PasswordResetLibraryModule.forRootAsync({
           );
         }
 
-        return passwordResetService.deletePasswordResetRecord(
-          new ObjectId(id),
-        );
+        return passwordResetService.deletePasswordResetRecord(new ObjectId(id));
       },
 
       resetUserPassword: async (
@@ -137,7 +130,7 @@ PasswordResetLibraryModule.forRootAsync({
       },
     },
   }),
-}),
+});
 ```
 
 ## Routes
