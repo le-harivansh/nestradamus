@@ -51,7 +51,9 @@ describe(PasswordResetService.name, () => {
         };
 
         passwordResetRepository.findById.mockResolvedValueOnce(
-          passwordReset as any,
+          passwordReset as unknown as ReturnType<
+            PasswordResetRepository['findById']
+          >,
         );
 
         await expect(

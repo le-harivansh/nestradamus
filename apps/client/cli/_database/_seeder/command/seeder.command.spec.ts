@@ -35,7 +35,10 @@ describe(SeederCommand.name, () => {
 
     it(`calls '${SeederCommand.name}::${SeederCommand.prototype['seedUsers'].name}'`, async () => {
       const seedUsersSpy = jest
-        .spyOn(SeederCommand.prototype as any, 'seedUsers')
+        .spyOn(
+          SeederCommand.prototype as unknown as { seedUsers: () => undefined },
+          'seedUsers',
+        )
         .mockImplementation(() => undefined);
 
       await databaseSeederCommand.run();

@@ -12,8 +12,8 @@ describe('Mail sending (e2e)', () => {
     host: 'localhost',
     port: 1025,
     authentication: {
-      username: 'nestradamus',
-      password: 'nestradamus',
+      username: 'username',
+      password: 'password',
     },
     default: {
       from: {

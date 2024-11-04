@@ -58,15 +58,15 @@ describe(Mail.name, () => {
     } as MailerOption<'text'>,
   ] as const)('$key', ({ key, value }) => {
     it(`assigns the provided value to the '${key}' option field`, () => {
-      expect(new Mail(transporter)[key](value as any)['mailOptions'][key]).toBe(
-        value,
-      );
+      expect(
+        new Mail(transporter)[key](value as string)['mailOptions'][key],
+      ).toBe(value);
     });
 
     it("returns the current 'Mail' instance", () => {
       const mail = new Mail(transporter);
 
-      expect(mail[key](value as any)).toBe(mail);
+      expect(mail[key](value as string)).toBe(mail);
     });
   });
 
