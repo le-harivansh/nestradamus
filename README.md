@@ -83,6 +83,10 @@ cd nestradamus
 yarn
 ```
 
+### Setup
+
+You can optionally setup the project using the `setup.sh` script found in the root project directory. This script will setup the project, create the appropriate branches, and generate the required `.env` files.
+
 ## Run (development)
 
 1. Go into the project directory
