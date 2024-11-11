@@ -17,6 +17,7 @@ export const authenticatedUser = {
 export const authenticationModuleConfiguration: AuthenticationModuleOptions = {
   route: {
     login: 'login',
+    passwordConfirmation: 'confirm-password',
     tokenRefresh: {
       accessToken: 'token-refresh/access-token',
       refreshToken: 'token-refresh/refresh-token',
@@ -41,6 +42,11 @@ export const authenticationModuleConfiguration: AuthenticationModuleOptions = {
   },
 
   cookie: {
+    passwordConfirmation: {
+      name: 'user.password-confirmation',
+      expiresInSeconds: 10 * 60, // 10 minutes
+    },
+
     accessToken: {
       name: 'user.access-token',
       expiresInSeconds: 15 * 60, // 15 minutes
@@ -53,13 +59,21 @@ export const authenticationModuleConfiguration: AuthenticationModuleOptions = {
   },
 
   callback: {
-    validateCredentials: (username: string, password: string) =>
+    retrieveUser: (username: string) =>
       Promise.resolve(
-        username === authenticatedUser.username &&
-          password === authenticatedUser.password
-          ? authenticatedUser
-          : null,
+        username === authenticatedUser.username ? authenticatedUser : null,
       ),
+    validatePassword: (user: typeof authenticatedUser, password: string) =>
+      Promise.resolve(password === user.password),
+
+    passwordConfirmation: {
+      createCookiePayload: (user: typeof authenticatedUser) =>
+        Promise.resolve(user.id.toString()),
+      validateCookiePayload: (
+        user: typeof authenticatedUser,
+        cookiePayload: string,
+      ) => Promise.resolve(user.id.toString() === cookiePayload),
+    },
 
     accessToken: {
       createJwtPayload: (user: typeof authenticatedUser) =>

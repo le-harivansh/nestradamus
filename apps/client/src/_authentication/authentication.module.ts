@@ -1,5 +1,5 @@
 import { Module, NotFoundException, RequestMethod } from '@nestjs/common';
-import { verify } from 'argon2';
+import { argon2id, hash, verify } from 'argon2';
 import { ObjectId, WithId } from 'mongodb';
 
 import { AuthenticationModule as AuthenticationLibraryModule } from '@library/authentication';
@@ -18,6 +18,8 @@ import {
   ACCESS_TOKEN_COOKIE_NAME,
   ACCESS_TOKEN_REFRESH_ROUTE,
   LOGIN_ROUTE,
+  PASSWORD_CONFIRMATION_COOKIE_NAME,
+  PASSWORD_CONFIRMATION_ROUTE,
   REFRESH_TOKEN_COOKIE_NAME,
   REFRESH_TOKEN_REFRESH_ROUTE,
   REQUEST_PROPERTY_HOLDING_AUTHENTICATED_USER,
@@ -34,6 +36,7 @@ import {
       ) => ({
         route: {
           login: LOGIN_ROUTE,
+          passwordConfirmation: PASSWORD_CONFIRMATION_ROUTE,
           tokenRefresh: {
             accessToken: ACCESS_TOKEN_REFRESH_ROUTE,
             refreshToken: REFRESH_TOKEN_REFRESH_ROUTE,
@@ -65,6 +68,11 @@ import {
         },
 
         cookie: {
+          passwordConfirmation: {
+            name: PASSWORD_CONFIRMATION_COOKIE_NAME,
+            expiresInSeconds: 10 * 60, // 10 minutes
+          },
+
           accessToken: {
             name: ACCESS_TOKEN_COOKIE_NAME,
             expiresInSeconds: 15 * 60, // 15 minutes
@@ -77,32 +85,38 @@ import {
         },
 
         callback: {
-          validateCredentials: async (email: string, password: string) => {
-            let user: WithId<User>;
+          retrieveUser: async (email: string) => {
+            let user: WithId<User> | null = null;
 
             try {
               user = await userService.findUserByEmail(email);
             } catch (error) {
-              if (error instanceof NotFoundException) {
-                return null;
+              if (!(error instanceof NotFoundException)) {
+                throw error;
               }
-
-              throw error;
-            }
-
-            if (!(await verify(user.password, password))) {
-              return null;
             }
 
             return user;
           },
 
-          accessToken: {
-            createJwtPayload: (user: WithId<User>) =>
-              Promise.resolve({ id: user._id.toString() }),
+          validatePassword: async (user: WithId<User>, password: string) =>
+            await verify(user.password, password),
 
-            validateJwtPayload: (payload: Record<string, unknown>) =>
-              Promise.resolve(Boolean(payload['id'])),
+          passwordConfirmation: {
+            createCookiePayload: async (user: WithId<User>) =>
+              await hash(user.password, { type: argon2id }),
+            validateCookiePayload: async (
+              user: WithId<User>,
+              cookiePayload: string,
+            ) => await verify(cookiePayload, user.password),
+          },
+
+          accessToken: {
+            createJwtPayload: async (user: WithId<User>) =>
+              await Promise.resolve({ id: user._id.toString() }),
+
+            validateJwtPayload: async (payload: Record<string, unknown>) =>
+              await Promise.resolve(Boolean(payload['id'])),
 
             resolveUserFromJwtPayload: async (
               payload: Record<string, unknown>,

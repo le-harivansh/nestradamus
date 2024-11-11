@@ -1,5 +1,5 @@
 import { HttpStatus, INestApplication } from '@nestjs/common';
-import request from 'supertest';
+import request, { Response } from 'supertest';
 
 import { LoginController } from '@library/authentication/controller/login.controller';
 import { LoginDto } from '@library/authentication/dto/login.dto';
@@ -21,9 +21,9 @@ describe(`${LoginController.name} (e2e)`, () => {
     await application.close();
   });
 
-  describe('Login', () => {
+  describe(`${LoginController.name}::${LoginController.prototype.login.name}`, () => {
     describe('[succeeds because]', () => {
-      it(`returns 'HTTP ${HttpStatus.NO_CONTENT}' with the 'access-token' cookie when the correct user-credentials are sent`, async () => {
+      it(`returns 'HTTP ${HttpStatus.NO_CONTENT}' with the 'access-token', 'refresh-token', & 'password-confirmation' cookies when the correct user-credentials are sent`, async () => {
         const response = await request(application.getHttpServer())
           .post(`/${authenticationModuleConfiguration.route.login}`)
           .send({
@@ -49,6 +49,16 @@ describe(`${LoginController.name} (e2e)`, () => {
           cookies.findIndex((cookie) =>
             cookie.startsWith(
               authenticationModuleConfiguration.cookie.refreshToken.name,
+            ),
+          ),
+        ).not.toBe(-1);
+
+        // password-confirmation cookie
+        expect(
+          cookies.findIndex((cookie) =>
+            cookie.startsWith(
+              authenticationModuleConfiguration.cookie.passwordConfirmation
+                .name,
             ),
           ),
         ).not.toBe(-1);
@@ -89,7 +99,7 @@ describe(`${LoginController.name} (e2e)`, () => {
     });
   });
 
-  describe('Logout', () => {
+  describe(`${LoginController.name}::${LoginController.prototype.logout.name}`, () => {
     let accessToken: string;
 
     beforeAll(async () => {
@@ -100,8 +110,10 @@ describe(`${LoginController.name} (e2e)`, () => {
         },
         application,
         `/${authenticationModuleConfiguration.route.login}`,
-        authenticationModuleConfiguration.cookie.accessToken.name,
-        authenticationModuleConfiguration.cookie.refreshToken.name,
+        {
+          accessToken:
+            authenticationModuleConfiguration.cookie.accessToken.name,
+        },
       ));
     });
 
@@ -114,30 +126,43 @@ describe(`${LoginController.name} (e2e)`, () => {
         expect(response.status).toBe(HttpStatus.NO_CONTENT);
       });
 
-      it("clears the 'access-token' & 'refresh-token' cookies", async () => {
-        const response = await request(application.getHttpServer())
-          .delete(`/${authenticationModuleConfiguration.route.login}`)
-          .set('Cookie', accessToken);
+      describe('clears the:', () => {
+        let response: Response;
 
-        const tokens = response
-          .get('Set-Cookie')
-          ?.filter(
-            (cookie) =>
-              cookie.startsWith(
-                `${authenticationModuleConfiguration.cookie.accessToken.name}=`,
-              ) ||
-              cookie.startsWith(
-                `${authenticationModuleConfiguration.cookie.refreshToken.name}=`,
-              ),
-          );
+        beforeAll(async () => {
+          response = await request(application.getHttpServer())
+            .delete(`/${authenticationModuleConfiguration.route.login}`)
+            .set('Cookie', accessToken);
+        });
 
-        expect(tokens).toHaveLength(2);
+        it.each([
+          {
+            testName: 'access-token',
+            cookieName:
+              authenticationModuleConfiguration.cookie.accessToken.name,
+          },
+          {
+            testName: 'refresh-token',
+            cookieName:
+              authenticationModuleConfiguration.cookie.accessToken.name,
+          },
+          {
+            testName: 'password-confirmation',
+            cookieName:
+              authenticationModuleConfiguration.cookie.accessToken.name,
+          },
+        ])('$testName cookie', ({ cookieName }) => {
+          const cookie = response
+            .get('Set-Cookie')
+            // eslint-disable-next-line max-nested-callbacks
+            .filter((cookie) => cookie.startsWith(`${cookieName}=`))[0];
 
-        for (const token of tokens!) {
-          expect(token.includes('Expires=Thu, 01 Jan 1970 00:00:00 GMT;')).toBe(
-            true,
-          );
-        }
+          expect(cookie).not.toBeUndefined();
+
+          expect(
+            cookie!.includes('Expires=Thu, 01 Jan 1970 00:00:00 GMT;'),
+          ).toBe(true);
+        });
       });
     });
 

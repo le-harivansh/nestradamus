@@ -16,23 +16,32 @@ import {
   authenticationModuleOptionsValidationSchema,
 } from './authentication.module-options';
 import { LoginController } from './controller/login.controller';
+import { PasswordConfirmationController } from './controller/password-confirmation.controller';
 import { TokenRefreshController } from './controller/token-refresh.controller';
 import { RequiresAccessTokenMiddleware } from './middleware/requires-access-token.middleware';
 import { RequiresRefreshTokenMiddleware } from './middleware/requires-refresh-token.middleware';
 import { AccessTokenCallbackService } from './service/access-token-callback.service';
-import { CredentialValidationService } from './service/credential-validation.service';
+import { PasswordConfirmationCallbackService } from './service/password-confirmation-callback.service';
+import { PasswordValidationService } from './service/password-validation.service';
 import { RefreshTokenCallbackService } from './service/refresh-token-callback.service';
 import { ResponseService } from './service/response.service';
 import { TokenService } from './service/token.service';
+import { UserRetrievalService } from './service/user-retrieval.service';
 
 @Module({
   imports: [JwtModule.register({})],
-  controllers: [LoginController, TokenRefreshController],
+  controllers: [
+    LoginController,
+    PasswordConfirmationController,
+    TokenRefreshController,
+  ],
   providers: [
     TokenService,
-    CredentialValidationService,
+    UserRetrievalService,
+    PasswordValidationService,
     AccessTokenCallbackService,
     RefreshTokenCallbackService,
+    PasswordConfirmationCallbackService,
     ResponseService,
   ],
 })

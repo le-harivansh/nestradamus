@@ -1,12 +1,13 @@
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Db, MongoClient } from 'mongodb';
-import request from 'supertest';
+import request, { Response } from 'supertest';
 
 import { getAuthenticationTokens } from '@library/authentication/../test/helper';
 
 import {
   ACCESS_TOKEN_COOKIE_NAME,
   LOGIN_ROUTE,
+  PASSWORD_CONFIRMATION_COOKIE_NAME,
   REFRESH_TOKEN_COOKIE_NAME,
 } from '../src/_authentication/constant';
 import {
@@ -71,6 +72,13 @@ describe('Authentication (e2e)', () => {
             cookie.startsWith(REFRESH_TOKEN_COOKIE_NAME),
           ),
         ).not.toBe(-1);
+
+        // password-confirmation cookie
+        expect(
+          cookies.findIndex((cookie) =>
+            cookie.startsWith(PASSWORD_CONFIRMATION_COOKIE_NAME),
+          ),
+        ).not.toBe(-1);
       });
     });
 
@@ -115,8 +123,7 @@ describe('Authentication (e2e)', () => {
         userCredentials,
         application,
         `/${LOGIN_ROUTE}`,
-        ACCESS_TOKEN_COOKIE_NAME,
-        REFRESH_TOKEN_COOKIE_NAME,
+        { accessToken: ACCESS_TOKEN_COOKIE_NAME },
       ));
     });
 
@@ -129,26 +136,34 @@ describe('Authentication (e2e)', () => {
         expect(response.status).toBe(HttpStatus.NO_CONTENT);
       });
 
-      it("clears the 'access-token' & 'refresh-token' cookies", async () => {
-        const response = await request(application.getHttpServer())
-          .delete(`/${LOGIN_ROUTE}`)
-          .set('Cookie', accessToken);
+      describe('clears the:', () => {
+        let response: Response;
 
-        const tokens = response
-          .get('Set-Cookie')
-          ?.filter(
-            (cookie) =>
-              cookie.startsWith(`${ACCESS_TOKEN_COOKIE_NAME}=`) ||
-              cookie.startsWith(`${REFRESH_TOKEN_COOKIE_NAME}=`),
-          );
+        beforeAll(async () => {
+          response = await request(application.getHttpServer())
+            .delete(`/${LOGIN_ROUTE}`)
+            .set('Cookie', accessToken);
+        });
 
-        expect(tokens).toHaveLength(2);
+        it.each([
+          { testName: 'access-token', cookieName: ACCESS_TOKEN_COOKIE_NAME },
+          { testName: 'refresh-token', cookieName: REFRESH_TOKEN_COOKIE_NAME },
+          {
+            testName: 'password-confirmation',
+            cookieName: PASSWORD_CONFIRMATION_COOKIE_NAME,
+          },
+        ])('$testName', ({ cookieName }) => {
+          const cookie = response
+            .get('Set-Cookie')
+            // eslint-disable-next-line max-nested-callbacks
+            .filter((cookie) => cookie.startsWith(`${cookieName}=`))[0];
 
-        for (const token of tokens!) {
-          expect(token.includes('Expires=Thu, 01 Jan 1970 00:00:00 GMT;')).toBe(
-            true,
-          );
-        }
+          expect(cookie).not.toBeUndefined();
+
+          expect(
+            cookie!.includes('Expires=Thu, 01 Jan 1970 00:00:00 GMT;'),
+          ).toBe(true);
+        });
       });
     });
 

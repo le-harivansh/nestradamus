@@ -17,7 +17,7 @@ import { ResponseService } from '../service/response.service';
 export class TokenRefreshController {
   constructor(
     @Inject(AUTHENTICATION_MODULE_OPTIONS_TOKEN)
-    private readonly authenticationModuleOptions: AuthenticationModuleOptions,
+    authenticationModuleOptions: AuthenticationModuleOptions,
 
     private readonly responseService: ResponseService,
   ) {
@@ -29,7 +29,7 @@ export class TokenRefreshController {
      */
 
     // Refresh `Access-Token` route
-    Post(this.authenticationModuleOptions.route.tokenRefresh.accessToken)(
+    Post(authenticationModuleOptions.route.tokenRefresh.accessToken)(
       this,
       TokenRefreshController.prototype.refreshAccessToken.name,
       Object.getOwnPropertyDescriptor(
@@ -39,7 +39,7 @@ export class TokenRefreshController {
     );
 
     // Refresh `Refresh-Token` route
-    Post(this.authenticationModuleOptions.route.tokenRefresh.refreshToken)(
+    Post(authenticationModuleOptions.route.tokenRefresh.refreshToken)(
       this,
       TokenRefreshController.prototype.refreshRefreshToken.name,
       Object.getOwnPropertyDescriptor(
@@ -50,7 +50,7 @@ export class TokenRefreshController {
 
     // Setup decorator that will retrieve the authenticated user from the request.
     const AuthenticatedUser = AuthenticatedUserDecoratorFactory(
-      this.authenticationModuleOptions.requestPropertyHoldingAuthenticatedUser,
+      authenticationModuleOptions.requestPropertyHoldingAuthenticatedUser,
     );
 
     // Apply parameter-decorators that will inject the authenticated user into the controller method.

@@ -10,6 +10,10 @@ This application is the one used by the ultimate end-user of the application - i
 
 See the authentication library module, and the client's authentication module for more details.
 
+### Password-Confirmation
+
+See the authentication library module, and the client's authentication module for more details.
+
 ### Password-Reset
 
 See the password-reset library module, and the client's password-reset module for more details.

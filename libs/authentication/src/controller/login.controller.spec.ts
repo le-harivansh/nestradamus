@@ -1,3 +1,4 @@
+import { UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Response } from 'express';
 import { ObjectId } from 'mongodb';
@@ -5,11 +6,13 @@ import { ObjectId } from 'mongodb';
 import { AUTHENTICATION_MODULE_OPTIONS_TOKEN } from '../authentication.module-definition';
 import { AuthenticationModuleOptions } from '../authentication.module-options';
 import { LoginDto } from '../dto/login.dto';
-import { CredentialValidationService } from '../service/credential-validation.service';
+import { PasswordValidationService } from '../service/password-validation.service';
 import { ResponseService } from '../service/response.service';
+import { UserRetrievalService } from '../service/user-retrieval.service';
 import { LoginController } from './login.controller';
 
-jest.mock('../service/credential-validation.service');
+jest.mock('../service/user-retrieval.service');
+jest.mock('../service/password-validation.service');
 jest.mock('../service/response.service');
 
 describe(LoginController.name, () => {
@@ -23,7 +26,8 @@ describe(LoginController.name, () => {
 
   let loginController: LoginController;
 
-  let credentialValidationService: jest.Mocked<CredentialValidationService>;
+  let userRetrievalService: jest.Mocked<UserRetrievalService>;
+  let passwordValidationService: jest.Mocked<PasswordValidationService>;
   let responseService: jest.Mocked<ResponseService>;
 
   beforeAll(async () => {
@@ -34,14 +38,16 @@ describe(LoginController.name, () => {
           provide: AUTHENTICATION_MODULE_OPTIONS_TOKEN,
           useValue: authenticationModuleOptions,
         },
-        CredentialValidationService,
+        UserRetrievalService,
+        PasswordValidationService,
         ResponseService,
       ],
     }).compile();
 
     loginController = module.get(LoginController);
 
-    credentialValidationService = module.get(CredentialValidationService);
+    userRetrievalService = module.get(UserRetrievalService);
+    passwordValidationService = module.get(PasswordValidationService);
     responseService = module.get(ResponseService);
   });
 
@@ -65,29 +71,54 @@ describe(LoginController.name, () => {
     };
 
     beforeAll(() => {
-      credentialValidationService.validateCredentials.mockResolvedValue(
-        authenticatedUser,
-      );
+      userRetrievalService.retrieveUser.mockResolvedValue(authenticatedUser);
+      passwordValidationService.validatePassword.mockResolvedValue(true);
     });
 
-    beforeAll(async () => {
-      await loginController.login(credentials, response);
-    });
-
-    afterAll(() => {
+    afterEach(() => {
       jest.clearAllMocks();
     });
 
-    it(`calls '${CredentialValidationService.name}::${CredentialValidationService.prototype.validateCredentials.name}' with the credentials from the request - to retrieve the authenticated user`, () => {
-      expect(
-        credentialValidationService.validateCredentials,
-      ).toHaveBeenCalledTimes(1);
-      expect(
-        credentialValidationService.validateCredentials,
-      ).toHaveBeenCalledWith(credentials.username, credentials.password);
+    it(`calls '${UserRetrievalService.name}::${UserRetrievalService.prototype.retrieveUser.name}' with the username from the request - to retrieve the associated user`, async () => {
+      await loginController.login(credentials, response);
+
+      expect(userRetrievalService.retrieveUser).toHaveBeenCalledTimes(1);
+      expect(userRetrievalService.retrieveUser).toHaveBeenCalledWith(
+        credentials.username,
+      );
     });
 
-    it(`calls '${ResponseService.name}::${ResponseService.prototype.setAccessTokenCookieForUserInResponse.name}' with the authenticated user`, () => {
+    it(`throws an '${UnauthorizedException.name}' if a user could not be retrieved from the provided username`, async () => {
+      userRetrievalService.retrieveUser.mockResolvedValueOnce(null);
+
+      await expect(() =>
+        loginController.login(credentials, response),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it(`calls '${PasswordValidationService.name}::${PasswordValidationService.prototype.validatePassword.name}' with the resolved user instance, and the provided password from the request`, async () => {
+      await loginController.login(credentials, response);
+
+      expect(passwordValidationService.validatePassword).toHaveBeenCalledTimes(
+        1,
+      );
+      expect(passwordValidationService.validatePassword).toHaveBeenCalledWith(
+        authenticatedUser,
+        credentials.password,
+      );
+    });
+
+    it(`throws an '${UnauthorizedException.name}' if the provided password could not be validated against the retrieved user's`, async () => {
+      passwordValidationService.validatePassword.mockResolvedValueOnce(false);
+
+      await expect(() =>
+        loginController.login(credentials, response),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it(`calls '${ResponseService.name}::${ResponseService.prototype.setAccessTokenCookieForUserInResponse.name}' with the authenticated user`, async () => {
+      await loginController.login(credentials, response);
+
       expect(
         responseService.setAccessTokenCookieForUserInResponse,
       ).toHaveBeenCalledTimes(1);
@@ -96,12 +127,25 @@ describe(LoginController.name, () => {
       ).toHaveBeenCalledWith(authenticatedUser, response);
     });
 
-    it(`calls '${ResponseService.name}::${ResponseService.prototype.setRefreshTokenCookieForUserInResponse.name}' with the authenticated user`, () => {
+    it(`calls '${ResponseService.name}::${ResponseService.prototype.setRefreshTokenCookieForUserInResponse.name}' with the authenticated user`, async () => {
+      await loginController.login(credentials, response);
+
       expect(
         responseService.setRefreshTokenCookieForUserInResponse,
       ).toHaveBeenCalledTimes(1);
       expect(
         responseService.setRefreshTokenCookieForUserInResponse,
+      ).toHaveBeenCalledWith(authenticatedUser, response);
+    });
+
+    it(`calls '${ResponseService.name}::${ResponseService.prototype.setPasswordConfirmationCookieForUserInResponse.name}' with the authenticated user`, async () => {
+      await loginController.login(credentials, response);
+
+      expect(
+        responseService.setPasswordConfirmationCookieForUserInResponse,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        responseService.setPasswordConfirmationCookieForUserInResponse,
       ).toHaveBeenCalledWith(authenticatedUser, response);
     });
   });
@@ -127,6 +171,15 @@ describe(LoginController.name, () => {
       expect(responseService.clearRefreshTokenCookie).toHaveBeenCalledWith(
         response,
       );
+    });
+
+    it(`calls '${ResponseService.name}::${ResponseService.prototype.clearPasswordConfirmationCookie.name}' with the authenticated user`, () => {
+      expect(
+        responseService.clearPasswordConfirmationCookie,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        responseService.clearPasswordConfirmationCookie,
+      ).toHaveBeenCalledWith(response);
     });
   });
 });

@@ -7,6 +7,7 @@ import {
   Inject,
   Post,
   Response,
+  UnauthorizedException,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -15,8 +16,9 @@ import { Response as ExpressResponse } from 'express';
 import { AUTHENTICATION_MODULE_OPTIONS_TOKEN } from '../authentication.module-definition';
 import { AuthenticationModuleOptions } from '../authentication.module-options';
 import { LoginDto } from '../dto/login.dto';
-import { CredentialValidationService } from '../service/credential-validation.service';
+import { PasswordValidationService } from '../service/password-validation.service';
 import { ResponseService } from '../service/response.service';
+import { UserRetrievalService } from '../service/user-retrieval.service';
 
 @Controller()
 export class LoginController {
@@ -24,7 +26,8 @@ export class LoginController {
     @Inject(AUTHENTICATION_MODULE_OPTIONS_TOKEN)
     authenticationModuleOptions: AuthenticationModuleOptions,
 
-    private readonly credentialValidationService: CredentialValidationService,
+    private readonly userRetrievalService: UserRetrievalService,
+    private readonly passwordValidationService: PasswordValidationService,
     private readonly responseService: ResponseService,
   ) {
     /**
@@ -65,19 +68,36 @@ export class LoginController {
     @Response({ passthrough: true }) response: ExpressResponse,
   ) {
     const authenticatedUser =
-      await this.credentialValidationService.validateCredentials(
-        username,
+      await this.userRetrievalService.retrieveUser(username);
+
+    if (authenticatedUser === null) {
+      throw new UnauthorizedException('Invalid credentials.');
+    }
+
+    const passwordIsValid =
+      await this.passwordValidationService.validatePassword(
+        authenticatedUser,
         password,
       );
 
-    this.responseService.setAccessTokenCookieForUserInResponse(
-      authenticatedUser,
-      response,
-    );
-    this.responseService.setRefreshTokenCookieForUserInResponse(
-      authenticatedUser,
-      response,
-    );
+    if (!passwordIsValid) {
+      throw new UnauthorizedException('Invalid credentials.');
+    }
+
+    await Promise.all([
+      this.responseService.setAccessTokenCookieForUserInResponse(
+        authenticatedUser,
+        response,
+      ),
+      this.responseService.setRefreshTokenCookieForUserInResponse(
+        authenticatedUser,
+        response,
+      ),
+      this.responseService.setPasswordConfirmationCookieForUserInResponse(
+        authenticatedUser,
+        response,
+      ),
+    ]);
   }
 
   /**
@@ -87,5 +107,6 @@ export class LoginController {
   logout(@Response({ passthrough: true }) response: ExpressResponse) {
     this.responseService.clearAccessTokenCookie(response);
     this.responseService.clearRefreshTokenCookie(response);
+    this.responseService.clearPasswordConfirmationCookie(response);
   }
 }

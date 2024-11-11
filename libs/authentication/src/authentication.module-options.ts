@@ -28,11 +28,19 @@ export const authenticationModuleOptionsValidationSchema = z.object({
      * This is the route where the user credentials in the form of a POST
      * request with a body having the shape:
      * `{ "username": "...", "password": "***" }`
-     * is sent to login/authenticate the user.
+     * is sent to "login" / "authenticate" the user.
      *
      * A DELETE request can also be used on this route to "logout" / "de-authenticate" the user.
      */
     login: z.string().min(1),
+
+    /**
+     * This is the route where the user password in the form of a POST
+     * request with a body having the shape:
+     * `{ "password": "***" }`
+     * is sent to be validated against the stored user's password.
+     */
+    passwordConfirmation: z.string().min(1),
 
     /**
      * This configuration block defines the "token-refresh" routes of the
@@ -40,13 +48,13 @@ export const authenticationModuleOptionsValidationSchema = z.object({
      */
     tokenRefresh: z.object({
       /**
-       * This route is used to refresh the "access-token" of the user.
+       * This route refreshes the "access-token" of the user.
        * A "refresh-token is needed to access this route.
        */
       accessToken: z.string().min(1),
 
       /**
-       * This route is used to refresh the "refresh-token" of the user.
+       * This route refreshes the "refresh-token" of the user.
        * An "access-token" is needed to access this route.
        */
       refreshToken: z.string().min(1),
@@ -110,11 +118,27 @@ export const authenticationModuleOptionsValidationSchema = z.object({
    */
   cookie: z.object({
     /**
-     * This block defines the "access-token" specific configurations.
+     * This bolck defines the "password-confirmation" specific configuration.
+     */
+    passwordConfirmation: z.object({
+      /**
+       * The name of the "password-confirmation" cookie.
+       */
+      name: z.string().min(4),
+
+      /**
+       * The duration (in seconds) for which the "password-confirmation" cookie
+       * is valid.
+       */
+      expiresInSeconds: z.number().safe().positive(),
+    }),
+
+    /**
+     * This block defines the "access-token" specific configuration.
      */
     accessToken: z.object({
       /**
-       * The name of the cookie which will hold the "access-token".
+       * The name of the "access-token" cookie.
        */
       name: z.string().min(4),
 
@@ -126,11 +150,11 @@ export const authenticationModuleOptionsValidationSchema = z.object({
     }),
 
     /**
-     * This block defines the "refresh-token" specific configurations.
+     * This block defines the "refresh-token" specific configuration.
      */
     refreshToken: z.object({
       /**
-       * The name of the cookie which will hold the "refresh-token".
+       * The name of the "refresh-token" cookie.
        */
       name: z.string().min(4),
 
@@ -149,22 +173,74 @@ export const authenticationModuleOptionsValidationSchema = z.object({
    */
   callback: z.object({
     /**
-     * The callback that is used to verify whether the passed-in username &
-     * password are valid.
+     * The callback that is used to retrieve a user according to its "username".
      *
-     * It should accept the username & password passed-in through the request,
-     * and return the resolved user instance if the validation is successful,
+     * It accepts the username, and returs the resolved user instance if found,
      * and `null` otherwise.
      *
      * e.g.:
      * ```
-     * (username: string, password: string) => { return User(...); };
+     * async (username: string) => { return await userService.findByUsername(username); }
      * ```
      */
-    validateCredentials: z
+    retrieveUser: z
       .function()
-      .args(z.string(), z.string())
-      .returns(z.promise(z.unknown())),
+      .args(z.string())
+      .returns(z.promise(z.unknown().nullable())),
+
+    /**
+     * The callback that is used to verify whether the provided password is
+     * valid.
+     *
+     * It accepts the resolved user instance, and the passed-in "password", and
+     * returns true if the validation is successful, and false otherwise.
+     *
+     * e.g.:
+     * ```
+     * async (user: User, password: string) => { return await validate(user.email, password); }
+     * ```
+     */
+    validatePassword: z
+      .function()
+      .args(z.any(), z.string())
+      .returns(z.promise(z.boolean())),
+
+    /**
+     * This block defines the "password-confirmation" specific callbacks.
+     */
+    passwordConfirmation: z.object({
+      /**
+       * The callback used to create the cookie-payload.
+       *
+       * It accepts a "user" instance, and returns the cookie string.
+       *
+       * e.g.:
+       * ```
+       * async (user: User) => { return await hash(user.password); }
+       * ```
+       */
+      createCookiePayload: z
+        .function()
+        .args(z.any())
+        .returns(z.promise(z.string())),
+
+      /**
+       * The callback used to validate the password-confirmation cookie string.
+       *
+       * It accepts a "user" instance and the previously created
+       * password-confirmation cookie string, and returns `true` if it is
+       * valid, and `false` otherwise.
+       *
+       * e.g.:
+       * ```
+       * async (user: User, cookiePayload: string) => { return await verify(cookiePayload, user.password); }
+       * ```
+       */
+      validateCookiePayload: z
+        .function()
+        .args(z.any(), z.string())
+        .returns(z.promise(z.boolean())),
+    }),
 
     /**
      * This block defines the "access-token" specific callbacks.
@@ -177,7 +253,7 @@ export const authenticationModuleOptionsValidationSchema = z.object({
        *
        * e.g.:
        * ```
-       * (user: any) => ({ id: ..., exp: ... });
+       * async (user: User) => ({ id: ..., exp: ... });
        * ```
        */
       createJwtPayload: z
@@ -190,6 +266,11 @@ export const authenticationModuleOptionsValidationSchema = z.object({
        *
        * It accepts the resolved JWT payload, and returns `true` if it is valid,
        * and `false` otherwise.
+       *
+       * e.g.:
+       * ```
+       * async (payload: Record<string, string>) => { return await validatePayload(payload) };
+       * ```
        */
       validateJwtPayload: z
         .function()
@@ -206,7 +287,7 @@ export const authenticationModuleOptionsValidationSchema = z.object({
        *
        * e.g.:
        * ```
-       * (payload: object) => injectedRepository.findById(payload.id);
+       * async (payload: Record<string, string>) => { return await userRepository.findById(payload.id); }
        * ```
        */
       resolveUserFromJwtPayload: z
@@ -226,7 +307,7 @@ export const authenticationModuleOptionsValidationSchema = z.object({
        *
        * e.g.:
        * ```
-       * (user: any) => ({ id: ..., exp: ... });
+       * async (user: any) => ({ id: ..., exp: ... });
        * ```
        */
       createJwtPayload: z
@@ -239,6 +320,11 @@ export const authenticationModuleOptionsValidationSchema = z.object({
        *
        * It accepts the resolved JWT payload, and returns `true` if it is valid,
        * and `false` otherwise.
+       *
+       * e.g.:
+       * ```
+       * async (payload: Record<string, string>) => { return await validatePayload(payload) };
+       * ```
        */
       validateJwtPayload: z
         .function()
@@ -255,7 +341,7 @@ export const authenticationModuleOptionsValidationSchema = z.object({
        *
        * e.g.:
        * ```
-       * (payload: object) => injectedRepository.findById(payload.id);
+       * async (payload: Record<string, string>) => { return await userRepository.findById(payload.id); }
        * ```
        */
       resolveUserFromJwtPayload: z

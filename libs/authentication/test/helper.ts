@@ -28,13 +28,15 @@ export async function setupTestApplication() {
   return application.init();
 }
 
-export async function getAuthenticationTokens(
+export async function getAuthenticationTokens<
+  T extends Record<string, string>,
+  U extends { [K in keyof T]: string },
+>(
   credentials: { username: string; password: string },
   application: INestApplication,
   loginRoute: string,
-  accessTokenCookieName: string,
-  refreshTokenCookieName: string,
-): Promise<{ accessToken: string; refreshToken: string }> {
+  cookiesToRetrieve: T, // in the form: { arbitraryKeyName: cookieName }
+): Promise<U> {
   const response = await request(application.getHttpServer())
     .post(loginRoute)
     .send(credentials);
@@ -47,12 +49,16 @@ export async function getAuthenticationTokens(
     );
   }
 
-  const accessToken = cookies.find((cookie) =>
-    cookie.startsWith(accessTokenCookieName),
-  )!;
-  const refreshToken = cookies.find((cookie) =>
-    cookie.startsWith(refreshTokenCookieName),
-  )!;
-
-  return { accessToken, refreshToken };
+  return Object.entries(cookiesToRetrieve)
+    .map(([key, cookieName]) => ({
+      [key]: cookies.find((cookie) => cookie.startsWith(cookieName)),
+    }))
+    .filter((cookieData) => Boolean(Object.values(cookieData)[0]))
+    .reduce(
+      (cookieInformation, cookieData) => ({
+        ...cookieInformation,
+        ...cookieData,
+      }),
+      {},
+    ) as U;
 }
