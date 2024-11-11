@@ -9,6 +9,11 @@ if [ -z "${1}" ]; then
   exit 1
 fi
 
+if ! git ls-remote "${1}" 1> /dev/null 2> /dev/null; then
+  echo "Could not access the provided git repository: '${1}'"
+  exit 1
+fi
+
 
 echo "Renaming 'origin' to 'upstream'"
 git remote rename "origin" "upstream"
