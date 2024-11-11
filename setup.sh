@@ -5,7 +5,7 @@ set -e
 echo ""
 
 if [ -z "${1}" ]; then
-  echo "Usage: ${0##*/} <git-repo-url>"
+  echo "Usage: ${0##*/} <git repository url>"
   exit 1
 fi
 
