@@ -23,7 +23,6 @@ import databaseConfiguration from './database.config';
         applicationName: configurationService.getOrThrow('application.name'),
       }),
 
-      // Extra options.
       isGlobal: true,
     }),
   ],

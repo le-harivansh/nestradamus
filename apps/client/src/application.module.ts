@@ -8,6 +8,7 @@ import { DatabaseModule } from './_database/database.module';
 import { HealthCheckModule } from './_health-check/health-check.module';
 import { MailModule } from './_mail/mail.module';
 import { PasswordResetModule } from './_password-reset/password-reset.module';
+import { S3Module } from './_s3/s3.module';
 import { UserModule } from './_user/user.module';
 import applicationConfiguration from './application.config';
 
@@ -17,6 +18,8 @@ import applicationConfiguration from './application.config';
     ConfigModule.forFeature(applicationConfiguration),
 
     DatabaseModule,
+
+    S3Module,
 
     MailModule,
 

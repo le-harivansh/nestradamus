@@ -1,9 +1,18 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 
-import { ApplicationModule } from '../src/application.module';
-import { DatabaseModule } from './_database/database.module';
+import { ConfigurationModule } from '../src/_configuration/configuration.module';
+import { DatabaseModule as ClientDatabaseModule } from '../src/_database/database.module';
+import applicationConfiguration from '../src/application.config';
+import { DatabaseModule as CliDatabaseModule } from './_database/database.module';
 
 @Module({
-  imports: [ApplicationModule, DatabaseModule],
+  imports: [
+    ConfigurationModule,
+    ConfigModule.forFeature(applicationConfiguration),
+
+    ClientDatabaseModule,
+    CliDatabaseModule,
+  ],
 })
 export class CliModule {}

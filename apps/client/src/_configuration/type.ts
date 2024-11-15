@@ -13,6 +13,10 @@ import {
   CONFIGURATION_NAMESPACE as PasswordResetConfigurationNamespace,
 } from '../_password-reset/password-reset.config';
 import {
+  S3Configuration,
+  CONFIGURATION_NAMESPACE as S3ConfigurationNamespace,
+} from '../_s3/s3.config';
+import {
   ApplicationConfiguration,
   CONFIGURATION_NAMESPACE as ApplicationConfigurationNamespace,
 } from '../application.config';
@@ -31,6 +35,11 @@ export type NamespacedConfiguration =
     FlattenedPrefixedConfiguration<
       typeof DatabaseConfigurationNamespace,
       DatabaseConfiguration
+    > &
+    // S3
+    FlattenedPrefixedConfiguration<
+      typeof S3ConfigurationNamespace,
+      S3Configuration
     > &
     // Mail
     FlattenedPrefixedConfiguration<

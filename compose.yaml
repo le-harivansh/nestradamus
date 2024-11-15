@@ -11,6 +11,19 @@ services:
     volumes:
       - database:/data/db
 
+  minio:
+    image: minio/minio
+    restart: unless-stopped
+    ports:
+      - '${__MINIO_API_PORT}:9000'
+      - '${__MINIO_UI_PORT}:9001'
+    volumes:
+      - 'minio:/data'
+    environment:
+      MINIO_ROOT_USER: ${__MINIO_USERNAME}
+      MINIO_ROOT_PASSWORD: ${__MINIO_PASSWORD}
+    command: ['server', '/data', '--console-address', ':${__MINIO_UI_PORT}']
+
   mail:
     image: axllent/mailpit:latest
     restart: unless-stopped
@@ -26,4 +39,5 @@ services:
 
 volumes:
   database:
+  minio:
   mail:
