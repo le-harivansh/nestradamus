@@ -41,22 +41,34 @@
 export type FlattenedPrefixedConfiguration<
   Namespace extends string,
   Configuration extends object,
-> = Flatten<PrefixedConfiguration<Namespace, Configuration>>;
+> = ObjectFromConfigurationKeyValuePairs<
+  FlattenedConfigurationKeyValuePairsFrom<Configuration, Namespace, '.'>
+>;
 
-type Flatten<T> = { [P in FlattenToPairs<T> as P[0]]: P[1] };
-
-type PrefixedConfiguration<N extends string, C> = {
-  [K in keyof C as K extends string ? `${N}.${K}` : never]: C[K] extends object
-    ? K extends string
-      ? PrefixedConfiguration<`${N}.${K}`, C[K]>
-      : never
-    : C[K];
+type ObjectFromConfigurationKeyValuePairs<T extends [string, Value]> = {
+  [K in T as K[0]]: K[1];
 };
 
-type FlattenToPairs<T> = {
-  [K in keyof T]: T[K] extends Value ? [K, T[K]] : FlattenToPairs<T[K]>;
-}[keyof T] &
-  [PropertyKey, Value];
+type FlattenedConfigurationKeyValuePairsFrom<
+  Configuration,
+  Prefix extends string,
+  Separator extends string,
+> = {
+  [Key in keyof Configuration]: Configuration[Key] extends Value
+    ? [
+        Prefix extends ''
+          ? Key & string
+          : `${Prefix}${Separator}${Key & string}`,
+        Configuration[Key],
+      ]
+    : FlattenedConfigurationKeyValuePairsFrom<
+        Configuration[Key],
+        Prefix extends ''
+          ? Key & string
+          : `${Prefix}${Separator}${Key & string}`,
+        Separator
+      >;
+}[keyof Configuration];
 
 /**
  * This type represents the possible types of values of environment variables.

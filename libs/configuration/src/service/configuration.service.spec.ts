@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { FlattenedPrefixedConfiguration } from '../helper';
+import { FlattenedPrefixedConfiguration } from '../type';
 import { ConfigurationService } from './configuration.service';
 
 jest.mock('@nestjs/config');
