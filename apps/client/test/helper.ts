@@ -74,7 +74,7 @@ export function createUser(
 ) {
   const userService = application.get(UserService);
 
-  return userService.createUser(fakeUserData(userData));
+  return userService.create(fakeUserData(userData));
 }
 
 export async function getPasswordResetId(

@@ -35,7 +35,7 @@ describe(UserService.name, () => {
     expect(userService).toBeDefined();
   });
 
-  describe(UserService.prototype.findUserById.name, () => {
+  describe(UserService.prototype.findById.name, () => {
     const userId = new ObjectId();
 
     afterEach(() => {
@@ -43,7 +43,7 @@ describe(UserService.name, () => {
     });
 
     it(`calls '${UserRepository.name}::${UserRepository.prototype.findById.name}' with the provided 'id'`, async () => {
-      await userService.findUserById(userId);
+      await userService.findById(userId);
 
       expect(userRepository.findById).toHaveBeenCalledTimes(1);
       expect(userRepository.findById).toHaveBeenCalledWith(
@@ -58,21 +58,19 @@ describe(UserService.name, () => {
         user as unknown as WithId<User>,
       );
 
-      await expect(userService.findUserById(new ObjectId())).resolves.toBe(
-        user,
-      );
+      await expect(userService.findById(new ObjectId())).resolves.toBe(user);
     });
 
     it(`throws '${NotFoundException.name}' if '${UserRepository.name}::${UserRepository.prototype.findById.name}' returns 'null'`, async () => {
       userRepository.findById.mockResolvedValueOnce(null);
 
-      await expect(userService.findUserById(new ObjectId())).rejects.toThrow(
+      await expect(userService.findById(new ObjectId())).rejects.toThrow(
         NotFoundException,
       );
     });
   });
 
-  describe(UserService.prototype.findUserByEmail.name, () => {
+  describe(UserService.prototype.findByEmail.name, () => {
     const email = 'user@email.dev';
 
     afterEach(() => {
@@ -80,7 +78,7 @@ describe(UserService.name, () => {
     });
 
     it(`calls '${UserRepository.name}::${UserRepository.prototype.findByEmail.name}' with the provided 'email'`, async () => {
-      await userService.findUserByEmail(email);
+      await userService.findByEmail(email);
 
       expect(userRepository.findByEmail).toHaveBeenCalledTimes(1);
       expect(userRepository.findByEmail).toHaveBeenCalledWith(email);
@@ -93,19 +91,19 @@ describe(UserService.name, () => {
         user as unknown as WithId<User>,
       );
 
-      await expect(userService.findUserByEmail(email)).resolves.toBe(user);
+      await expect(userService.findByEmail(email)).resolves.toBe(user);
     });
 
     it(`throws '${NotFoundException.name}' if '${UserRepository.name}::${UserRepository.prototype.findByEmail.name}' returns 'null'`, async () => {
       userRepository.findByEmail.mockResolvedValueOnce(null);
 
-      await expect(userService.findUserByEmail(email)).rejects.toThrow(
+      await expect(userService.findByEmail(email)).rejects.toThrow(
         NotFoundException,
       );
     });
   });
 
-  describe(UserService.prototype.createUser.name, () => {
+  describe(UserService.prototype.create.name, () => {
     const newUserId = new ObjectId();
     const userData: User = fakeUserData();
 
@@ -121,7 +119,7 @@ describe(UserService.name, () => {
     });
 
     it(`calls '${UserRepository.name}::${UserRepository.prototype.create.name}' with the email and the hashed password`, async () => {
-      await userService.createUser(userData);
+      await userService.create(userData);
 
       expect(userRepository.create).toHaveBeenCalledTimes(1);
       expect(userRepository.create).toHaveBeenCalledWith({
@@ -134,7 +132,7 @@ describe(UserService.name, () => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password: _, ...otherUserData } = userData;
 
-      await expect(userService.createUser(userData)).resolves.toEqual({
+      await expect(userService.create(userData)).resolves.toEqual({
         _id: newUserId,
         ...otherUserData,
       });
@@ -146,13 +144,13 @@ describe(UserService.name, () => {
         insertedId: undefined as unknown as ObjectId,
       });
 
-      await expect(() => userService.createUser(userData)).rejects.toThrow(
+      await expect(() => userService.create(userData)).rejects.toThrow(
         InternalServerErrorException,
       );
     });
   });
 
-  describe(UserService.prototype.updateUser.name, () => {
+  describe(UserService.prototype.update.name, () => {
     const userId = new ObjectId();
 
     const user: WithId<User> = {
@@ -178,7 +176,7 @@ describe(UserService.name, () => {
     });
 
     it(`calls '${UserRepository.name}::${UserRepository.prototype.update.name}' with the email and the hashed password`, async () => {
-      await userService.updateUser(user._id, userUpdates);
+      await userService.update(user._id, userUpdates);
 
       expect(userRepository.update).toHaveBeenCalledTimes(1);
       expect(userRepository.update).toHaveBeenCalledWith(user._id, {
@@ -191,16 +189,16 @@ describe(UserService.name, () => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password: _, ...otherUpdatedUserData } = updatedUser;
 
-      await expect(
-        userService.updateUser(user._id, userUpdates),
-      ).resolves.toEqual(otherUpdatedUserData);
+      await expect(userService.update(user._id, userUpdates)).resolves.toEqual(
+        otherUpdatedUserData,
+      );
     });
 
     it(`throws an '${InternalServerErrorException.name} if the returned user is 'null'`, async () => {
       userRepository.update.mockResolvedValue(null);
 
       await expect(() =>
-        userService.updateUser(user._id, userUpdates),
+        userService.update(user._id, userUpdates),
       ).rejects.toThrow(InternalServerErrorException);
     });
   });

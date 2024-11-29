@@ -46,7 +46,7 @@ import { PasswordResetService } from './service/password-reset.service';
         },
 
         callback: {
-          resolveUser: (email: string) => userService.findUserByEmail(email),
+          resolveUser: (email: string) => userService.findByEmail(email),
 
           notifyUser: async (
             user: WithId<User>,
@@ -135,7 +135,7 @@ import { PasswordResetService } from './service/password-reset.service';
               throw new BadRequestException(errors);
             }
 
-            await userService.updateUser(userId, { password: newPassword });
+            await userService.update(userId, { password: newPassword });
           },
         },
       }),

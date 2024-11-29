@@ -13,7 +13,7 @@ import { User } from '../schema/user.schema';
 export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
 
-  async findUserById(id: ObjectId) {
+  async findById(id: ObjectId) {
     const fetchedUser = await this.userRepository.findById(id);
 
     if (fetchedUser === null) {
@@ -23,7 +23,7 @@ export class UserService {
     return fetchedUser;
   }
 
-  async findUserByEmail(email: string) {
+  async findByEmail(email: string) {
     const fetchedUser = await this.userRepository.findByEmail(email);
 
     if (fetchedUser === null) {
@@ -35,7 +35,7 @@ export class UserService {
     return fetchedUser;
   }
 
-  async createUser({
+  async create({
     password,
     ...otherUserData
   }: User): Promise<Omit<WithId<User>, 'password'>> {
@@ -59,7 +59,7 @@ export class UserService {
     };
   }
 
-  async updateUser(
+  async update(
     id: ObjectId,
     { password, ...otherUserData }: Partial<User>,
   ): Promise<Omit<WithId<User>, 'password'>> {

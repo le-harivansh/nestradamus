@@ -54,19 +54,19 @@ describe(SeederCommand.name, () => {
       ).rejects.toThrow(Error);
     });
 
-    it(`calls '${UserService.name}::${UserService.prototype.createUser.name}' "count" no. of times`, async () => {
+    it(`calls '${UserService.name}::${UserService.prototype.create.name}' "count" no. of times`, async () => {
       const COUNT = 7;
 
       await databaseSeederCommand['seedUsers'](COUNT);
 
-      expect(userService.createUser).toHaveBeenCalledTimes(COUNT);
+      expect(userService.create).toHaveBeenCalledTimes(COUNT);
     });
 
-    it(`returns the values of '${UserService.name}::${UserService.prototype.createUser.name}' ("count" times)`, async () => {
+    it(`returns the values of '${UserService.name}::${UserService.prototype.create.name}' ("count" times)`, async () => {
       const resolvedUser = Symbol('resolved user') as unknown;
       const COUNT = 5;
 
-      userService.createUser.mockResolvedValue(
+      userService.create.mockResolvedValue(
         resolvedUser as unknown as Omit<WithId<User>, 'password'>,
       );
 

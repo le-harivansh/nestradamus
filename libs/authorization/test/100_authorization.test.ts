@@ -66,5 +66,13 @@ describe('Authorization (e2e)', () => {
 
       expect(response.status).toBe(HttpStatus.FORBIDDEN);
     });
+
+    it(`returns 'HTTP ${HttpStatus.UNAUTHORIZED}' if the request does not have an authenticated user attached to it`, async () => {
+      const response = await request(application.getHttpServer()).delete(
+        `/${TEST_BASE_ROUTE}`,
+      );
+
+      expect(response.status).toBe(HttpStatus.UNAUTHORIZED);
+    });
   });
 });

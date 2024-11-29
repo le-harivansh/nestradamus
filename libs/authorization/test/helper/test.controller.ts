@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Post } from '@nestjs/common';
+import { Controller, Delete, Get, Patch, Post } from '@nestjs/common';
 
 import { RequiresPermission } from './permissions.decorator';
 
@@ -27,6 +27,15 @@ export class TestController {
   @Patch('/creator/:creatorId')
   @RequiresPermission(['test:update', { taskCreatorId: 'creatorId' }])
   update() {
+    // intentionally left blank...
+  }
+
+  /**
+   * This route should not have the authentication middleware applied to it.
+   */
+  @Delete()
+  @RequiresPermission('test:delete:own')
+  delete() {
     // intentionally left blank...
   }
 }

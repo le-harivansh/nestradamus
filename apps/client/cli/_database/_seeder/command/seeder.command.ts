@@ -23,11 +23,11 @@ export class SeederCommand extends CommandRunner {
     const userSeedingTasksQueue: Promise<Omit<WithId<User>, 'password'>>[] = [];
 
     userSeedingTasksQueue.push(
-      this.userService.createUser(fakeUserData({ email: 'user@email.dev' })),
+      this.userService.create(fakeUserData({ email: 'user@email.dev' })),
     );
 
     for (let i = 0; i < count - 1; i++) {
-      userSeedingTasksQueue.push(this.userService.createUser(fakeUserData()));
+      userSeedingTasksQueue.push(this.userService.create(fakeUserData()));
     }
 
     return Promise.all(userSeedingTasksQueue);

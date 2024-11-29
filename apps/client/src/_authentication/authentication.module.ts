@@ -89,7 +89,7 @@ import {
             let user: WithId<User> | null = null;
 
             try {
-              user = await userService.findUserByEmail(email);
+              user = await userService.findByEmail(email);
             } catch (error) {
               if (!(error instanceof NotFoundException)) {
                 throw error;
@@ -129,7 +129,7 @@ import {
                  * to be able to catch any error that occurs in
                  * `UserService::findUserById`.
                  */
-                return await userService.findUserById(userId);
+                return await userService.findById(userId);
               } catch (error) {
                 if (error instanceof NotFoundException) {
                   return null;
@@ -158,7 +158,7 @@ import {
                  * to be able to catch any error that occurs in
                  * `UserService::findUserById`.
                  */
-                return await userService.findUserById(userId);
+                return await userService.findById(userId);
               } catch (error) {
                 if (error instanceof NotFoundException) {
                   return null;

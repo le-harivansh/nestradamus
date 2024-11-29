@@ -11,5 +11,8 @@ export const permissionsMap = {
       authenticatedUser: TestUser,
       { taskCreatorId }: { taskCreatorId: string },
     ) => authenticatedUser.id === taskCreatorId,
+    delete: {
+      own: () => true,
+    },
   },
 };
