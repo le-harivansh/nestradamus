@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_PIPE } from '@nestjs/core';
 
 import { AuthenticationModule } from './_authentication/authentication.module';
+import { AuthorizationModule } from './_authorization/authorization.module';
 import { ConfigurationModule } from './_configuration/configuration.module';
 import { DatabaseModule } from './_database/database.module';
 import { HealthCheckModule } from './_health-check/health-check.module';
@@ -28,6 +29,8 @@ import applicationConfiguration from './application.config';
     UserModule,
 
     AuthenticationModule,
+
+    AuthorizationModule,
 
     PasswordResetModule,
   ],

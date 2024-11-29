@@ -64,6 +64,7 @@ export function fakeUserData(defaults?: Partial<User>): User {
     defaults?.phoneNumber ?? faker.phone.number(),
     defaults?.email ?? faker.internet.email(),
     defaults?.password ?? PASSWORD,
+    defaults?.permissions ?? [],
   );
 }
 

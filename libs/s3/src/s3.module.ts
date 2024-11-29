@@ -6,6 +6,7 @@ import {
 import {
   DynamicModule,
   Inject,
+  InternalServerErrorException,
   Module,
   OnApplicationBootstrap,
   OnApplicationShutdown,
@@ -40,10 +41,16 @@ export class S3Module
   }
 
   async onApplicationBootstrap() {
-    // Check if the specified bucket exists & can be reached.
-    await this.s3Client.send(
-      new HeadBucketCommand({ Bucket: this.s3ModuleOptions.aws.bucketName }),
-    );
+    try {
+      // Check if the specified bucket exists & can be reached.
+      await this.s3Client.send(
+        new HeadBucketCommand({ Bucket: this.s3ModuleOptions.aws.bucketName }),
+      );
+    } catch {
+      throw new InternalServerErrorException(
+        'Could not initialize the S3 bucket.',
+      );
+    }
   }
 
   onApplicationShutdown() {

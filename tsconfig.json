@@ -28,6 +28,8 @@
     "paths": {
       "@library/authentication": ["libs/authentication/src"],
       "@library/authentication/*": ["libs/authentication/src/*"],
+      "@library/authorization": ["libs/authorization/src"],
+      "@library/authorization/*": ["libs/authorization/src/*"],
       "@library/configuration": ["libs/configuration/src"],
       "@library/configuration/*": ["libs/configuration/src/*"],
       "@library/database": ["libs/database/src"],

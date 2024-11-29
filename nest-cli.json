@@ -45,6 +45,15 @@
         "tsConfigPath": "libs/authentication/tsconfig.lib.json"
       }
     },
+    "authorization": {
+      "type": "library",
+      "root": "libs/authorization",
+      "entryFile": "index",
+      "sourceRoot": "libs/authorization/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/authorization/tsconfig.lib.json"
+      }
+    },
     "configuration": {
       "type": "library",
       "root": "libs/configuration",

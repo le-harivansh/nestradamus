@@ -24,11 +24,11 @@ import s3Configuration from './s3.config';
           },
           region: configurationService.getOrThrow('s3.aws.region'),
           bucketName: configurationService.getOrThrow('s3.aws.bucketName'),
-          endpoint:
-            configurationService.getOrThrow('application.environment') ===
-            'development'
-              ? configurationService.getOrThrow('s3.aws.endpoint.development')
-              : undefined,
+          endpoint: ['development', 'test'].includes(
+            configurationService.getOrThrow('application.environment'),
+          )
+            ? configurationService.getOrThrow('s3.aws.endpoint.development')
+            : undefined,
         },
       }),
 

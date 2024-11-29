@@ -1,0 +1,1 @@
+export const PERMISSION_STRING_SEPARATOR = ':';

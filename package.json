@@ -9,6 +9,7 @@
     "lint": "eslint",
     "format": "prettier --cache --cache-location ./.prettiercache --write .",
     "cli:client": "nest start --path ./apps/client/tsconfig.cli.json --entryFile ./apps/client/cli/main.js --",
+    "repl:client": "nest start --watch --path ./apps/client/tsconfig.app.json --entryFile ./apps/client/src/repl.js --",
     "build": "nest build",
     "start": "nest start",
     "start:dev": "nest start --watch",

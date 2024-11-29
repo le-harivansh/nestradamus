@@ -13,6 +13,7 @@ export class User {
     public readonly phoneNumber: string,
     public readonly email: string,
     public readonly password: string,
+    public readonly permissions: string[] = [],
   ) {}
 }
 
@@ -26,7 +27,7 @@ export class UserSchema implements OnApplicationBootstrap {
   private static readonly validator = {
     $jsonSchema: {
       bsonType: 'object',
-      required: ['email', 'password'],
+      required: ['firstName', 'lastName', 'phoneNumber', 'email', 'password'],
       properties: {
         firstName: {
           bsonType: 'string',

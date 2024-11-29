@@ -58,7 +58,6 @@ PasswordResetLibraryModule.forRootAsync({
           )
         ).toString();
 
-        // todo: this should be throttled to prevent abuse.
         await mailService
           .mail()
           .to(user.email)

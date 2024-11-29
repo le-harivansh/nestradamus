@@ -16,8 +16,8 @@ const configuration: Config = {
     // Authentication Library
     '^@library/authentication(|/.*)$': '<rootDir>/libs/authentication/src/$1',
 
-    // Password-Reset Library
-    '^@library/password-reset(|/.*)$': '<rootDir>/libs/password-reset/src/$1',
+    // Authorization Library
+    '^@library/authorization(|/.*)$': '<rootDir>/libs/authorization/src/$1',
 
     // Configuration Library
     '^@library/configuration(|/.*)$': '<rootDir>/libs/configuration/src/$1',
@@ -27,6 +27,12 @@ const configuration: Config = {
 
     // Mail Library
     '^@library/mail(|/.*)$': '<rootDir>/libs/mail/src/$1',
+
+    // Password-Reset Library
+    '^@library/password-reset(|/.*)$': '<rootDir>/libs/password-reset/src/$1',
+
+    // S3 Library
+    '^@library/s3(|/.*)$': '<rootDir>/libs/s3/src/$1',
   },
 };
 
