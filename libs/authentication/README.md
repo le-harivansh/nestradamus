@@ -39,11 +39,6 @@ The route responds with a HTTP 204 (No-Content) with the new _access-token_ - if
 This route requires that the user has a valid _access-token_.
 The route responds with a HTTP 204 (No-Content) with the new _refresh-token_ - if the provided _access-token_ is valid.
 
-### Password-Confirmation
-
-This route requires that the user has a valid _access-token_.
-The route responds with a HTTP 204 (No-Content) with the new _password-confirmation_ cookie - if the provided _password_ is valid.
-
 ### Configuration
 
 #### `AuthenticatedModule`
@@ -53,14 +48,18 @@ The configuration options are documented in the `authentication.module-options.t
 ```ts
 AuthenticationLibraryModule.forRootAsync({
   imports: [ConfigurationModule, UserModule],
-  inject: [ConfigurationService, UserService],
+  inject: [
+    ConfigurationService,
+    UserService,
+    PasswordConfirmationResponseService,
+  ],
   useFactory: (
     configurationService: ConfigurationService,
     userService: UserService,
+    passwordConfirmationResponseService: PasswordConfirmationResponseService,
   ) => ({
     route: {
       login: LOGIN_ROUTE,
-      passwordConfirmation: PASSWORD_CONFIRMATION_ROUTE,
       tokenRefresh: {
         accessToken: ACCESS_TOKEN_REFRESH_ROUTE,
         refreshToken: REFRESH_TOKEN_REFRESH_ROUTE,
@@ -69,7 +68,7 @@ AuthenticationLibraryModule.forRootAsync({
 
     middleware: {
       requiresAccessToken: {
-        forRoutes: ['*'],
+        forRoutes: [{ path: '*', method: RequestMethod.ALL }],
         except: [
           { path: HEALTHCHECK_ROUTE, method: RequestMethod.GET },
 
@@ -92,11 +91,6 @@ AuthenticationLibraryModule.forRootAsync({
     },
 
     cookie: {
-      passwordConfirmation: {
-        name: PASSWORD_CONFIRMATION_COOKIE_NAME,
-        expiresInSeconds: 10 * 60, // 10 minutes
-      },
-
       accessToken: {
         name: ACCESS_TOKEN_COOKIE_NAME,
         expiresInSeconds: 15 * 60, // 15 minutes
@@ -109,30 +103,23 @@ AuthenticationLibraryModule.forRootAsync({
     },
 
     callback: {
-      retrieveUser: async (email: string) => {
-        let user: WithId<User> | null = null;
+      user: {
+        retrieve: async (email: string) => {
+          let user: WithId<User> | null = null;
 
-        try {
-          user = await userService.findUserByEmail(email);
-        } catch (error) {
-          if (!(error instanceof NotFoundException)) {
-            throw error;
+          try {
+            user = await userService.findByEmail(email);
+          } catch (error) {
+            if (!(error instanceof NotFoundException)) {
+              throw error;
+            }
           }
-        }
 
-        return user;
-      },
+          return user;
+        },
 
-      validatePassword: async (user: WithId<User>, password: string) =>
-        await verify(user.password, password),
-
-      passwordConfirmation: {
-        createCookiePayload: async (user: WithId<User>) =>
-          await hash(user.password, { type: argon2id }),
-        validateCookiePayload: async (
-          user: WithId<User>,
-          cookiePayload: string,
-        ) => await verify(cookiePayload, user.password),
+        validatePassword: async (user: WithId<User>, password: string) =>
+          await verify(user.password, password),
       },
 
       accessToken: {
@@ -151,7 +138,7 @@ AuthenticationLibraryModule.forRootAsync({
              * to be able to catch any error that occurs in
              * `UserService::findUserById`.
              */
-            return await userService.findUserById(userId);
+            return await userService.findById(userId);
           } catch (error) {
             if (error instanceof NotFoundException) {
               return null;
@@ -178,7 +165,7 @@ AuthenticationLibraryModule.forRootAsync({
              * to be able to catch any error that occurs in
              * `UserService::findUserById`.
              */
-            return await userService.findUserById(userId);
+            return await userService.findById(userId);
           } catch (error) {
             if (error instanceof NotFoundException) {
               return null;
@@ -186,6 +173,38 @@ AuthenticationLibraryModule.forRootAsync({
 
             throw error;
           }
+        },
+      },
+    },
+
+    hook: {
+      post: {
+        login: async (
+          _request: Request,
+          response: Response,
+          authenticatedUser: WithId<User>,
+        ) => {
+          if (!authenticatedUser) {
+            throw new UnauthorizedException(
+              'Could not retrieve the authenticated user from the request.',
+            );
+          }
+
+          await passwordConfirmationResponseService.setPasswordConfirmationCookieForUserInResponse(
+            authenticatedUser,
+            response,
+          );
+        },
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        logout: (
+          _request: Request,
+          response: Response,
+          _authenticatedUser: WithId<User>,
+        ) => {
+          passwordConfirmationResponseService.clearPasswordConfirmationCookie(
+            response,
+          );
         },
       },
     },

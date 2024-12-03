@@ -6,19 +6,24 @@ import {
   HttpStatus,
   Inject,
   Post,
+  Request,
   Response,
   UnauthorizedException,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { Response as ExpressResponse } from 'express';
+import {
+  Request as ExpressRequest,
+  Response as ExpressResponse,
+} from 'express';
 
 import { AUTHENTICATION_MODULE_OPTIONS_TOKEN } from '../authentication.module-definition';
 import { AuthenticationModuleOptions } from '../authentication.module-options';
+import { AuthenticatedUserDecoratorFactory } from '../decorator/authenticated-user.decorator-factory';
 import { LoginDto } from '../dto/login.dto';
-import { PasswordValidationService } from '../service/password-validation.service';
+import { HookService } from '../service/hook.service';
 import { ResponseService } from '../service/response.service';
-import { UserRetrievalService } from '../service/user-retrieval.service';
+import { UserCallbackService } from '../service/user-callback.service';
 
 @Controller()
 export class LoginController {
@@ -26,9 +31,9 @@ export class LoginController {
     @Inject(AUTHENTICATION_MODULE_OPTIONS_TOKEN)
     authenticationModuleOptions: AuthenticationModuleOptions,
 
-    private readonly userRetrievalService: UserRetrievalService,
-    private readonly passwordValidationService: PasswordValidationService,
+    private readonly userCallbackService: UserCallbackService,
     private readonly responseService: ResponseService,
+    private readonly hookService: HookService,
   ) {
     /**
      * Setup 'Dynamic' routing.
@@ -56,6 +61,20 @@ export class LoginController {
         LoginController.prototype.logout.name,
       )!,
     );
+
+    /**
+     * Setup decorator that will retrieve the authenticated user from the
+     * request.
+     */
+    const AuthenticatedUser = AuthenticatedUserDecoratorFactory(
+      authenticationModuleOptions.requestPropertyHoldingAuthenticatedUser,
+    );
+
+    /**
+     * Inject the authenticated user into the third argument of the controller's
+     * method.
+     */
+    AuthenticatedUser()(this, LoginController.prototype.logout.name, 2);
   }
 
   /**
@@ -64,21 +83,21 @@ export class LoginController {
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.NO_CONTENT)
   async login(
+    @Request() request: ExpressRequest,
     @Body() { username, password }: LoginDto,
     @Response({ passthrough: true }) response: ExpressResponse,
   ) {
     const authenticatedUser =
-      await this.userRetrievalService.retrieveUser(username);
+      await this.userCallbackService.retrieveUser(username);
 
     if (authenticatedUser === null) {
       throw new UnauthorizedException('Invalid credentials.');
     }
 
-    const passwordIsValid =
-      await this.passwordValidationService.validatePassword(
-        authenticatedUser,
-        password,
-      );
+    const passwordIsValid = await this.userCallbackService.validatePassword(
+      authenticatedUser,
+      password,
+    );
 
     if (!passwordIsValid) {
       throw new UnauthorizedException('Invalid credentials.');
@@ -93,20 +112,23 @@ export class LoginController {
         authenticatedUser,
         response,
       ),
-      this.responseService.setPasswordConfirmationCookieForUserInResponse(
-        authenticatedUser,
-        response,
-      ),
     ]);
+
+    await this.hookService.postLogin(request, response, authenticatedUser);
   }
 
   /**
    * Logout
    */
   @HttpCode(HttpStatus.NO_CONTENT)
-  logout(@Response({ passthrough: true }) response: ExpressResponse) {
+  async logout(
+    @Request() request: ExpressRequest,
+    @Response({ passthrough: true }) response: ExpressResponse,
+    authenticatedUser: unknown,
+  ) {
     this.responseService.clearAccessTokenCookie(response);
     this.responseService.clearRefreshTokenCookie(response);
-    this.responseService.clearPasswordConfirmationCookie(response);
+
+    await this.hookService.postLogout(request, response, authenticatedUser);
   }
 }

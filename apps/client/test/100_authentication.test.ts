@@ -2,19 +2,19 @@ import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Db, MongoClient } from 'mongodb';
 import request, { Response } from 'supertest';
 
-import { getAuthenticationTokens } from '@library/authentication/../test/helper';
+import { getAuthenticationTokens } from '@library/authentication/../test/helper/setup';
 
 import {
   ACCESS_TOKEN_COOKIE_NAME,
   LOGIN_ROUTE,
-  PASSWORD_CONFIRMATION_COOKIE_NAME,
   REFRESH_TOKEN_COOKIE_NAME,
 } from '../src/_authentication/constant';
+import { PASSWORD_CONFIRMATION_COOKIE_NAME } from '../src/_password-confirmation/constant';
 import {
-  createUser,
   setupTestApplication,
   teardownTestApplication,
-} from './helper';
+} from './helper/application';
+import { createUser } from './helper/user';
 
 describe('Authentication (e2e)', () => {
   const userCredentials = {
@@ -73,7 +73,7 @@ describe('Authentication (e2e)', () => {
           ),
         ).not.toBe(-1);
 
-        // password-confirmation cookie
+        // password-confirmation token
         expect(
           cookies.findIndex((cookie) =>
             cookie.startsWith(PASSWORD_CONFIRMATION_COOKIE_NAME),
@@ -149,7 +149,7 @@ describe('Authentication (e2e)', () => {
           { testName: 'access-token', cookieName: ACCESS_TOKEN_COOKIE_NAME },
           { testName: 'refresh-token', cookieName: REFRESH_TOKEN_COOKIE_NAME },
           {
-            testName: 'password-confirmation',
+            testName: 'password-confirmation token',
             cookieName: PASSWORD_CONFIRMATION_COOKIE_NAME,
           },
         ])('$testName', ({ cookieName }) => {

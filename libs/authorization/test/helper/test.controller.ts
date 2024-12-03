@@ -31,7 +31,7 @@ export class TestController {
   }
 
   /**
-   * This route should not have the authentication middleware applied to it.
+   * This route does not (AND should not) have the authentication middleware applied to it.
    */
   @Delete()
   @RequiresPermission('test:delete:own')

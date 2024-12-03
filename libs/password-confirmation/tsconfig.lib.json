@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.json",
+  "include": ["src/**/*"],
+  "exclude": ["test", "**/*.spec.ts", "**/*.test.ts"],
+  "compilerOptions": {
+    "declaration": true,
+    "outDir": "../../dist/libs/password-confirmation"
+  }
+}

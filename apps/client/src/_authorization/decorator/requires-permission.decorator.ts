@@ -7,7 +7,7 @@ import {
 } from '@library/authorization';
 
 import { PERMISSION_STRING_SEPARATOR } from '../constant';
-import { createPermissionsMap } from '../permission.map';
+import { createPermissionsMap } from '../permission-map';
 
 export function RequiresPermission(
   ...permissions: (

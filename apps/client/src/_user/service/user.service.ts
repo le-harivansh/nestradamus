@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { argon2id, hash } from 'argon2';
-import { ObjectId, WithId } from 'mongodb';
+import { ObjectId } from 'mongodb';
 
 import { UserRepository } from '../repository/user.repository';
 import { User } from '../schema/user.schema';
@@ -35,34 +35,16 @@ export class UserService {
     return fetchedUser;
   }
 
-  async create({
-    password,
-    ...otherUserData
-  }: User): Promise<Omit<WithId<User>, 'password'>> {
+  async create({ password, ...otherUserData }: User) {
     const hashedPassword = await UserService.hashPassword(password);
 
-    const { acknowledged, insertedId: newUserId } =
-      await this.userRepository.create({
-        ...otherUserData,
-        password: hashedPassword,
-      });
-
-    if (!acknowledged) {
-      throw new InternalServerErrorException(
-        `Could not create user: ${JSON.stringify({ ...otherUserData, password, hashedPassword })}`,
-      );
-    }
-
-    return {
-      _id: newUserId,
+    return this.userRepository.create({
       ...otherUserData,
-    };
+      password: hashedPassword,
+    });
   }
 
-  async update(
-    id: ObjectId,
-    { password, ...otherUserData }: Partial<User>,
-  ): Promise<Omit<WithId<User>, 'password'>> {
+  async update(id: ObjectId, { password, ...otherUserData }: Partial<User>) {
     const hashedPassword = password
       ? await UserService.hashPassword(password)
       : null;
@@ -78,10 +60,11 @@ export class UserService {
       );
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _, ...updatedUserData } = updatedUser;
+    return updatedUser;
+  }
 
-    return updatedUserData;
+  async delete(id: ObjectId) {
+    await this.userRepository.delete(id);
   }
 
   private static hashPassword(password: string) {

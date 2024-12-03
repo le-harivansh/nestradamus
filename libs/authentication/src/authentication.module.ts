@@ -16,33 +16,26 @@ import {
   authenticationModuleOptionsValidationSchema,
 } from './authentication.module-options';
 import { LoginController } from './controller/login.controller';
-import { PasswordConfirmationController } from './controller/password-confirmation.controller';
 import { TokenRefreshController } from './controller/token-refresh.controller';
 import { RequiresAccessTokenMiddleware } from './middleware/requires-access-token.middleware';
 import { RequiresRefreshTokenMiddleware } from './middleware/requires-refresh-token.middleware';
 import { AccessTokenCallbackService } from './service/access-token-callback.service';
-import { PasswordConfirmationCallbackService } from './service/password-confirmation-callback.service';
-import { PasswordValidationService } from './service/password-validation.service';
+import { HookService } from './service/hook.service';
 import { RefreshTokenCallbackService } from './service/refresh-token-callback.service';
 import { ResponseService } from './service/response.service';
 import { TokenService } from './service/token.service';
-import { UserRetrievalService } from './service/user-retrieval.service';
+import { UserCallbackService } from './service/user-callback.service';
 
 @Module({
   imports: [JwtModule.register({})],
-  controllers: [
-    LoginController,
-    PasswordConfirmationController,
-    TokenRefreshController,
-  ],
+  controllers: [LoginController, TokenRefreshController],
   providers: [
     TokenService,
-    UserRetrievalService,
-    PasswordValidationService,
+    UserCallbackService,
     AccessTokenCallbackService,
     RefreshTokenCallbackService,
-    PasswordConfirmationCallbackService,
     ResponseService,
+    HookService,
   ],
 })
 export class AuthenticationModule

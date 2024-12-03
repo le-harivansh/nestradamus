@@ -7,8 +7,8 @@ import { LoginDto } from '@library/authentication/dto/login.dto';
 import {
   authenticatedUser,
   authenticationModuleConfiguration,
-} from './constant';
-import { getAuthenticationTokens, setupTestApplication } from './helper';
+} from './helper/constant';
+import { getAuthenticationTokens, setupTestApplication } from './helper/setup';
 
 describe(`${LoginController.name} (e2e)`, () => {
   let application: INestApplication;
@@ -49,16 +49,6 @@ describe(`${LoginController.name} (e2e)`, () => {
           cookies.findIndex((cookie) =>
             cookie.startsWith(
               authenticationModuleConfiguration.cookie.refreshToken.name,
-            ),
-          ),
-        ).not.toBe(-1);
-
-        // password-confirmation cookie
-        expect(
-          cookies.findIndex((cookie) =>
-            cookie.startsWith(
-              authenticationModuleConfiguration.cookie.passwordConfirmation
-                .name,
             ),
           ),
         ).not.toBe(-1);

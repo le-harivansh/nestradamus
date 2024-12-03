@@ -81,6 +81,15 @@
         "tsConfigPath": "libs/mail/tsconfig.lib.json"
       }
     },
+    "password-confirmation": {
+      "type": "library",
+      "root": "libs/password-confirmation",
+      "entryFile": "index",
+      "sourceRoot": "libs/password-confirmation/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/password-confirmation/tsconfig.lib.json"
+      }
+    },
     "password-reset": {
       "type": "library",
       "root": "libs/password-reset",

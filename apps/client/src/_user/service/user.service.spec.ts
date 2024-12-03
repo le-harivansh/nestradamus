@@ -6,7 +6,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { argon2id, hash } from 'argon2';
 import { ObjectId, WithId } from 'mongodb';
 
-import { fakeUserData } from '../../../test/helper';
+import { fakeUserData } from '../../../test/helper/user';
 import { UserRepository } from '../repository/user.repository';
 import { User } from '../schema/user.schema';
 import { UserService } from './user.service';
@@ -107,10 +107,11 @@ describe(UserService.name, () => {
     const newUserId = new ObjectId();
     const userData: User = fakeUserData();
 
-    beforeEach(() => {
+    beforeAll(() => {
       userRepository.create.mockResolvedValue({
-        acknowledged: true,
-        insertedId: newUserId,
+        _id: newUserId,
+        ...userData,
+        password: hashedPassword,
       });
     });
 
@@ -128,55 +129,52 @@ describe(UserService.name, () => {
       });
     });
 
-    it('returns the newly created user without its password', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password: _, ...otherUserData } = userData;
-
+    it('returns the newly created user', async () => {
       await expect(userService.create(userData)).resolves.toEqual({
         _id: newUserId,
-        ...otherUserData,
+        ...userData,
+        password: hashedPassword,
       });
-    });
-
-    it(`throws an '${InternalServerErrorException.name} if the 'acknowledged' property of the result is false`, async () => {
-      userRepository.create.mockResolvedValue({
-        acknowledged: false,
-        insertedId: undefined as unknown as ObjectId,
-      });
-
-      await expect(() => userService.create(userData)).rejects.toThrow(
-        InternalServerErrorException,
-      );
     });
   });
 
   describe(UserService.prototype.update.name, () => {
-    const userId = new ObjectId();
-
     const user: WithId<User> = {
-      _id: userId,
+      _id: new ObjectId(),
       ...fakeUserData(),
     };
+
     const userUpdates: Partial<User> = {
       firstName: 'Updated Firstname',
       email: 'updated-user@email.dev',
-      password: 'updated-password',
-    };
-    const updatedUser: WithId<User> = {
-      ...user,
-      ...userUpdates,
     };
 
-    beforeAll(() => {
-      userRepository.update.mockResolvedValue(updatedUser);
-    });
+    const updatedPassword = 'updated-password';
 
-    afterAll(() => {
+    afterEach(() => {
       jest.clearAllMocks();
     });
 
-    it(`calls '${UserRepository.name}::${UserRepository.prototype.update.name}' with the email and the hashed password`, async () => {
+    it(`calls '${UserRepository.name}::${UserRepository.prototype.update.name}' with the specified updates`, async () => {
+      userRepository.update.mockResolvedValueOnce({ ...user, ...userUpdates });
+
       await userService.update(user._id, userUpdates);
+
+      expect(userRepository.update).toHaveBeenCalledTimes(1);
+      expect(userRepository.update).toHaveBeenCalledWith(user._id, userUpdates);
+    });
+
+    it(`calls '${UserRepository.name}::${UserRepository.prototype.update.name}' with the specified updates & the hashed password (if any was provided)`, async () => {
+      userRepository.update.mockResolvedValueOnce({
+        ...user,
+        ...userUpdates,
+        password: hashedPassword,
+      });
+
+      await userService.update(user._id, {
+        ...userUpdates,
+        password: updatedPassword,
+      });
 
       expect(userRepository.update).toHaveBeenCalledTimes(1);
       expect(userRepository.update).toHaveBeenCalledWith(user._id, {
@@ -185,13 +183,19 @@ describe(UserService.name, () => {
       });
     });
 
-    it('returns the updated user without its password', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password: _, ...otherUpdatedUserData } = updatedUser;
+    it('returns the updated user', async () => {
+      userRepository.update.mockResolvedValueOnce({
+        ...user,
+        ...userUpdates,
+        password: hashedPassword,
+      });
 
-      await expect(userService.update(user._id, userUpdates)).resolves.toEqual(
-        otherUpdatedUserData,
-      );
+      await expect(
+        userService.update(user._id, {
+          ...userUpdates,
+          password: updatedPassword,
+        }),
+      ).resolves.toEqual({ ...user, ...userUpdates, password: hashedPassword });
     });
 
     it(`throws an '${InternalServerErrorException.name} if the returned user is 'null'`, async () => {
@@ -203,6 +207,21 @@ describe(UserService.name, () => {
     });
   });
 
+  describe(UserService.prototype.delete.name, () => {
+    const userId = new ObjectId();
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it(`calls '${UserRepository.name}::${UserRepository.prototype.delete.name}' with the specified id`, async () => {
+      await userService.delete(userId);
+
+      expect(userRepository.delete).toHaveBeenCalledTimes(1);
+      expect(userRepository.delete).toHaveBeenCalledWith(userId);
+    });
+  });
+
   describe(UserService['hashPassword'].name, () => {
     const password = 'password';
 
@@ -210,6 +229,10 @@ describe(UserService.name, () => {
 
     beforeAll(async () => {
       result = await UserService['hashPassword'](password);
+    });
+
+    afterAll(() => {
+      jest.clearAllMocks();
     });
 
     it(`calls '${hash.name}' to hash the passed in password`, () => {

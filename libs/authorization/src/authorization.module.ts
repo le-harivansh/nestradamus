@@ -1,7 +1,6 @@
-import { DynamicModule, Inject, Module } from '@nestjs/common';
+import { Inject, Module } from '@nestjs/common';
 
 import {
-  AUTHORIZATION_MODULE_ASYNC_OPTIONS_TYPE,
   AUTHORIZATION_MODULE_OPTIONS_TOKEN,
   AuthorizationConfigurableModuleClass,
 } from './authorization.module-definition';
@@ -10,10 +9,25 @@ import {
   authorizationModuleOptionsValidationSchema,
 } from './authorization.module-options';
 import { AUTHORIZATION_PERMISSIONS_CONTAINER } from './constant';
-import { PermissionContainer } from './container/permission.container';
-import { UserService } from './service/user.service';
+import { PermissionContainer } from './helper/permission-container';
+import { UserCallbackService } from './service/user-callback.service';
 
-@Module({})
+@Module({
+  providers: [
+    {
+      provide: AUTHORIZATION_PERMISSIONS_CONTAINER,
+      inject: [AUTHORIZATION_MODULE_OPTIONS_TOKEN],
+      useFactory: ({
+        permissionsMap,
+        permissionStringSeparator,
+      }: AuthorizationModuleOptions) =>
+        new PermissionContainer(permissionsMap, permissionStringSeparator),
+    },
+
+    UserCallbackService,
+  ],
+  exports: [AUTHORIZATION_PERMISSIONS_CONTAINER, UserCallbackService],
+})
 export class AuthorizationModule extends AuthorizationConfigurableModuleClass {
   constructor(
     @Inject(AUTHORIZATION_MODULE_OPTIONS_TOKEN)
@@ -25,37 +39,5 @@ export class AuthorizationModule extends AuthorizationConfigurableModuleClass {
     authorizationModuleOptionsValidationSchema.parse(
       authorizationModuleOptions,
     );
-  }
-
-  static forRootAsync(
-    options: typeof AUTHORIZATION_MODULE_ASYNC_OPTIONS_TYPE,
-  ): DynamicModule {
-    const {
-      providers = [],
-      exports = [],
-      ...dynamicModuleOptions
-    } = super.forRootAsync(options);
-
-    return {
-      ...dynamicModuleOptions,
-
-      providers: [
-        ...providers,
-
-        UserService,
-
-        {
-          provide: AUTHORIZATION_PERMISSIONS_CONTAINER,
-          inject: [AUTHORIZATION_MODULE_OPTIONS_TOKEN],
-          useFactory: ({
-            permissionsMap,
-            permissionStringSeparator,
-          }: AuthorizationModuleOptions) =>
-            new PermissionContainer(permissionsMap, permissionStringSeparator),
-        },
-      ],
-
-      exports: [...exports, AUTHORIZATION_PERMISSIONS_CONTAINER, UserService],
-    };
   }
 }

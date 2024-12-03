@@ -3,9 +3,8 @@ import { ConfigurableModuleBuilder } from '@nestjs/common';
 import { S3ModuleOptions } from './s3.module-options';
 
 export const {
-  ConfigurableModuleClass: S3ConfigurableModuleClass,
   MODULE_OPTIONS_TOKEN: S3_MODULE_OPTIONS_TOKEN,
-  ASYNC_OPTIONS_TYPE: S3_MODULE_ASYNC_OPTIONS_TYPE,
+  ConfigurableModuleClass: S3ConfigurableModuleClass,
 } = new ConfigurableModuleBuilder<S3ModuleOptions>({
   moduleName: 'S3',
 })

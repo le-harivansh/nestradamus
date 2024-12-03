@@ -4,11 +4,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Request } from 'express';
 
 import { AUTHORIZATION_PERMISSIONS_CONTAINER } from '../constant';
-import { PermissionContainer } from '../container/permission.container';
-import { UserService } from '../service/user.service';
+import { PermissionContainer } from '../helper/permission-container';
+import { UserCallbackService } from '../service/user-callback.service';
 import { AuthorizationGuard } from './authorization.guard';
 
-jest.mock('../service/user.service');
+jest.mock('../service/user-callback.service');
 
 describe(AuthorizationGuard.name, () => {
   const request = {
@@ -44,7 +44,7 @@ describe(AuthorizationGuard.name, () => {
     'buildCallbackParameterObjectFrom',
   );
 
-  let userService: jest.Mocked<UserService>;
+  let userCallbackService: jest.Mocked<UserCallbackService>;
 
   let authorizationGuard: AuthorizationGuard;
 
@@ -62,13 +62,13 @@ describe(AuthorizationGuard.name, () => {
             permissionStringSeparator,
           ),
         },
-        UserService,
+        UserCallbackService,
 
         AuthorizationGuard,
       ],
     }).compile();
 
-    userService = module.get(UserService);
+    userCallbackService = module.get(UserCallbackService);
     authorizationGuard = module.get(AuthorizationGuard);
   });
 
@@ -89,11 +89,11 @@ describe(AuthorizationGuard.name, () => {
       ).resolves.toBe(true);
     });
 
-    it(`calls '${UserService.name}::${UserService.prototype.retrieveFrom.name}' with the current request`, async () => {
+    it(`calls '${UserCallbackService.name}::${UserCallbackService.prototype.retrieveFrom.name}' with the current request`, async () => {
       reflector.getAllAndMerge.mockReturnValueOnce([
         `user${permissionStringSeparator}create`,
       ]); // sets the required permission(s)
-      userService.retrieveFrom.mockImplementationOnce(() => {
+      userCallbackService.retrieveFrom.mockImplementationOnce(() => {
         throw Error('Could not retrieve user.');
       });
 
@@ -103,23 +103,23 @@ describe(AuthorizationGuard.name, () => {
         // do nothing...
       }
 
-      expect(userService.retrieveFrom).toHaveBeenCalledTimes(1);
-      expect(userService.retrieveFrom).toHaveBeenCalledWith(request);
+      expect(userCallbackService.retrieveFrom).toHaveBeenCalledTimes(1);
+      expect(userCallbackService.retrieveFrom).toHaveBeenCalledWith(request);
     });
 
-    it(`calls '${UserService.name}::${UserService.prototype.getPermissionsFor.name}' with the resolved user`, async () => {
+    it(`calls '${UserCallbackService.name}::${UserCallbackService.prototype.getPermissionsFor.name}' with the resolved user`, async () => {
       const user = Symbol('User');
 
       reflector.getAllAndMerge.mockReturnValueOnce([
         `user${permissionStringSeparator}create`,
       ]); // sets the required permission(s)
-      userService.retrieveFrom.mockResolvedValueOnce(user);
-      userService.getPermissionsFor.mockResolvedValueOnce([]);
+      userCallbackService.retrieveFrom.mockResolvedValueOnce(user);
+      userCallbackService.getPermissionsFor.mockResolvedValueOnce([]);
 
       await authorizationGuard.canActivate(executionContext);
 
-      expect(userService.getPermissionsFor).toHaveBeenCalledTimes(1);
-      expect(userService.getPermissionsFor).toHaveBeenCalledWith(user);
+      expect(userCallbackService.getPermissionsFor).toHaveBeenCalledTimes(1);
+      expect(userCallbackService.getPermissionsFor).toHaveBeenCalledWith(user);
     });
 
     it('returns `false` if the specified permission is not found on the authenticated user', async () => {
@@ -128,8 +128,8 @@ describe(AuthorizationGuard.name, () => {
       reflector.getAllAndMerge.mockReturnValueOnce([
         `user${permissionStringSeparator}create`,
       ]); // sets the required permission(s)
-      userService.retrieveFrom.mockResolvedValueOnce(user);
-      userService.getPermissionsFor.mockResolvedValueOnce([]);
+      userCallbackService.retrieveFrom.mockResolvedValueOnce(user);
+      userCallbackService.getPermissionsFor.mockResolvedValueOnce([]);
 
       await expect(
         authorizationGuard.canActivate(executionContext),
@@ -148,8 +148,10 @@ describe(AuthorizationGuard.name, () => {
         resolvedCallbackParameters,
       );
       reflector.getAllAndMerge.mockReturnValueOnce(requiredPermissions); // sets the required permission(s)
-      userService.retrieveFrom.mockResolvedValueOnce(user);
-      userService.getPermissionsFor.mockResolvedValueOnce(userPermissions);
+      userCallbackService.retrieveFrom.mockResolvedValueOnce(user);
+      userCallbackService.getPermissionsFor.mockResolvedValueOnce(
+        userPermissions,
+      );
 
       await authorizationGuard.canActivate(executionContext);
 
@@ -173,7 +175,9 @@ describe(AuthorizationGuard.name, () => {
       ];
 
       reflector.getAllAndMerge.mockReturnValueOnce(requiredPermissions); // sets the required permission(s)
-      userService.getPermissionsFor.mockResolvedValueOnce(userPermissions);
+      userCallbackService.getPermissionsFor.mockResolvedValueOnce(
+        userPermissions,
+      );
 
       permissionsMap.user.update.mockReturnValueOnce(false);
 
@@ -195,7 +199,9 @@ describe(AuthorizationGuard.name, () => {
       ];
 
       reflector.getAllAndMerge.mockReturnValueOnce(requiredPermissions); // sets the required permission(s)
-      userService.getPermissionsFor.mockResolvedValueOnce(userPermissions);
+      userCallbackService.getPermissionsFor.mockResolvedValueOnce(
+        userPermissions,
+      );
 
       await expect(
         authorizationGuard.canActivate(executionContext),

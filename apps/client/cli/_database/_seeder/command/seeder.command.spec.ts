@@ -67,7 +67,7 @@ describe(SeederCommand.name, () => {
       const COUNT = 5;
 
       userService.create.mockResolvedValue(
-        resolvedUser as unknown as Omit<WithId<User>, 'password'>,
+        resolvedUser as unknown as WithId<User>,
       );
 
       const users = await databaseSeederCommand['seedUsers'](COUNT);

@@ -36,6 +36,8 @@
       "@library/database/*": ["libs/database/src/*"],
       "@library/mail": ["libs/mail/src"],
       "@library/mail/*": ["libs/mail/src/*"],
+      "@library/password-confirmation": ["libs/password-confirmation/src"],
+      "@library/password-confirmation/*": ["libs/password-confirmation/src/*"],
       "@library/password-reset": ["libs/password-reset/src"],
       "@library/password-reset/*": ["libs/password-reset/src/*"],
       "@library/s3": ["libs/s3/src"],

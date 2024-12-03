@@ -1,8 +1,15 @@
-import { Module, NotFoundException, RequestMethod } from '@nestjs/common';
-import { argon2id, hash, verify } from 'argon2';
+import {
+  Module,
+  NotFoundException,
+  RequestMethod,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { verify } from 'argon2';
+import { Request, Response } from 'express';
 import { ObjectId, WithId } from 'mongodb';
 
 import { AuthenticationModule as AuthenticationLibraryModule } from '@library/authentication';
+import { ResponseService as PasswordConfirmationResponseService } from '@library/password-confirmation';
 
 import { ConfigurationModule } from '../_configuration/configuration.module';
 import { ConfigurationService } from '../_configuration/service/configuration.service';
@@ -18,8 +25,6 @@ import {
   ACCESS_TOKEN_COOKIE_NAME,
   ACCESS_TOKEN_REFRESH_ROUTE,
   LOGIN_ROUTE,
-  PASSWORD_CONFIRMATION_COOKIE_NAME,
-  PASSWORD_CONFIRMATION_ROUTE,
   REFRESH_TOKEN_COOKIE_NAME,
   REFRESH_TOKEN_REFRESH_ROUTE,
   REQUEST_PROPERTY_HOLDING_AUTHENTICATED_USER,
@@ -29,14 +34,18 @@ import {
   imports: [
     AuthenticationLibraryModule.forRootAsync({
       imports: [ConfigurationModule, UserModule],
-      inject: [ConfigurationService, UserService],
+      inject: [
+        ConfigurationService,
+        UserService,
+        PasswordConfirmationResponseService,
+      ],
       useFactory: (
         configurationService: ConfigurationService,
         userService: UserService,
+        passwordConfirmationResponseService: PasswordConfirmationResponseService,
       ) => ({
         route: {
           login: LOGIN_ROUTE,
-          passwordConfirmation: PASSWORD_CONFIRMATION_ROUTE,
           tokenRefresh: {
             accessToken: ACCESS_TOKEN_REFRESH_ROUTE,
             refreshToken: REFRESH_TOKEN_REFRESH_ROUTE,
@@ -45,7 +54,7 @@ import {
 
         middleware: {
           requiresAccessToken: {
-            forRoutes: ['*'],
+            forRoutes: [{ path: '*', method: RequestMethod.ALL }],
             except: [
               { path: HEALTHCHECK_ROUTE, method: RequestMethod.GET },
 
@@ -68,11 +77,6 @@ import {
         },
 
         cookie: {
-          passwordConfirmation: {
-            name: PASSWORD_CONFIRMATION_COOKIE_NAME,
-            expiresInSeconds: 10 * 60, // 10 minutes
-          },
-
           accessToken: {
             name: ACCESS_TOKEN_COOKIE_NAME,
             expiresInSeconds: 15 * 60, // 15 minutes
@@ -85,30 +89,23 @@ import {
         },
 
         callback: {
-          retrieveUser: async (email: string) => {
-            let user: WithId<User> | null = null;
+          user: {
+            retrieve: async (email: string) => {
+              let user: WithId<User> | null = null;
 
-            try {
-              user = await userService.findByEmail(email);
-            } catch (error) {
-              if (!(error instanceof NotFoundException)) {
-                throw error;
+              try {
+                user = await userService.findByEmail(email);
+              } catch (error) {
+                if (!(error instanceof NotFoundException)) {
+                  throw error;
+                }
               }
-            }
 
-            return user;
-          },
+              return user;
+            },
 
-          validatePassword: async (user: WithId<User>, password: string) =>
-            await verify(user.password, password),
-
-          passwordConfirmation: {
-            createCookiePayload: async (user: WithId<User>) =>
-              await hash(user.password, { type: argon2id }),
-            validateCookiePayload: async (
-              user: WithId<User>,
-              cookiePayload: string,
-            ) => await verify(cookiePayload, user.password),
+            validatePassword: async (user: WithId<User>, password: string) =>
+              await verify(user.password, password),
           },
 
           accessToken: {
@@ -166,6 +163,38 @@ import {
 
                 throw error;
               }
+            },
+          },
+        },
+
+        hook: {
+          post: {
+            login: async (
+              _request: Request,
+              response: Response,
+              authenticatedUser: WithId<User>,
+            ) => {
+              if (!authenticatedUser) {
+                throw new UnauthorizedException(
+                  'Could not retrieve the authenticated user from the request.',
+                );
+              }
+
+              await passwordConfirmationResponseService.setPasswordConfirmationCookieForUserInResponse(
+                authenticatedUser,
+                response,
+              );
+            },
+
+            logout: (
+              _request: Request,
+              response: Response,
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              _authenticatedUser: WithId<User>,
+            ) => {
+              passwordConfirmationResponseService.clearPasswordConfirmationCookie(
+                response,
+              );
             },
           },
         },

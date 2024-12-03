@@ -3,7 +3,6 @@ import { Response } from 'express';
 
 import { AUTHENTICATION_MODULE_OPTIONS_TOKEN } from '../authentication.module-definition';
 import { AuthenticationModuleOptions } from '../authentication.module-options';
-import { PasswordConfirmationCallbackService } from './password-confirmation-callback.service';
 import { TokenService } from './token.service';
 
 @Injectable()
@@ -12,7 +11,6 @@ export class ResponseService {
     @Inject(AUTHENTICATION_MODULE_OPTIONS_TOKEN)
     private readonly authenticationModuleOptions: AuthenticationModuleOptions,
 
-    private readonly passwordConfirmationCallbackService: PasswordConfirmationCallbackService,
     private readonly tokenService: TokenService,
   ) {}
 
@@ -52,25 +50,6 @@ export class ResponseService {
     );
   }
 
-  async setPasswordConfirmationCookieForUserInResponse(
-    user: unknown,
-    response: Response,
-  ): Promise<void> {
-    const payload =
-      await this.passwordConfirmationCallbackService.createCookiePayload(user);
-
-    response.cookie(
-      this.authenticationModuleOptions.cookie.passwordConfirmation.name,
-      payload,
-      {
-        ...TokenService.COOKIE_OPTIONS,
-        maxAge:
-          this.authenticationModuleOptions.cookie.passwordConfirmation
-            .expiresInSeconds * 1000,
-      },
-    );
-  }
-
   clearAccessTokenCookie(response: Response): void {
     response.clearCookie(
       this.authenticationModuleOptions.cookie.accessToken.name,
@@ -81,13 +60,6 @@ export class ResponseService {
   clearRefreshTokenCookie(response: Response): void {
     response.clearCookie(
       this.authenticationModuleOptions.cookie.refreshToken.name,
-      TokenService.COOKIE_OPTIONS,
-    );
-  }
-
-  clearPasswordConfirmationCookie(response: Response): void {
-    response.clearCookie(
-      this.authenticationModuleOptions.cookie.passwordConfirmation.name,
       TokenService.COOKIE_OPTIONS,
     );
   }

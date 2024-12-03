@@ -1,23 +1,10 @@
 import { RequestMethod } from '@nestjs/common';
 import { z } from 'zod';
 
-/**
- * This object provides the schema for validating a "route" which is used when
- * configuring the authentication middleware.
- */
-const routeValidationSchema = z.array(
-  z.union([
-    /**
-     * Route can be a string.
-     */
-    z.string(),
-
-    /**
-     * Route can be a `RouteInfo`.
-     */
-    z.object({ path: z.string(), method: z.nativeEnum(RequestMethod) }),
-  ]),
-);
+const routeInfoValidationSchema = z.object({
+  path: z.string(),
+  method: z.nativeEnum(RequestMethod),
+});
 
 export const authenticationModuleOptionsValidationSchema = z.object({
   /**
@@ -33,14 +20,6 @@ export const authenticationModuleOptionsValidationSchema = z.object({
      * A DELETE request can also be used on this route to "logout" / "de-authenticate" the user.
      */
     login: z.string().min(1),
-
-    /**
-     * This is the route where the user password in the form of a POST
-     * request with a body having the shape:
-     * `{ "password": "***" }`
-     * is sent to be validated against the stored user's password.
-     */
-    passwordConfirmation: z.string().min(1),
 
     /**
      * This configuration block defines the "token-refresh" routes of the
@@ -79,7 +58,7 @@ export const authenticationModuleOptionsValidationSchema = z.object({
        *
        * Note: The "refresh refresh-token" route is automatically included.
        */
-      forRoutes: routeValidationSchema.nonempty(),
+      forRoutes: z.array(routeInfoValidationSchema),
 
       /**
        * The routes for which the "access-token" middleware should not be
@@ -88,7 +67,7 @@ export const authenticationModuleOptionsValidationSchema = z.object({
        * Note: The "login" & "refresh access-token" routes are automatically
        * excluded.
        */
-      except: routeValidationSchema,
+      except: z.array(routeInfoValidationSchema),
     }),
   }),
 
@@ -117,22 +96,6 @@ export const authenticationModuleOptionsValidationSchema = z.object({
    * This block defines the cookie-specific configuration options.
    */
   cookie: z.object({
-    /**
-     * This bolck defines the "password-confirmation" specific configuration.
-     */
-    passwordConfirmation: z.object({
-      /**
-       * The name of the "password-confirmation" cookie.
-       */
-      name: z.string().min(4),
-
-      /**
-       * The duration (in seconds) for which the "password-confirmation" cookie
-       * is valid.
-       */
-      expiresInSeconds: z.number().safe().positive(),
-    }),
-
     /**
      * This block defines the "access-token" specific configuration.
      */
@@ -173,70 +136,38 @@ export const authenticationModuleOptionsValidationSchema = z.object({
    */
   callback: z.object({
     /**
-     * The callback that is used to retrieve a user according to its "username".
-     *
-     * It accepts the username, and returs the resolved user instance if found,
-     * and `null` otherwise.
-     *
-     * e.g.:
-     * ```
-     * async (username: string) => { return await userService.findByUsername(username); }
-     * ```
+     * This block defines the user specific callbacks.
      */
-    retrieveUser: z
-      .function()
-      .args(z.string())
-      .returns(z.promise(z.unknown().nullable())),
-
-    /**
-     * The callback that is used to verify whether the provided password is
-     * valid.
-     *
-     * It accepts the resolved user instance, and the passed-in "password", and
-     * returns true if the validation is successful, and false otherwise.
-     *
-     * e.g.:
-     * ```
-     * async (user: User, password: string) => { return await validate(user.email, password); }
-     * ```
-     */
-    validatePassword: z
-      .function()
-      .args(z.any(), z.string())
-      .returns(z.promise(z.boolean())),
-
-    /**
-     * This block defines the "password-confirmation" specific callbacks.
-     */
-    passwordConfirmation: z.object({
+    user: z.object({
       /**
-       * The callback used to create the cookie-payload.
+       * The callback that is used to retrieve a user according to its "username".
        *
-       * It accepts a "user" instance, and returns the cookie string.
+       * It accepts the username, and returs the resolved user instance if found,
+       * and `null` otherwise.
        *
        * e.g.:
        * ```
-       * async (user: User) => { return await hash(user.password); }
+       * async (username: string) => { return await userService.findByUsername(username); }
        * ```
        */
-      createCookiePayload: z
+      retrieve: z
         .function()
-        .args(z.any())
-        .returns(z.promise(z.string())),
+        .args(z.string())
+        .returns(z.promise(z.unknown().nullable())),
 
       /**
-       * The callback used to validate the password-confirmation cookie string.
+       * The callback that is used to verify whether the provided password is
+       * valid.
        *
-       * It accepts a "user" instance and the previously created
-       * password-confirmation cookie string, and returns `true` if it is
-       * valid, and `false` otherwise.
+       * It accepts the resolved user instance, and the passed-in "password", and
+       * returns true if the validation is successful, and false otherwise.
        *
        * e.g.:
        * ```
-       * async (user: User, cookiePayload: string) => { return await verify(cookiePayload, user.password); }
+       * async (user: User, password: string) => { return await validate(user.email, password); }
        * ```
        */
-      validateCookiePayload: z
+      validatePassword: z
         .function()
         .args(z.any(), z.string())
         .returns(z.promise(z.boolean())),
@@ -348,6 +279,52 @@ export const authenticationModuleOptionsValidationSchema = z.object({
         .function()
         .args(z.record(z.unknown()))
         .returns(z.promise(z.unknown())),
+    }),
+  }),
+
+  /**
+   * This configuration block defines the various hooks available within this
+   * module.
+   *
+   * A hook is basically a function that is called before/during/after a
+   * specific action has occured.
+   */
+  hook: z.object({
+    /**
+     * This block is for hooks that happen after a specific action.
+     */
+    post: z.object({
+      /**
+       * The hook that is called after a successful login.
+       *
+       * It accepts the current request, response, and authenticated user;
+       * and does not return any value.
+       *
+       * e.g.:
+       * ```
+       * async (request: Request, response: Response, authenticatedUser: WithId<User>) => { ... }
+       * ```
+       */
+      login: z
+        .function()
+        .args(z.any(), z.any(), z.any())
+        .returns(z.union([z.void(), z.promise(z.void())])),
+
+      /**
+       * The hook that is called after a successful logout.
+       *
+       * It accepts the current request, response, and authenticated user;
+       * and does not return any value.
+       *
+       * e.g.:
+       * ```
+       * async (request: Request, response: Response, authenticatedUser: WithId<User>) => { ... }
+       * ```
+       */
+      logout: z
+        .function()
+        .args(z.any(), z.any(), z.any())
+        .returns(z.union([z.void(), z.promise(z.void())])),
     }),
   }),
 });

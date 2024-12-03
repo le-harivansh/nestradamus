@@ -26,6 +26,10 @@ const configuration: Config = {
     // Mail Library
     '^@library/mail(|/.*)$': '<rootDir>/libs/mail/src/$1',
 
+    // Password-Confirmation Library
+    '^@library/password-confirmation(|/.*)$':
+      '<rootDir>/libs/password-confirmation/src/$1',
+
     // Password-Reset Library
     '^@library/password-reset(|/.*)$': '<rootDir>/libs/password-reset/src/$1',
 

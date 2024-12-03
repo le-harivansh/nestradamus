@@ -12,8 +12,8 @@ import {
   AUTHORIZATION_PERMISSIONS_CONTAINER,
   REQUIRED_PERMISSIONS,
 } from '../constant';
-import { PermissionContainer } from '../container/permission.container';
-import { UserService } from '../service/user.service';
+import { PermissionContainer } from '../helper/permission-container';
+import { UserCallbackService } from '../service/user-callback.service';
 import {
   Permission,
   PermissionAndRequestParameterPair,
@@ -27,7 +27,7 @@ export class AuthorizationGuard implements CanActivate {
     @Inject(AUTHORIZATION_PERMISSIONS_CONTAINER)
     private readonly permissionContainer: PermissionContainer,
 
-    private readonly userService: UserService,
+    private readonly userCallbackService: UserCallbackService,
   ) {}
 
   async canActivate(context: ExecutionContext) {
@@ -45,9 +45,10 @@ export class AuthorizationGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest<Request>();
 
-    const authenticatedUser = await this.userService.retrieveFrom(request);
+    const authenticatedUser =
+      await this.userCallbackService.retrieveFrom(request);
     const userPermissions =
-      await this.userService.getPermissionsFor(authenticatedUser);
+      await this.userCallbackService.getPermissionsFor(authenticatedUser);
 
     for (const requiredPermissionOrPermissionTuple of requiredPermissions) {
       const [requiredPermission, requestParameterMap = {}] =

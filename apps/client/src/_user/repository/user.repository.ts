@@ -1,5 +1,5 @@
-import { Inject } from '@nestjs/common';
-import { Collection, Db, ObjectId } from 'mongodb';
+import { Inject, InternalServerErrorException } from '@nestjs/common';
+import { Collection, Db, ObjectId, WithId } from 'mongodb';
 
 import { DATABASE } from '@library/database';
 
@@ -20,8 +20,20 @@ export class UserRepository {
     return this.collection.findOne({ email });
   }
 
-  create(userData: User) {
-    return this.collection.insertOne(userData);
+  async create(userData: User): Promise<WithId<User>> {
+    const { acknowledged, insertedId: newUserId } =
+      await this.collection.insertOne(userData);
+
+    if (!acknowledged) {
+      throw new InternalServerErrorException(
+        `Could not create user: ${JSON.stringify({ userData })}`,
+      );
+    }
+
+    return {
+      _id: newUserId,
+      ...userData,
+    };
   }
 
   update(id: ObjectId, userData: Partial<User>) {
@@ -30,5 +42,23 @@ export class UserRepository {
       { $set: userData },
       { returnDocument: 'after' },
     );
+  }
+
+  async delete(id: ObjectId) {
+    const { acknowledged, deletedCount } = await this.collection.deleteOne({
+      _id: id,
+    });
+
+    if (!acknowledged) {
+      throw new InternalServerErrorException(
+        `Could not delete user with id: '${id}'.`,
+      );
+    }
+
+    if (deletedCount !== 1) {
+      throw new InternalServerErrorException(
+        `An unexpected number of records (${deletedCount}) were deleted [id: '${id}'].`,
+      );
+    }
   }
 }

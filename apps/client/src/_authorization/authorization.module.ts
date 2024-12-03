@@ -10,7 +10,7 @@ import {
 
 import { User } from '../_user/schema/user.schema';
 import { PERMISSION_STRING_SEPARATOR } from './constant';
-import { createPermissionsMap } from './permission.map';
+import { createPermissionsMap } from './permission-map';
 
 @Module({
   imports: [

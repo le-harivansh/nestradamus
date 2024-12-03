@@ -1,9 +1,11 @@
+import { InternalServerErrorException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Collection, Db, MongoClient, ObjectId } from 'mongodb';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 
 import { DATABASE } from '@library/database';
 
+import { fakeUserData } from '../../../test/helper/user';
 import { User, UserSchema } from '../schema/user.schema';
 import { UserRepository } from './user.repository';
 
@@ -99,39 +101,45 @@ describe(UserRepository.name, () => {
   });
 
   describe(UserRepository.prototype.create.name, () => {
+    let collectionInsertOneMethodSpy: jest.SpyInstance;
+
+    beforeAll(() => {
+      collectionInsertOneMethodSpy = jest.spyOn(
+        userRepository['collection'],
+        'insertOne',
+      );
+    });
+
     afterAll(async () => {
       await database.dropDatabase();
     });
 
     it('inserts a new user into the database', async () => {
-      const userData = new User(
-        'One',
-        'Two',
-        '1212121212',
-        'user@email.dev',
-        'P@ssw0rd',
-      );
-
-      const { insertedId } = await userRepository.create(userData);
+      const userData = fakeUserData();
+      const newUser = await userRepository.create(userData);
 
       await expect(
-        userCollection.findOne({ _id: insertedId }),
+        userCollection.findOne({ _id: newUser._id }),
       ).resolves.toMatchObject({
-        _id: insertedId,
+        _id: newUser._id,
         ...userData,
       });
+    });
+
+    it(`throws an '${InternalServerErrorException.name}' if the operation is not acknowledged`, async () => {
+      collectionInsertOneMethodSpy.mockResolvedValueOnce({
+        acknowledged: false,
+        insertedId: undefined as unknown as ObjectId,
+      });
+
+      await expect(() => userRepository.create(fakeUserData())).rejects.toThrow(
+        InternalServerErrorException,
+      );
     });
   });
 
   describe(UserRepository.prototype.update.name, () => {
-    const user = new User(
-      'One',
-      'Two',
-      '1234567890',
-      'user@email.dev',
-      'P@ssw0rd',
-    );
-
+    const user = fakeUserData();
     const userUpdates: Partial<User> = {
       lastName: 'Three',
       email: 'updated-user@email.dev',
@@ -155,6 +163,61 @@ describe(UserRepository.name, () => {
         ...user,
         ...userUpdates,
       });
+    });
+  });
+
+  describe(UserRepository.prototype.delete.name, () => {
+    let collectionDeleteOneMethodSpy: jest.SpyInstance;
+    let insertedUserId: ObjectId | null = null;
+
+    beforeAll(() => {
+      collectionDeleteOneMethodSpy = jest.spyOn(
+        userRepository['collection'],
+        'deleteOne',
+      );
+    });
+
+    beforeEach(async () => {
+      ({ insertedId: insertedUserId } =
+        await userCollection.insertOne(fakeUserData()));
+    });
+
+    afterEach(() => {
+      insertedUserId = null;
+    });
+
+    afterAll(async () => {
+      await database.dropDatabase();
+    });
+
+    it('deletes a user instance from the database', async () => {
+      await userRepository.delete(insertedUserId!);
+
+      await expect(
+        userCollection.findOne({ _id: insertedUserId! }),
+      ).resolves.toBe(null);
+    });
+
+    it(`throws an '${InternalServerErrorException.name}' if the operation is not acknowledged`, async () => {
+      collectionDeleteOneMethodSpy.mockResolvedValueOnce({
+        acknowledged: false,
+        deletedCount: undefined as unknown as number,
+      });
+
+      await expect(() =>
+        userRepository.delete(insertedUserId!),
+      ).rejects.toThrow(InternalServerErrorException);
+    });
+
+    it(`throws an '${InternalServerErrorException.name}' if the deleted-count is not 1`, async () => {
+      collectionDeleteOneMethodSpy.mockResolvedValueOnce({
+        acknowledged: true,
+        deletedCount: 0,
+      });
+
+      await expect(() =>
+        userRepository.delete(insertedUserId!),
+      ).rejects.toThrow(InternalServerErrorException);
     });
   });
 });

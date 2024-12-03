@@ -4,7 +4,6 @@ import {
   S3ClientConfig,
 } from '@aws-sdk/client-s3';
 import {
-  DynamicModule,
   Inject,
   InternalServerErrorException,
   Module,
@@ -14,7 +13,6 @@ import {
 
 import { S3_CLIENT } from './constant';
 import {
-  S3_MODULE_ASYNC_OPTIONS_TYPE,
   S3_MODULE_OPTIONS_TOKEN,
   S3ConfigurableModuleClass,
 } from './s3.module-definition';
@@ -24,7 +22,35 @@ import {
 } from './s3.module-options';
 import { S3Service } from './service/s3.service';
 
-@Module({})
+@Module({
+  providers: [
+    {
+      provide: S3_CLIENT,
+      inject: [S3_MODULE_OPTIONS_TOKEN],
+      useFactory: (s3ModuleOptions: S3ModuleOptions): S3Client => {
+        const endpointConfig: Pick<S3ClientConfig, 'endpoint'> = s3ModuleOptions
+          .aws.endpoint
+          ? { endpoint: s3ModuleOptions.aws.endpoint }
+          : {};
+
+        return new S3Client({
+          credentials: {
+            accessKeyId: s3ModuleOptions.aws.credentials.accessKey,
+            secretAccessKey: s3ModuleOptions.aws.credentials.secretKey,
+          },
+
+          region: s3ModuleOptions.aws.region,
+
+          ...endpointConfig,
+        });
+      },
+    },
+
+    S3Service,
+  ],
+
+  exports: [S3Service],
+})
 export class S3Module
   extends S3ConfigurableModuleClass
   implements OnApplicationBootstrap, OnApplicationShutdown
@@ -55,49 +81,5 @@ export class S3Module
 
   onApplicationShutdown() {
     this.s3Client.destroy();
-  }
-
-  static forRootAsync(
-    options: typeof S3_MODULE_ASYNC_OPTIONS_TYPE,
-  ): DynamicModule {
-    const {
-      providers = [],
-      exports = [],
-      ...dynamicModuleOptions
-    } = super.forRootAsync(options);
-
-    return {
-      ...dynamicModuleOptions,
-
-      providers: [
-        ...providers,
-
-        {
-          provide: S3_CLIENT,
-          inject: [S3_MODULE_OPTIONS_TOKEN],
-          useFactory: (s3ModuleOptions: S3ModuleOptions): S3Client => {
-            const endpointConfig: Pick<S3ClientConfig, 'endpoint'> =
-              s3ModuleOptions.aws.endpoint
-                ? { endpoint: s3ModuleOptions.aws.endpoint }
-                : {};
-
-            return new S3Client({
-              credentials: {
-                accessKeyId: s3ModuleOptions.aws.credentials.accessKey,
-                secretAccessKey: s3ModuleOptions.aws.credentials.secretKey,
-              },
-
-              region: s3ModuleOptions.aws.region,
-
-              ...endpointConfig,
-            });
-          },
-        },
-
-        S3Service,
-      ],
-
-      exports: [...exports, S3Service],
-    };
   }
 }
