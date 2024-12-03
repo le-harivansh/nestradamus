@@ -55,7 +55,7 @@ describe(UserRepository.name, () => {
 
     beforeAll(async () => {
       ({ insertedId: userId } = await userCollection.insertOne(
-        new User('One', 'Two', '', 'user@email.dev', 'P@ssw0rd'),
+        new User('One', 'Two', 'user@email.dev', 'P@ssw0rd'),
       ));
     });
 
@@ -78,9 +78,7 @@ describe(UserRepository.name, () => {
     const email = 'user@email.dev';
 
     beforeAll(async () => {
-      await userCollection.insertOne(
-        new User('One', 'Two', '1212121212', email, 'P@ssw0rd'),
-      );
+      await userCollection.insertOne(new User('One', 'Two', email, 'P@ssw0rd'));
     });
 
     afterAll(async () => {

@@ -22,7 +22,6 @@ export class SeederCommand extends CommandRunner {
       fakeUserData({
         firstName: 'FirstName',
         lastName: 'LastName',
-        phoneNumber: '1234567890',
         email: 'user@email.dev',
         password: 'password',
         permissions: [

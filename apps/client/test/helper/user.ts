@@ -19,7 +19,6 @@ export function fakeUserData(defaults?: Partial<User>): User {
   return new User(
     defaults?.firstName ?? faker.person.firstName(),
     defaults?.lastName ?? faker.person.lastName(),
-    defaults?.phoneNumber ?? faker.phone.number(),
     defaults?.email ?? faker.internet.email(),
     defaults?.password ?? PASSWORD,
     defaults?.permissions ?? [],
@@ -42,14 +41,13 @@ export function deleteUser(userId: ObjectId, application: INestApplication) {
 }
 
 export async function createUserAndGetAuthenticationCookies(
-  userData: Partial<Omit<User, 'email' | 'password'>> &
-    Required<Pick<User, 'email' | 'password'>>,
+  userData: Partial<Omit<User, 'password'>> & Required<Pick<User, 'password'>>,
   application: INestApplication,
 ) {
   const user = await createUser(fakeUserData(userData), application);
 
   const cookies = await getAuthenticationTokens(
-    { username: userData.email, password: userData.password },
+    { username: user.email, password: userData.password },
     application,
     `/${LOGIN_ROUTE}`,
     {

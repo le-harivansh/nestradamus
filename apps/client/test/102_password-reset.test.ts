@@ -20,7 +20,7 @@ import {
   teardownTestApplication,
 } from './helper/application';
 import { getPasswordResetId } from './helper/mail';
-import { createUser } from './helper/user';
+import { createUser, fakeUserData } from './helper/user';
 
 describe('Password-Reset (e2e)', () => {
   let application: INestApplication;
@@ -51,13 +51,10 @@ describe('Password-Reset (e2e)', () => {
 
     // Create user
     user = await createUser(
-      {
-        firstName: 'One',
-        lastName: 'Two',
-        phoneNumber: '1212121212',
+      fakeUserData({
         email: userCredentials.username,
         password: userCredentials.password,
-      },
+      }),
       application,
     );
   });

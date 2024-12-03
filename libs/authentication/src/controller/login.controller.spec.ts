@@ -61,7 +61,6 @@ describe(LoginController.name, () => {
       _id: new ObjectId(),
       firstName: 'One',
       lastName: 'Two',
-      phoneNumber: '1234 56 78 90',
       email: 'one@two.com',
       password: 'hashed-password',
     };

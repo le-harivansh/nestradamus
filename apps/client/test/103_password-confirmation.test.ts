@@ -2,13 +2,8 @@ import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Db, MongoClient } from 'mongodb';
 import request from 'supertest';
 
-import { getAuthenticationTokens } from '@library/authentication/../test/helper/setup';
 import { PasswordConfirmationDto } from '@library/password-confirmation/dto/password-confirmation.dto';
 
-import {
-  ACCESS_TOKEN_COOKIE_NAME,
-  LOGIN_ROUTE,
-} from '../src/_authentication/constant';
 import {
   PASSWORD_CONFIRMATION_COOKIE_NAME,
   PASSWORD_CONFIRMATION_ROUTE,
@@ -17,7 +12,7 @@ import {
   setupTestApplication,
   teardownTestApplication,
 } from './helper/application';
-import { createUser } from './helper/user';
+import { createUserAndGetAuthenticationCookies } from './helper/user';
 
 describe('Password-Confirmation (e2e)', () => {
   let application: INestApplication;
@@ -27,29 +22,18 @@ describe('Password-Confirmation (e2e)', () => {
 
   const userPassword = 'P@ssw0rd';
 
-  let accessToken: string;
+  let accessTokenCookie: string;
 
   beforeAll(async () => {
     const testApplication = await setupTestApplication();
 
     ({ application, mongoClient, database } = testApplication);
 
-    const userData = {
-      firstName: 'One',
-      lastName: 'Two',
-      phoneNumber: '1212121212',
-      email: 'user@email.dev',
-      password: userPassword,
-    };
-
-    // Create user
-    await createUser(userData, application);
-
-    ({ accessToken } = await getAuthenticationTokens(
-      { username: userData.email, password: userPassword },
+    ({
+      cookies: { accessToken: accessTokenCookie },
+    } = await createUserAndGetAuthenticationCookies(
+      { password: userPassword },
       application,
-      `/${LOGIN_ROUTE}`,
-      { accessToken: ACCESS_TOKEN_COOKIE_NAME },
     ));
   });
 
@@ -62,7 +46,7 @@ describe('Password-Confirmation (e2e)', () => {
       it(`returns 'HTTP ${HttpStatus.NO_CONTENT}' with the new password-confirmation cookie when the correct password is sent`, async () => {
         const response = await request(application.getHttpServer())
           .post(`/${PASSWORD_CONFIRMATION_ROUTE}`)
-          .set('Cookie', accessToken)
+          .set('Cookie', accessTokenCookie)
           .send({ password: userPassword });
 
         expect(response.status).toBe(HttpStatus.NO_CONTENT);
@@ -94,7 +78,7 @@ describe('Password-Confirmation (e2e)', () => {
         async ({ password }) => {
           const response = await request(application.getHttpServer())
             .post(`/${PASSWORD_CONFIRMATION_ROUTE}`)
-            .set('Cookie', accessToken)
+            .set('Cookie', accessTokenCookie)
             .send({ password });
 
           expect(response.status).toBe(HttpStatus.BAD_REQUEST);
@@ -104,7 +88,7 @@ describe('Password-Confirmation (e2e)', () => {
       it(`returns 'HTTP ${HttpStatus.UNAUTHORIZED}' if the wrong password is sent`, async () => {
         const response = await request(application.getHttpServer())
           .post(`/${PASSWORD_CONFIRMATION_ROUTE}`)
-          .set('Cookie', accessToken)
+          .set('Cookie', accessTokenCookie)
           .send({ password: 'wrong-password' });
 
         expect(response.status).toBe(HttpStatus.UNAUTHORIZED);

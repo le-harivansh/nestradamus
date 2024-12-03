@@ -10,7 +10,6 @@ export class User {
   constructor(
     public readonly firstName: string,
     public readonly lastName: string,
-    public readonly phoneNumber: string,
     public readonly email: string,
     public readonly password: string,
     public readonly permissions: string[] = [],
@@ -27,7 +26,7 @@ export class UserSchema implements OnApplicationBootstrap {
   private static readonly validator = {
     $jsonSchema: {
       bsonType: 'object',
-      required: ['firstName', 'lastName', 'phoneNumber', 'email', 'password'],
+      required: ['firstName', 'lastName', 'email', 'password'],
       properties: {
         firstName: {
           bsonType: 'string',
@@ -36,10 +35,6 @@ export class UserSchema implements OnApplicationBootstrap {
         lastName: {
           bsonType: 'string',
           description: 'The last-name of the user is required.',
-        },
-        phoneNumber: {
-          bsonType: 'string',
-          description: 'The phone-number of the user is required.',
         },
         email: {
           bsonType: 'string',

@@ -14,7 +14,7 @@ import {
   setupTestApplication,
   teardownTestApplication,
 } from './helper/application';
-import { createUser } from './helper/user';
+import { createUser, fakeUserData } from './helper/user';
 
 describe('Authentication (e2e)', () => {
   const userCredentials = {
@@ -33,13 +33,10 @@ describe('Authentication (e2e)', () => {
     ({ application, mongoClient, database } = testApplication);
 
     await createUser(
-      {
-        firstName: 'One',
-        lastName: 'Two',
-        phoneNumber: '1212121212',
+      fakeUserData({
         email: userCredentials.username,
         password: userCredentials.password,
-      },
+      }),
       application,
     );
   });

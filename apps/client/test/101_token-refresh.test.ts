@@ -2,12 +2,9 @@ import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Db, MongoClient } from 'mongodb';
 import request from 'supertest';
 
-import { getAuthenticationTokens } from '@library/authentication/../test/helper/setup';
-
 import {
   ACCESS_TOKEN_COOKIE_NAME,
   ACCESS_TOKEN_REFRESH_ROUTE,
-  LOGIN_ROUTE,
   REFRESH_TOKEN_COOKIE_NAME,
   REFRESH_TOKEN_REFRESH_ROUTE,
 } from '../src/_authentication/constant';
@@ -15,7 +12,7 @@ import {
   setupTestApplication,
   teardownTestApplication,
 } from './helper/application';
-import { createUser } from './helper/user';
+import { createUserAndGetAuthenticationCookies } from './helper/user';
 
 describe('Token-Refresh (e2e)', () => {
   let application: INestApplication;
@@ -28,34 +25,22 @@ describe('Token-Refresh (e2e)', () => {
     password: 'P@ssw0rd',
   };
 
-  let accessToken: string;
-  let refreshToken: string;
+  let accessTokenCookie: string;
+  let refreshTokenCookie: string;
 
   beforeAll(async () => {
     const testApplication = await setupTestApplication();
 
     ({ application, mongoClient, database } = testApplication);
 
-    // Create user
-    await createUser(
-      {
-        firstName: 'One',
-        lastName: 'Two',
-        phoneNumber: '1212121212',
-        email: userCredentials.username,
-        password: userCredentials.password,
+    ({
+      cookies: {
+        accessToken: accessTokenCookie,
+        refreshToken: refreshTokenCookie,
       },
+    } = await createUserAndGetAuthenticationCookies(
+      { email: userCredentials.username, password: userCredentials.password },
       application,
-    );
-
-    ({ accessToken, refreshToken } = await getAuthenticationTokens(
-      userCredentials,
-      application,
-      `/${LOGIN_ROUTE}`,
-      {
-        accessToken: ACCESS_TOKEN_COOKIE_NAME,
-        refreshToken: REFRESH_TOKEN_COOKIE_NAME,
-      },
     ));
   });
 
@@ -68,7 +53,7 @@ describe('Token-Refresh (e2e)', () => {
       it(`returns 'HTTP ${HttpStatus.NO_CONTENT}' with the new access-token when the correct refresh-token is sent`, async () => {
         const response = await request(application.getHttpServer())
           .post(`/${ACCESS_TOKEN_REFRESH_ROUTE}`)
-          .set('Cookie', refreshToken);
+          .set('Cookie', refreshTokenCookie);
 
         expect(response.status).toBe(HttpStatus.NO_CONTENT);
 
@@ -104,7 +89,7 @@ describe('Token-Refresh (e2e)', () => {
       it(`returns 'HTTP ${HttpStatus.NO_CONTENT}' with the new refresh-token when the correct access-token is sent`, async () => {
         const response = await request(application.getHttpServer())
           .post(`/${REFRESH_TOKEN_REFRESH_ROUTE}`)
-          .set('Cookie', accessToken);
+          .set('Cookie', accessTokenCookie);
 
         expect(response.status).toBe(HttpStatus.NO_CONTENT);
 
