@@ -44,6 +44,13 @@ export class UserSchema implements OnApplicationBootstrap {
           bsonType: 'string',
           description: 'The password of the user is required.',
         },
+        permissions: {
+          bsonType: 'array',
+          description: 'The permissions field should be an array.',
+          items: {
+            bsonType: 'string',
+          },
+        },
       },
     },
   } as const;

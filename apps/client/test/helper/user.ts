@@ -1,4 +1,4 @@
-import { faker } from '@faker-js/faker/.';
+import { faker } from '@faker-js/faker';
 import { INestApplication } from '@nestjs/common';
 import { ObjectId } from 'mongodb';
 

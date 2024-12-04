@@ -1,10 +1,10 @@
+import { faker } from '@faker-js/faker';
 import { WithId } from 'mongodb';
 import { CommandRunner, SubCommand } from 'nest-commander';
 
 import { PERMISSION_STRING_SEPARATOR } from '../../../../src/_authorization/constant';
 import { User } from '../../../../src/_user/schema/user.schema';
 import { UserService } from '../../../../src/_user/service/user.service';
-import { fakeUserData } from '../../../../test/helper/user';
 
 @SubCommand({ name: 'seed', description: 'Seed the client database.' })
 export class SeederCommand extends CommandRunner {
@@ -18,30 +18,36 @@ export class SeederCommand extends CommandRunner {
   }
 
   private createDefaultUser() {
-    return this.userService.create(
-      fakeUserData({
-        firstName: 'FirstName',
-        lastName: 'LastName',
-        email: 'user@email.dev',
-        password: 'password',
-        permissions: [
-          `user${PERMISSION_STRING_SEPARATOR}read${PERMISSION_STRING_SEPARATOR}own`,
-          `user${PERMISSION_STRING_SEPARATOR}update${PERMISSION_STRING_SEPARATOR}own`,
-          `user${PERMISSION_STRING_SEPARATOR}delete${PERMISSION_STRING_SEPARATOR}own`,
-        ],
-      }),
-    );
+    return this.userService.create({
+      firstName: 'FirstName',
+      lastName: 'LastName',
+      email: 'user@email.dev',
+      password: 'password',
+      permissions: [
+        `user${PERMISSION_STRING_SEPARATOR}read${PERMISSION_STRING_SEPARATOR}own`,
+        `user${PERMISSION_STRING_SEPARATOR}update${PERMISSION_STRING_SEPARATOR}own`,
+        `user${PERMISSION_STRING_SEPARATOR}delete${PERMISSION_STRING_SEPARATOR}own`,
+      ],
+    });
   }
 
-  private seedUsers(count: number): Promise<Omit<WithId<User>, 'password'>[]> {
+  private seedUsers(count: number): Promise<WithId<User>[]> {
     if (count < 1) {
       throw new Error('The provided count cannot be less than 1.');
     }
 
-    const userSeedingTasksQueue: Promise<Omit<WithId<User>, 'password'>>[] = [];
+    const userSeedingTasksQueue: Promise<WithId<User>>[] = [];
 
     for (let i = 0; i < count; i++) {
-      userSeedingTasksQueue.push(this.userService.create(fakeUserData()));
+      userSeedingTasksQueue.push(
+        this.userService.create({
+          firstName: faker.person.firstName(),
+          lastName: faker.person.lastName(),
+          email: faker.internet.email(),
+          password: 'password',
+          permissions: [],
+        }),
+      );
     }
 
     return Promise.all(userSeedingTasksQueue);
