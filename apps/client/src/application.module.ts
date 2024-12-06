@@ -36,6 +36,9 @@ import applicationConfiguration from './application.config';
 
     PasswordResetModule,
 
+    /**
+     * Contains an `APP_GUARD` provider registration for `AuthorizationGuard`.
+     */
     AuthorizationModule,
   ],
   providers: [
