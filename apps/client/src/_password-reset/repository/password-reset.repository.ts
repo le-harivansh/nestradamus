@@ -1,4 +1,4 @@
-import { Inject } from '@nestjs/common';
+import { Inject, InternalServerErrorException } from '@nestjs/common';
 import { Collection, Db, ObjectId, WithId } from 'mongodb';
 
 import { DATABASE } from '@library/database';
@@ -62,15 +62,47 @@ export class PasswordResetRepository {
     return this.collection.findOne({ userId });
   }
 
-  create(passwordResetData: PasswordReset) {
-    return this.collection.insertOne(passwordResetData);
+  async create(
+    passwordResetData: PasswordReset,
+  ): Promise<WithId<PasswordReset>> {
+    const { acknowledged, insertedId: newPasswordResetId } =
+      await this.collection.insertOne(passwordResetData);
+
+    if (!acknowledged) {
+      throw new InternalServerErrorException(
+        `Could not acknowledge the creation of the 'password-reset' record with data: ${JSON.stringify(passwordResetData)}.`,
+      );
+    }
+
+    return {
+      _id: newPasswordResetId,
+      ...passwordResetData,
+    };
   }
 
   update(id: ObjectId, passwordResetData: Partial<PasswordReset>) {
-    return this.collection.updateOne({ _id: id }, { $set: passwordResetData });
+    return this.collection.findOneAndUpdate(
+      { _id: id },
+      { $set: passwordResetData },
+      { returnDocument: 'after' },
+    );
   }
 
-  delete(id: ObjectId) {
-    return this.collection.deleteOne({ _id: id });
+  async delete(id: ObjectId) {
+    const { acknowledged, deletedCount } = await this.collection.deleteOne({
+      _id: id,
+    });
+
+    if (!acknowledged) {
+      throw new InternalServerErrorException(
+        `Could not delete 'password-reset' with id: '${id}'.`,
+      );
+    }
+
+    if (deletedCount !== 1) {
+      throw new InternalServerErrorException(
+        `An unexpected number of 'password-reset' records (${deletedCount}) were deleted [id: '${id}'].`,
+      );
+    }
   }
 }

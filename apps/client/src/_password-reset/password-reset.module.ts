@@ -84,15 +84,11 @@ import { PasswordResetService } from './service/password-reset.service';
               );
             }
 
-            return passwordResetService.findPasswordResetRecordById(
-              new ObjectId(id),
-            );
+            return passwordResetService.findById(new ObjectId(id));
           },
 
           createPasswordReset: ({ _id: userId }: WithId<User>) =>
-            passwordResetService.createOrUpdatePasswordResetRecordForUser(
-              userId,
-            ),
+            passwordResetService.createOrUpdateForUser(userId),
 
           deletePasswordReset: (id: string) => {
             if (!ObjectId.isValid(id)) {
@@ -101,17 +97,13 @@ import { PasswordResetService } from './service/password-reset.service';
               );
             }
 
-            return passwordResetService.deletePasswordResetRecord(
-              new ObjectId(id),
-            );
+            return passwordResetService.delete(new ObjectId(id));
           },
 
           resetUserPassword: async (
             {
               user: { _id: userId },
-            }: Awaited<
-              ReturnType<PasswordResetService['findPasswordResetRecordById']>
-            >,
+            }: Awaited<ReturnType<PasswordResetService['findById']>>,
             newPassword: string,
           ) => {
             class Password {

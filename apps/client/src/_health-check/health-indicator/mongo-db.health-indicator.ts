@@ -15,7 +15,7 @@ export class MongoDbHealthIndicator extends HealthIndicator {
 
     if (!ping['ok']) {
       throw new HealthCheckError(
-        'Could not ping the database',
+        'Could not ping the database.',
         this.getStatus(MongoDbHealthIndicator.KEY, false, {
           message: 'Could not ping the database.',
         }),

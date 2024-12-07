@@ -1,3 +1,4 @@
+import { InternalServerErrorException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Collection, Db, MongoClient, ObjectId } from 'mongodb';
 import { MongoMemoryServer } from 'mongodb-memory-server';
@@ -110,21 +111,50 @@ describe(PasswordResetRepository.name, () => {
 
   describe(PasswordResetRepository.prototype.create.name, () => {
     afterAll(async () => {
+      jest.restoreAllMocks();
+
       await database.dropDatabase();
     });
 
     it('inserts a new password-reset record into the database', async () => {
       const passwordReset = new PasswordReset(new ObjectId(), new Date());
 
-      const { insertedId } =
+      const { _id: newPasswordResetId } =
         await passwordResetRepository.create(passwordReset);
 
       await expect(
-        passwordResetCollection.findOne({ _id: insertedId }),
+        passwordResetCollection.findOne({ _id: newPasswordResetId }),
       ).resolves.toMatchObject({
-        _id: insertedId,
+        _id: newPasswordResetId,
         ...passwordReset,
       });
+    });
+
+    it('returns the newly inserted password-reset record', async () => {
+      const passwordReset = new PasswordReset(new ObjectId(), new Date());
+
+      const newPasswordReset =
+        await passwordResetRepository.create(passwordReset);
+
+      expect(newPasswordReset).toMatchObject({
+        _id: expect.any(ObjectId),
+        ...passwordReset,
+      });
+    });
+
+    it(`throws an '${InternalServerErrorException.name}' if the password-reset insertion could not be acknowledged`, async () => {
+      jest
+        .spyOn(passwordResetRepository['collection'], 'insertOne')
+        .mockResolvedValueOnce({
+          acknowledged: false,
+          insertedId: undefined as unknown as ObjectId,
+        });
+
+      await expect(() =>
+        passwordResetRepository.create(
+          new PasswordReset(new ObjectId(), new Date()),
+        ),
+      ).rejects.toThrow(InternalServerErrorException);
     });
   });
 
@@ -171,6 +201,8 @@ describe(PasswordResetRepository.name, () => {
     });
 
     afterAll(async () => {
+      jest.restoreAllMocks();
+
       await database.dropDatabase();
     });
 
@@ -180,6 +212,26 @@ describe(PasswordResetRepository.name, () => {
       await expect(
         passwordResetCollection.findOne({ _id: passwordResetId }),
       ).resolves.toBeNull();
+    });
+
+    it(`throws an '${InternalServerErrorException.name}' if the 'password-reset' deletion could not be acknowledged`, async () => {
+      jest
+        .spyOn(passwordResetRepository['collection'], 'deleteOne')
+        .mockResolvedValueOnce({ acknowledged: false, deletedCount: 1 });
+
+      await expect(() =>
+        passwordResetRepository.delete(new ObjectId()),
+      ).rejects.toThrow(InternalServerErrorException);
+    });
+
+    it(`throws an '${InternalServerErrorException.name}' if the password-reset deletion-count is not equal to 1`, async () => {
+      jest
+        .spyOn(passwordResetRepository['collection'], 'deleteOne')
+        .mockResolvedValueOnce({ acknowledged: false, deletedCount: 0 });
+
+      await expect(() =>
+        passwordResetRepository.delete(new ObjectId()),
+      ).rejects.toThrow(InternalServerErrorException);
     });
   });
 });

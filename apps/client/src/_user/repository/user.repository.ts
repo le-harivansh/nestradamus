@@ -26,7 +26,7 @@ export class UserRepository {
 
     if (!acknowledged) {
       throw new InternalServerErrorException(
-        `Could not create user: ${JSON.stringify({ userData })}`,
+        `Could not acknowledge the creation of the 'user' record with data: ${JSON.stringify({ userData })}`,
       );
     }
 
@@ -51,13 +51,13 @@ export class UserRepository {
 
     if (!acknowledged) {
       throw new InternalServerErrorException(
-        `Could not delete user with id: '${id}'.`,
+        `Could not delete 'user' with id: '${id}'.`,
       );
     }
 
     if (deletedCount !== 1) {
       throw new InternalServerErrorException(
-        `An unexpected number of records (${deletedCount}) were deleted [id: '${id}'].`,
+        `An unexpected number of 'user' records (${deletedCount}) were deleted [id: '${id}'].`,
       );
     }
   }

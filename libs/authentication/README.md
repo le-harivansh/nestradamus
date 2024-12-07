@@ -196,10 +196,10 @@ AuthenticationLibraryModule.forRootAsync({
           );
         },
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         logout: (
           _request: Request,
           response: Response,
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           _authenticatedUser: WithId<User>,
         ) => {
           passwordConfirmationResponseService.clearPasswordConfirmationCookie(
