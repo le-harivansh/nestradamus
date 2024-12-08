@@ -310,6 +310,18 @@ describe(`${UserController.name} (e2e)`, () => {
 
         expect(status).toBe(HttpStatus.FORBIDDEN);
       });
+
+      it(`returns 'HTTP ${HttpStatus.BAD_REQUEST}' if the provided email address already exists in the collection.`, async () => {
+        const { status } = await request(application.getHttpServer())
+          .patch('/user/email')
+          .set('Cookie', [
+            userWithPermission.cookies.accessToken,
+            userWithPermission.cookies.confirmPassword,
+          ])
+          .send(userWithoutPermission.user.email);
+
+        expect(status).toBe(HttpStatus.BAD_REQUEST);
+      });
     });
   });
 

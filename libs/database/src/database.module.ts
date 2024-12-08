@@ -10,6 +10,7 @@ import {
   DatabaseModuleOptions,
   databaseModuleOptionsValidationSchema,
 } from './database.module-options';
+import { ExistenceValidatorConstraint } from './validator/constraint/existence.validator-constraint';
 
 @Module({
   providers: [
@@ -41,9 +42,11 @@ import {
         mongoClient: MongoClient,
       ): Db => mongoClient.db(databaseName),
     },
+
+    ExistenceValidatorConstraint,
   ],
 
-  exports: [MONGO_CLIENT, DATABASE],
+  exports: [MONGO_CLIENT, DATABASE, ExistenceValidatorConstraint],
 })
 export class DatabaseModule
   extends DatabaseConfigurableModuleClass

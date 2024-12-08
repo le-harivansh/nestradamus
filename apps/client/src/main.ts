@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { useContainer } from 'class-validator';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 
@@ -27,6 +28,11 @@ import { ApplicationModule } from './application.module';
   // Setup cookie-parsing
   const cookieSecret = configurationService.getOrThrow('application.secret');
   application.use(cookieParser(cookieSecret));
+
+  // Setup container for custom class-validators
+  useContainer(application.select(ApplicationModule), {
+    fallbackOnErrors: true,
+  });
 
   // Start listening for requests
   await application.listen(configurationService.getOrThrow('application.port'));

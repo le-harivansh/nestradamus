@@ -1,5 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { useContainer } from 'class-validator';
 import cookieParser from 'cookie-parser';
 import { Db, MongoClient } from 'mongodb';
 
@@ -25,6 +26,14 @@ export async function setupTestApplication() {
   application.use(
     cookieParser(configurationService.getOrThrow('application.secret')),
   );
+
+  /**
+   * We setup the DI container to be used by class-validator, since it is used
+   * during user validation (amongst other instances).
+   */
+  useContainer(application.select(ApplicationModule), {
+    fallbackOnErrors: true,
+  });
 
   const mongoClient = application.get<MongoClient>(MONGO_CLIENT);
   const database = application.get<Db>(DATABASE);

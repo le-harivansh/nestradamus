@@ -1,7 +1,10 @@
 import { IsEmail } from 'class-validator';
 
+import { ShouldNotExist } from '../../_database/validator';
+import { User } from '../schema/user.schema';
+
 export class UpdateUserEmailDto {
-  // @todo: implement validator that checks for the existence of the passed-in email address in the database.
   @IsEmail()
+  @ShouldNotExist(User)
   readonly email!: string;
 }

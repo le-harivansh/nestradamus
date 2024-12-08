@@ -13,18 +13,19 @@ describe(UserRepository.name, () => {
   const testDatabaseName = 'test';
 
   let mongoMemoryServer: MongoMemoryServer;
+
   let mongoClient: MongoClient;
+  let database: Db;
 
   let userRepository: UserRepository;
-
-  let database: Db;
   let userCollection: Collection<User>;
 
   beforeAll(async () => {
     mongoMemoryServer = await MongoMemoryServer.create();
-    mongoClient = await MongoClient.connect(mongoMemoryServer.getUri());
 
+    mongoClient = await MongoClient.connect(mongoMemoryServer.getUri());
     database = mongoClient.db(testDatabaseName);
+
     userCollection = database.collection<User>(UserSchema.collectionName);
 
     const module: TestingModule = await Test.createTestingModule({

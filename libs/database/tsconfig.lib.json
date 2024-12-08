@@ -1,7 +1,7 @@
 {
   "extends": "../../tsconfig.json",
   "include": ["src/**/*"],
-  "exclude": ["**/*.spec.ts"],
+  "exclude": ["test", "**/*.spec.ts", "**/*.test.ts"],
   "compilerOptions": {
     "declaration": true,
     "outDir": "../../dist/libs/database"
