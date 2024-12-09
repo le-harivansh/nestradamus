@@ -1,11 +1,19 @@
 import { existenceValidatorFactory } from '@library/database';
 
-import { User, UserSchema } from '../_user/schema/user.schema';
+import { MODEL_COLLECTION_MAP } from './constant';
 
-const modelCollectionMap = new Map([[User, UserSchema.collectionName]]);
+/**
+ * Decorator checking the existence of the specified model in the database.
+ */
+export const ShouldExist = existenceValidatorFactory(
+  MODEL_COLLECTION_MAP,
+  true,
+);
 
-export const ShouldExist = existenceValidatorFactory(modelCollectionMap, true);
+/**
+ * Decorator checking the absence of the specified model from the database.
+ */
 export const ShouldNotExist = existenceValidatorFactory(
-  modelCollectionMap,
+  MODEL_COLLECTION_MAP,
   false,
 );

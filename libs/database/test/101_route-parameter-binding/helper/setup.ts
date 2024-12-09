@@ -4,8 +4,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { useContainer } from 'class-validator';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 
-import { DatabaseModule } from '../../src';
-import { TestController } from './controller/test.controller';
+import { DatabaseModule } from '../../../src';
+import { TestController } from './test.controller';
 
 export async function setupTestApplication() {
   const databaseCredentials = {

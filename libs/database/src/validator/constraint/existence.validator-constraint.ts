@@ -4,7 +4,7 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
-import { Db } from 'mongodb';
+import { Db, ObjectId } from 'mongodb';
 import { z } from 'zod';
 
 import { DATABASE } from '../../constant';
@@ -18,15 +18,22 @@ export class ExistenceValidatorConstraint
   constructor(@Inject(DATABASE) private readonly database: Db) {}
 
   async validate(
-    value: unknown,
+    value: string,
     { constraints }: ValidationArguments,
   ): Promise<boolean> {
-    const { collectionName, fieldName, inverseResult } =
-      ExistenceValidatorConstraint.validateConstraints(constraints);
+    const {
+      collectionName,
+      fieldName: constraintFieldName,
+      inverseResult,
+    } = ExistenceValidatorConstraint.validateConstraints(constraints);
+
+    const fieldName =
+      constraintFieldName === 'id' ? '_id' : constraintFieldName;
+    const fieldValue = fieldName === '_id' ? new ObjectId(value) : value;
 
     const matchingDocumentsCount = await this.database
       .collection(collectionName)
-      .countDocuments({ [fieldName]: value });
+      .countDocuments({ [fieldName]: fieldValue });
 
     return Boolean(
       inverseResult ? !matchingDocumentsCount : matchingDocumentsCount,

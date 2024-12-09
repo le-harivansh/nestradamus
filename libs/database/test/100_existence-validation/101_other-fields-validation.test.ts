@@ -1,22 +1,18 @@
 import { HttpStatus, INestApplication } from '@nestjs/common';
-import { Db } from 'mongodb';
+import { Db, ObjectId } from 'mongodb';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import request from 'supertest';
 
-import { DATABASE } from '../src';
-import {
-  EXPLICIT_USERNAME_SHOULD_EXIST_ROUTE,
-  EXPLICIT_USERNAME_SHOULD_NOT_EXIST_ROUTE,
-  IMPLICIT_USERNAME_SHOULD_EXIST_ROUTE,
-  IMPLICIT_USERNAME_SHOULD_NOT_EXIST_ROUTE,
-  TEST_BASE_ROUTE,
-  TEST_COLLECTION_NAME,
-} from './helper/constant';
+import { DATABASE } from '../../src';
+import { ROUTES, TEST_COLLECTION_NAME } from './helper/constant';
 import { setupTestApplication, shutDownTestApplication } from './helper/setup';
 import { User } from './helper/user.model';
 
-describe('Entity Existence Validation (e2e)', () => {
-  const existingUser: User = { username: 'user-1@email.dev' };
+describe('Entity Existence Validation [other fields validation] (e2e)', () => {
+  const user: User & { _id: ObjectId | null } = {
+    _id: null,
+    username: 'user@email.dev',
+  };
 
   let application: INestApplication;
   let mongoMemoryServer: MongoMemoryServer;
@@ -26,11 +22,14 @@ describe('Entity Existence Validation (e2e)', () => {
 
     const database = application.get<Db>(DATABASE);
 
-    const { acknowledged } = await database
-      .collection(TEST_COLLECTION_NAME)
-      .insertOne(existingUser);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { _id, ...userData } = user;
 
-    if (!acknowledged) {
+    ({ insertedId: user._id } = await database
+      .collection(TEST_COLLECTION_NAME)
+      .insertOne(userData));
+
+    if (user._id === null) {
       throw new Error('Could not insert the test user in the database.');
     }
   });
@@ -39,18 +38,14 @@ describe('Entity Existence Validation (e2e)', () => {
     await shutDownTestApplication(application, mongoMemoryServer);
   });
 
-  it('is true', () => {
-    expect(true).toBe(true);
-  });
-
   describe.each([
     {
       type: 'implicit',
-      route: `/${TEST_BASE_ROUTE}/${IMPLICIT_USERNAME_SHOULD_EXIST_ROUTE}`,
+      route: `/${ROUTES.USERNAME.BASE}/${ROUTES.USERNAME.IMPLICIT_SHOULD_EXIST}`,
     },
     {
       type: 'explicit',
-      route: `/${TEST_BASE_ROUTE}/${EXPLICIT_USERNAME_SHOULD_EXIST_ROUTE}`,
+      route: `/${ROUTES.USERNAME.BASE}/${ROUTES.USERNAME.EXPLICIT_SHOULD_EXIST}`,
     },
   ])('Existence ($type)', ({ route }) => {
     describe('[succeeds because]', () => {
@@ -58,7 +53,7 @@ describe('Entity Existence Validation (e2e)', () => {
         const response = await request(application.getHttpServer())
           .post(route)
           .send({
-            username: existingUser.username,
+            username: user.username,
           });
 
         expect(response.status).toBe(HttpStatus.NO_CONTENT);
@@ -81,11 +76,11 @@ describe('Entity Existence Validation (e2e)', () => {
   describe.each([
     {
       type: 'implicit',
-      route: `/${TEST_BASE_ROUTE}/${IMPLICIT_USERNAME_SHOULD_NOT_EXIST_ROUTE}`,
+      route: `/${ROUTES.USERNAME.BASE}/${ROUTES.USERNAME.IMPLICIT_SHOULD_NOT_EXIST}`,
     },
     {
       type: 'explicit',
-      route: `/${TEST_BASE_ROUTE}/${EXPLICIT_USERNAME_SHOULD_NOT_EXIST_ROUTE}`,
+      route: `/${ROUTES.USERNAME.BASE}/${ROUTES.USERNAME.EXPLICIT_SHOULD_NOT_EXIST}`,
     },
   ])('Non-Existence ($type)', ({ route }) => {
     describe('[succeeds because]', () => {
@@ -105,7 +100,7 @@ describe('Entity Existence Validation (e2e)', () => {
         const response = await request(application.getHttpServer())
           .post(route)
           .send({
-            username: existingUser.username,
+            username: user.username,
           });
 
         expect(response.status).toBe(HttpStatus.BAD_REQUEST);

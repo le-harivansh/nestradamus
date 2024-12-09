@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ValidationArguments } from 'class-validator';
+import { ObjectId } from 'mongodb';
 import { ZodError } from 'zod';
 
 import { DATABASE } from '../../constant';
@@ -61,7 +62,7 @@ describe(ExistenceValidatorConstraint.name, () => {
       expect(validateConstraintsSpy).toHaveBeenCalledWith(constraints);
     });
 
-    it('calls the database methods with the appropriate arguments', async () => {
+    it('queries the database with the specified collection-name, field-name, and field-value', async () => {
       const constraints = ['collectionName', 'fieldName', false] as const;
       const value = 'value';
 
@@ -75,6 +76,25 @@ describe(ExistenceValidatorConstraint.name, () => {
       expect(countDocuments).toHaveBeenCalledTimes(1);
       expect(countDocuments).toHaveBeenCalledWith({ [constraints[1]]: value });
     });
+
+    it.each([
+      { fieldName: '_id', fieldValue: new ObjectId().toString() },
+      { fieldName: 'id', fieldValue: new ObjectId().toString() },
+    ])(
+      `transforms the field-value to an '${ObjectId.name}' if the field-name is '$fieldName'.`,
+      async ({ fieldName, fieldValue }) => {
+        const constraints = ['collectionName', fieldName, false] as const;
+
+        await existenceValidatorConstraint.validate(fieldValue, {
+          constraints,
+        } as unknown as ValidationArguments);
+
+        expect(countDocuments).toHaveBeenCalledWith({
+          _id: expect.any(ObjectId),
+        });
+        expect(countDocuments.mock.calls[0][0]['_id']).toBeInstanceOf(ObjectId);
+      },
+    );
 
     it.each([
       { matchingDoumentsCount: 0, inverseResult: false, expectedResult: false }, // should exist

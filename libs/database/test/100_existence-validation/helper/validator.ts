@@ -1,4 +1,4 @@
-import { existenceValidatorFactory } from '../../src';
+import { existenceValidatorFactory } from '../../../src';
 import { TEST_COLLECTION_NAME } from './constant';
 import { User } from './user.model';
 
