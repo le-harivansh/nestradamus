@@ -1,12 +1,10 @@
 import { HealthCheckService } from '@nestjs/terminus';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { DATABASE } from '@library/database';
-
-import { MongoDbHealthIndicator } from '../health-indicator/mongo-db.health-indicator';
+import { DatabaseHealthIndicator } from '../health-indicator/database.health-indicator';
 import { HealthCheckController } from './health-check.controller';
 
-jest.mock('../health-indicator/mongo-db.health-indicator');
+jest.mock('../health-indicator/database.health-indicator');
 
 describe(HealthCheckController.name, () => {
   let healthCheckController: HealthCheckController;
@@ -15,13 +13,9 @@ describe(HealthCheckController.name, () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [HealthCheckController],
       providers: [
-        MongoDbHealthIndicator,
+        DatabaseHealthIndicator,
         {
           provide: HealthCheckService,
-          useValue: null,
-        },
-        {
-          provide: DATABASE,
           useValue: null,
         },
       ],
