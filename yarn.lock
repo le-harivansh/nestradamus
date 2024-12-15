@@ -2100,6 +2100,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@nestjs/throttler@npm:^6.3.0":
+  version: 6.3.0
+  resolution: "@nestjs/throttler@npm:6.3.0"
+  peerDependencies:
+    "@nestjs/common": ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0
+    "@nestjs/core": ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0
+    reflect-metadata: ^0.1.13 || ^0.2.0
+  checksum: 10c0/707610f0e1af8ba61acbb7f37f638904f12f9b46b8c01c4de82c8205402b7405ed752c30a060b8b3ac46fd360b9a6a84d38d9d720bca0035b4be69dbc33ae255
+  languageName: node
+  linkType: hard
+
 "@nodelib/fs.scandir@npm:2.1.5":
   version: 2.1.5
   resolution: "@nodelib/fs.scandir@npm:2.1.5"
@@ -9410,6 +9421,7 @@ __metadata:
     "@nestjs/schematics": "npm:^10.2.3"
     "@nestjs/terminus": "npm:^10.2.3"
     "@nestjs/testing": "npm:^10.4.15"
+    "@nestjs/throttler": "npm:^6.3.0"
     "@trivago/prettier-plugin-sort-imports": "npm:^5.2.0"
     "@types/cookie-parser": "npm:^1.4.8"
     "@types/eslint__js": "npm:^8.42.3"

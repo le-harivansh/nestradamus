@@ -12,6 +12,7 @@ import { MailModule } from './_mail/mail.module';
 import { PasswordConfirmationModule } from './_password-confirmation/password-confirmation.module';
 import { PasswordResetModule } from './_password-reset/password-reset.module';
 import { S3Module } from './_s3/s3.module';
+import { ThrottlingModule } from './_throttling/throttling.module';
 import { UserModule } from './_user/user.module';
 import applicationConfiguration from './application.config';
 
@@ -25,6 +26,11 @@ import applicationConfiguration from './application.config';
     S3Module,
 
     MailModule,
+
+    /**
+     * Contains an `APP_GUARD` provider registration for `ThrottlerGuard`.
+     */
+    ThrottlingModule,
 
     HealthCheckModule,
 

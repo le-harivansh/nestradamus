@@ -61,7 +61,6 @@ import { PasswordResetService } from './service/password-reset.service';
               )
             ).toString();
 
-            // todo: Throttle to prevent abuse.
             await mailService
               .mail()
               .to(user.email)

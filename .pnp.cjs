@@ -42,6 +42,7 @@ const RAW_RUNTIME_STATE =
           ["@nestjs/schematics", "virtual:fead261e7f261e24ac3ec6f7c18ea0bbe5f7ce1266b684d3df83b5e85a31c2d6aaf6703f0cc46e17d80ad765f43e068cf753ffa4c3c2762809b64cf157c25b42#npm:10.2.3"],\
           ["@nestjs/terminus", "virtual:fead261e7f261e24ac3ec6f7c18ea0bbe5f7ce1266b684d3df83b5e85a31c2d6aaf6703f0cc46e17d80ad765f43e068cf753ffa4c3c2762809b64cf157c25b42#npm:10.2.3"],\
           ["@nestjs/testing", "virtual:fead261e7f261e24ac3ec6f7c18ea0bbe5f7ce1266b684d3df83b5e85a31c2d6aaf6703f0cc46e17d80ad765f43e068cf753ffa4c3c2762809b64cf157c25b42#npm:10.4.15"],\
+          ["@nestjs/throttler", "virtual:fead261e7f261e24ac3ec6f7c18ea0bbe5f7ce1266b684d3df83b5e85a31c2d6aaf6703f0cc46e17d80ad765f43e068cf753ffa4c3c2762809b64cf157c25b42#npm:6.3.0"],\
           ["@trivago/prettier-plugin-sort-imports", "virtual:fead261e7f261e24ac3ec6f7c18ea0bbe5f7ce1266b684d3df83b5e85a31c2d6aaf6703f0cc46e17d80ad765f43e068cf753ffa4c3c2762809b64cf157c25b42#npm:5.2.0"],\
           ["@types/cookie-parser", "virtual:fead261e7f261e24ac3ec6f7c18ea0bbe5f7ce1266b684d3df83b5e85a31c2d6aaf6703f0cc46e17d80ad765f43e068cf753ffa4c3c2762809b64cf157c25b42#npm:1.4.8"],\
           ["@types/eslint__js", "npm:8.42.3"],\
@@ -2955,6 +2956,36 @@ const RAW_RUNTIME_STATE =
           "@types/nestjs__core",\
           "@types/nestjs__microservices",\
           "@types/nestjs__platform-express"\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["@nestjs/throttler", [\
+      ["npm:6.3.0", {\
+        "packageLocation": "../../../.yarn/berry/cache/@nestjs-throttler-npm-6.3.0-ca0a63244e-10c0.zip/node_modules/@nestjs/throttler/",\
+        "packageDependencies": [\
+          ["@nestjs/throttler", "npm:6.3.0"]\
+        ],\
+        "linkType": "SOFT"\
+      }],\
+      ["virtual:fead261e7f261e24ac3ec6f7c18ea0bbe5f7ce1266b684d3df83b5e85a31c2d6aaf6703f0cc46e17d80ad765f43e068cf753ffa4c3c2762809b64cf157c25b42#npm:6.3.0", {\
+        "packageLocation": "./.yarn/__virtual__/@nestjs-throttler-virtual-e6525c8892/4/.yarn/berry/cache/@nestjs-throttler-npm-6.3.0-ca0a63244e-10c0.zip/node_modules/@nestjs/throttler/",\
+        "packageDependencies": [\
+          ["@nestjs/throttler", "virtual:fead261e7f261e24ac3ec6f7c18ea0bbe5f7ce1266b684d3df83b5e85a31c2d6aaf6703f0cc46e17d80ad765f43e068cf753ffa4c3c2762809b64cf157c25b42#npm:6.3.0"],\
+          ["@nestjs/common", "virtual:fead261e7f261e24ac3ec6f7c18ea0bbe5f7ce1266b684d3df83b5e85a31c2d6aaf6703f0cc46e17d80ad765f43e068cf753ffa4c3c2762809b64cf157c25b42#npm:10.4.15"],\
+          ["@nestjs/core", "virtual:fead261e7f261e24ac3ec6f7c18ea0bbe5f7ce1266b684d3df83b5e85a31c2d6aaf6703f0cc46e17d80ad765f43e068cf753ffa4c3c2762809b64cf157c25b42#npm:10.4.15"],\
+          ["@types/nestjs__common", null],\
+          ["@types/nestjs__core", null],\
+          ["@types/reflect-metadata", null],\
+          ["reflect-metadata", "npm:0.2.2"]\
+        ],\
+        "packagePeers": [\
+          "@nestjs/common",\
+          "@nestjs/core",\
+          "@types/nestjs__common",\
+          "@types/nestjs__core",\
+          "@types/reflect-metadata",\
+          "reflect-metadata"\
         ],\
         "linkType": "HARD"\
       }]\
@@ -11394,6 +11425,7 @@ const RAW_RUNTIME_STATE =
           ["@nestjs/schematics", "virtual:fead261e7f261e24ac3ec6f7c18ea0bbe5f7ce1266b684d3df83b5e85a31c2d6aaf6703f0cc46e17d80ad765f43e068cf753ffa4c3c2762809b64cf157c25b42#npm:10.2.3"],\
           ["@nestjs/terminus", "virtual:fead261e7f261e24ac3ec6f7c18ea0bbe5f7ce1266b684d3df83b5e85a31c2d6aaf6703f0cc46e17d80ad765f43e068cf753ffa4c3c2762809b64cf157c25b42#npm:10.2.3"],\
           ["@nestjs/testing", "virtual:fead261e7f261e24ac3ec6f7c18ea0bbe5f7ce1266b684d3df83b5e85a31c2d6aaf6703f0cc46e17d80ad765f43e068cf753ffa4c3c2762809b64cf157c25b42#npm:10.4.15"],\
+          ["@nestjs/throttler", "virtual:fead261e7f261e24ac3ec6f7c18ea0bbe5f7ce1266b684d3df83b5e85a31c2d6aaf6703f0cc46e17d80ad765f43e068cf753ffa4c3c2762809b64cf157c25b42#npm:6.3.0"],\
           ["@trivago/prettier-plugin-sort-imports", "virtual:fead261e7f261e24ac3ec6f7c18ea0bbe5f7ce1266b684d3df83b5e85a31c2d6aaf6703f0cc46e17d80ad765f43e068cf753ffa4c3c2762809b64cf157c25b42#npm:5.2.0"],\
           ["@types/cookie-parser", "virtual:fead261e7f261e24ac3ec6f7c18ea0bbe5f7ce1266b684d3df83b5e85a31c2d6aaf6703f0cc46e17d80ad765f43e068cf753ffa4c3c2762809b64cf157c25b42#npm:1.4.8"],\
           ["@types/eslint__js", "npm:8.42.3"],\

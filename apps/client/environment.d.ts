@@ -7,6 +7,9 @@ declare global {
       APPLICATION_PORT: string;
       APPLICATION_SECRET: string;
 
+      THROTTLING_DEFAULT_TTL_SECONDS: string;
+      THROTTLING_DEFAULT_LIMIT: string;
+
       FRONTEND_URL: string;
 
       DATABASE_SCHEME: string;

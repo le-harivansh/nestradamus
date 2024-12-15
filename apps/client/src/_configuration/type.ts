@@ -17,6 +17,10 @@ import {
   CONFIGURATION_NAMESPACE as S3ConfigurationNamespace,
 } from '../_s3/s3.config';
 import {
+  ThrottlingConfiguration,
+  CONFIGURATION_NAMESPACE as ThrottlingConfigurationNamespace,
+} from '../_throttling/throttling.config';
+import {
   ApplicationConfiguration,
   CONFIGURATION_NAMESPACE as ApplicationConfigurationNamespace,
 } from '../application.config';
@@ -40,6 +44,11 @@ export type NamespacedConfiguration =
     FlattenedPrefixedConfiguration<
       typeof S3ConfigurationNamespace,
       S3Configuration
+    > &
+    // Throttling
+    FlattenedPrefixedConfiguration<
+      typeof ThrottlingConfigurationNamespace,
+      ThrottlingConfiguration
     > &
     // Mail
     FlattenedPrefixedConfiguration<

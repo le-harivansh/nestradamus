@@ -10,6 +10,7 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
+import { seconds, Throttle } from '@nestjs/throttler';
 
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { PASSWORD_RESET_MODULE_OPTIONS_TOKEN } from '../password-reset.module-definition';
@@ -45,6 +46,7 @@ export class ForgotPasswordController {
     );
   }
 
+  @Throttle({ default: { limit: 2, ttl: seconds(60) } })
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.NO_CONTENT)
   async forgotPassword(@Body() { username }: ForgotPasswordDto) {
