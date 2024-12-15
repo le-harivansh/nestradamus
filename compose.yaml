@@ -24,6 +24,24 @@ services:
       MINIO_ROOT_PASSWORD: ${__MINIO_PASSWORD}
     command: ['server', '/data', '--console-address', ':${__MINIO_UI_PORT}']
 
+  minio-create-bucket:
+    image: minio/mc
+    restart: on-failure
+    depends_on:
+      - minio
+    entrypoint: |
+      /bin/sh -c "
+        until mc config host add local http://minio:${__MINIO_API_PORT} ${__MINIO_USERNAME} ${__MINIO_PASSWORD};
+        do
+          echo 'Waiting for MinIO to be ready...';
+          sleep 1;
+        done;
+
+        mc mb local/${__MINIO_BUCKET_NAME} --ignore-existing;
+
+        exit 0;
+      "
+
   mail:
     image: axllent/mailpit:latest
     restart: unless-stopped
