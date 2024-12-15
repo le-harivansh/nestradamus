@@ -15,9 +15,11 @@ describe(UserCallbackService.name, () => {
   > = {
     permissionStringSeparator: ':',
 
-    user: {
-      retrieveFromRequest: retrieveUserFromRequestCallback,
-      getPermissions: getPermissionsFromUserCallback,
+    callback: {
+      user: {
+        retrieveFromRequest: retrieveUserFromRequestCallback,
+        getPermissions: getPermissionsFromUserCallback,
+      },
     },
   };
 

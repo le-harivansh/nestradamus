@@ -35,6 +35,52 @@ describe(UserService.name, () => {
     expect(userService).toBeDefined();
   });
 
+  describe(UserService.prototype.count.name, () => {
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it(`calls '${UserRepository.name}::${UserRepository.prototype.count.name}'`, async () => {
+      await userService.count();
+
+      expect(userRepository.count).toHaveBeenCalledTimes(1);
+    });
+
+    it(`returns the value of '${UserRepository.name}::${UserRepository.prototype.count.name}'`, async () => {
+      const resolvedCount = 5;
+
+      userRepository.count.mockResolvedValueOnce(resolvedCount);
+
+      await expect(userService.count()).resolves.toBe(resolvedCount);
+    });
+  });
+
+  describe(UserService.prototype.list.name, () => {
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it(`calls '${UserRepository.name}::${UserRepository.prototype.list.name}' with the provided 'limit' & 'offset'`, async () => {
+      const skip = 2;
+      const limit = 5;
+
+      await userService.list(skip, limit);
+
+      expect(userRepository.list).toHaveBeenCalledTimes(1);
+      expect(userRepository.list).toHaveBeenCalledWith(skip, limit);
+    });
+
+    it(`returns the value of '${UserRepository.name}::${UserRepository.prototype.list.name}'`, async () => {
+      const users = Symbol('Users');
+
+      userRepository.list.mockResolvedValueOnce(
+        users as unknown as WithId<User>[],
+      );
+
+      await expect(userService.list(2, 3)).resolves.toBe(users);
+    });
+  });
+
   describe(UserService.prototype.findById.name, () => {
     const userId = new ObjectId();
 

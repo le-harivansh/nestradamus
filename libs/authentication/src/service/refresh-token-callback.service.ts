@@ -10,22 +10,22 @@ export class RefreshTokenCallbackService {
     private readonly authenticationModuleOptions: AuthenticationModuleOptions,
   ) {}
 
-  createJwtPayload(user: unknown): Promise<Record<string, unknown>> {
-    return this.authenticationModuleOptions.callback.refreshToken.createJwtPayload(
+  async createJwtPayload(user: unknown): Promise<Record<string, unknown>> {
+    return await this.authenticationModuleOptions.callback.refreshToken.createJwtPayload(
       user,
     );
   }
 
-  validateJwtPayload(payload: Record<string, unknown>): Promise<boolean> {
-    return this.authenticationModuleOptions.callback.refreshToken.validateJwtPayload(
+  async validateJwtPayload(payload: Record<string, unknown>): Promise<boolean> {
+    return await this.authenticationModuleOptions.callback.refreshToken.validateJwtPayload(
       payload,
     );
   }
 
-  resolveUserFromJwtPayload(
+  async resolveUserFromJwtPayload(
     payload: Record<string, unknown>,
   ): Promise<unknown | null> {
-    return this.authenticationModuleOptions.callback.refreshToken.resolveUserFromJwtPayload(
+    return await this.authenticationModuleOptions.callback.refreshToken.resolveUserFromJwtPayload(
       payload,
     );
   }

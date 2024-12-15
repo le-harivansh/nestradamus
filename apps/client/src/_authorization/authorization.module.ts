@@ -18,9 +18,11 @@ import { createPermissionsMap } from './permission-map';
       useFactory: () => ({
         permissionsMap: createPermissionsMap(),
         permissionStringSeparator: PERMISSION_STRING_SEPARATOR,
-        user: {
-          retrieveFromRequest: ({ user }: Request) => user,
-          getPermissions: ({ permissions }: WithId<User>) => permissions,
+        callback: {
+          user: {
+            retrieveFromRequest: ({ user }: Request) => user,
+            getPermissions: ({ permissions }: WithId<User>) => permissions,
+          },
         },
       }),
 

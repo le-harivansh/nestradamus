@@ -12,7 +12,7 @@ describe(UserCallbackService.name, () => {
   const passwordConfirmationModuleOptions = {
     callback: {
       user: {
-        retrieveFrom: userRetriever,
+        retrieveFromRequest: userRetriever,
         validatePassword: passwordValidator,
       },
     },

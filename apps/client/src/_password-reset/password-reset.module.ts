@@ -46,7 +46,8 @@ import { PasswordResetService } from './service/password-reset.service';
         },
 
         callback: {
-          resolveUser: (email: string) => userService.findByEmail(email),
+          resolveUser: async (email: string) =>
+            await userService.findByEmail(email),
 
           notifyUser: async (
             user: WithId<User>,
@@ -60,13 +61,13 @@ import { PasswordResetService } from './service/password-reset.service';
               )
             ).toString();
 
-            // todo: this should be throttled to prevent abuse.
+            // todo: Throttle to prevent abuse.
             await mailService
               .mail()
               .to(user.email)
               .subject(`Forgot your ${applicationName} password?`)
               .mjml(
-                mailTemplate, // todo: style template & review message
+                mailTemplate, // todo: Style template & review message.
                 {
                   applicationName,
                   user,
@@ -77,27 +78,27 @@ import { PasswordResetService } from './service/password-reset.service';
               .send();
           },
 
-          retrievePasswordReset: (id: string) => {
+          retrievePasswordReset: async (id: string) => {
             if (!ObjectId.isValid(id)) {
               throw new BadRequestException(
                 `The provided password-reset record id: '${id}' - cannot be converted to an ObjectId.`,
               );
             }
 
-            return passwordResetService.findById(new ObjectId(id));
+            return await passwordResetService.findById(new ObjectId(id));
           },
 
-          createPasswordReset: ({ _id: userId }: WithId<User>) =>
-            passwordResetService.createOrUpdateForUser(userId),
+          createPasswordReset: async ({ _id: userId }: WithId<User>) =>
+            await passwordResetService.createOrUpdateForUser(userId),
 
-          deletePasswordReset: (id: string) => {
+          deletePasswordReset: async (id: string) => {
             if (!ObjectId.isValid(id)) {
               throw new BadRequestException(
                 `The provided password-reset record id: '${id}' - cannot be converted to an ObjectId.`,
               );
             }
 
-            return passwordResetService.delete(new ObjectId(id));
+            return await passwordResetService.delete(new ObjectId(id));
           },
 
           resetUserPassword: async (

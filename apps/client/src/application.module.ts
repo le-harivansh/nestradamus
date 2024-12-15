@@ -47,13 +47,18 @@ import applicationConfiguration from './application.config';
       inject: [ConfigurationService],
       useFactory: (configurationService: ConfigurationService) =>
         new ValidationPipe({
+          whitelist: true,
+
+          forbidNonWhitelisted: true,
+          forbidUnknownValues: true,
+
+          transformOptions: {
+            exposeUnsetFields: false,
+          },
+
           enableDebugMessages:
             configurationService.getOrThrow('application.environment') ===
             'development',
-          transform: true,
-          whitelist: true,
-          forbidNonWhitelisted: true,
-          forbidUnknownValues: true,
         }),
     },
   ],

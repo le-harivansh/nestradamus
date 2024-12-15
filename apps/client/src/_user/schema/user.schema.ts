@@ -1,10 +1,11 @@
 import { Inject, Injectable, OnApplicationBootstrap } from '@nestjs/common';
-import { Db } from 'mongodb';
+import { Exclude, Transform } from 'class-transformer';
+import { Db, ObjectId, WithId } from 'mongodb';
 
 import { DATABASE } from '@library/database';
 
 /**
- * Model
+ * Entity
  */
 export class User {
   constructor(
@@ -14,6 +15,28 @@ export class User {
     public readonly password: string,
     public readonly permissions: string[] = [],
   ) {}
+}
+
+/**
+ * Serializer
+ */
+export class SerializedUser {
+  @Transform(({ value }): string => value.toString())
+  public readonly _id!: ObjectId;
+
+  public readonly firstName!: string;
+  public readonly lastName!: string;
+
+  public readonly email!: string;
+
+  @Exclude()
+  public readonly password!: string;
+
+  public readonly permissions!: string[];
+
+  constructor(user: WithId<User>) {
+    Object.assign(this, user);
+  }
 }
 
 /**

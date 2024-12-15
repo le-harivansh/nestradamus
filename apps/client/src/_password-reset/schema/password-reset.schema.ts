@@ -6,7 +6,7 @@ import { DATABASE } from '@library/database';
 import { ConfigurationService } from '../../_configuration/service/configuration.service';
 
 /**
- * Model
+ * Entity
  */
 export class PasswordReset {
   constructor(

@@ -51,13 +51,55 @@ describe(UserRepository.name, () => {
     expect(userRepository).toBeDefined();
   });
 
+  describe(UserRepository.prototype.count.name, () => {
+    const userCount = 4;
+
+    beforeAll(async () => {
+      await userCollection.insertMany(
+        [...Array(userCount).keys()].map(() => fakeUserData()),
+      );
+    });
+
+    afterAll(async () => {
+      await database.dropDatabase();
+    });
+
+    it('returns the number of users in the database', async () => {
+      await expect(userRepository.count()).resolves.toBe(userCount);
+    });
+  });
+
+  describe(UserRepository.prototype.list.name, () => {
+    const userCount = 5;
+    const usersData = [...Array(userCount).keys()].map(() => fakeUserData());
+
+    beforeAll(async () => {
+      await userCollection.insertMany(usersData);
+    });
+
+    afterAll(async () => {
+      await database.dropDatabase();
+    });
+
+    it('returns the correct users based on the limit & offset', async () => {
+      const skip = 1;
+      const limit = 2;
+
+      const users = await userRepository.list(skip, limit);
+
+      expect(users.length).toBe(limit);
+
+      for (let i = 0; i < users.length; i++) {
+        expect(users[i]).toMatchObject(usersData[i + skip]!);
+      }
+    });
+  });
+
   describe(UserRepository.prototype.findById.name, () => {
     let userId: ObjectId;
 
     beforeAll(async () => {
-      ({ insertedId: userId } = await userCollection.insertOne(
-        new User('One', 'Two', 'user@email.dev', 'P@ssw0rd'),
-      ));
+      ({ insertedId: userId } = await userCollection.insertOne(fakeUserData()));
     });
 
     afterAll(async () => {

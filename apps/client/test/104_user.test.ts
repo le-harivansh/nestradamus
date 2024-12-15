@@ -1,12 +1,11 @@
 import { HttpStatus, INestApplication } from '@nestjs/common';
-import { Db, MongoClient, WithId } from 'mongodb';
+import { Db, MongoClient } from 'mongodb';
 import request from 'supertest';
 
+import { LOGIN_ROUTE } from '../src/_authentication/constant';
 import { UserController } from '../src/_user/controller/user.controller';
-import { UpdateGeneralUserDataDto } from '../src/_user/dto/update-general-user-data.dto';
-import { UpdateUserEmailDto } from '../src/_user/dto/update-user-email.dto';
-import { UpdateUserPasswordDto } from '../src/_user/dto/update-user-password.dto';
-import { User } from '../src/_user/schema/user.schema';
+import { CreateUserDto } from '../src/_user/dto/create-user.dto';
+import { UpdateUserDto } from '../src/_user/dto/update-user.dto';
 import {
   setupTestApplication,
   teardownTestApplication,
@@ -14,6 +13,7 @@ import {
 import {
   createUserAndGetAuthenticationCookies,
   deleteUser,
+  fakeUserData,
 } from './helper/user';
 
 describe(`${UserController.name} (e2e)`, () => {
@@ -32,38 +32,117 @@ describe(`${UserController.name} (e2e)`, () => {
     await teardownTestApplication(application, mongoClient, database);
   });
 
-  describe('GET /user', () => {
-    describe('[succeeds because]', () => {
-      let user: WithId<User>;
-      let accessTokenCookie: string;
+  describe('GET /users', () => {
+    let users: Awaited<
+      ReturnType<typeof createUserAndGetAuthenticationCookies>
+    >[];
 
-      beforeAll(async () => {
-        ({
-          user,
-          cookies: { accessToken: accessTokenCookie },
-        } = await createUserAndGetAuthenticationCookies(
-          {
-            email: 'user@email.dev',
-            password: 'P@ssw0rd',
-            permissions: ['user:read:own'],
-          },
+    beforeAll(async () => {
+      users = await Promise.all([
+        createUserAndGetAuthenticationCookies(
+          { permissions: ['user:list'] },
           application,
-        ));
+        ),
+        createUserAndGetAuthenticationCookies({}, application),
+        createUserAndGetAuthenticationCookies({}, application),
+        createUserAndGetAuthenticationCookies({}, application),
+      ]);
+    });
+
+    afterAll(async () => {
+      await Promise.all(
+        users.map(({ user }) => deleteUser(user._id, application)),
+      );
+    });
+
+    describe('[succeeds because]', () => {
+      it(`returns 'HTTP ${HttpStatus.OK}' with the specified number of users`, async () => {
+        const userWithListPermission = users[0]!;
+
+        const [skip, limit] = [1, 2];
+
+        const { status, body } = await request(application.getHttpServer())
+          .get(`/users?skip=${skip}&limit=${limit}`)
+          .set('Cookie', userWithListPermission.cookies.accessToken);
+
+        expect(status).toBe(HttpStatus.OK);
+
+        expect(body).toStrictEqual({
+          total: users.length,
+          skip,
+          limit,
+          users: expect.any(Array),
+        });
+
+        for (const user of body.users) {
+          expect(user).toStrictEqual({
+            _id: expect.any(String),
+            firstName: expect.any(String),
+            lastName: expect.any(String),
+            email: expect.any(String),
+            permissions: expect.any(Array),
+          });
+        }
+      });
+    });
+
+    describe('[fails because]', () => {
+      it(`returns 'HTTP ${HttpStatus.UNAUTHORIZED}' if the user is unauthenticated`, async () => {
+        const { status } = await request(application.getHttpServer()).get(
+          '/users',
+        );
+
+        expect(status).toBe(HttpStatus.UNAUTHORIZED);
       });
 
-      afterAll(async () => {
-        await deleteUser(user._id, application);
-      });
+      it(`returns 'HTTP ${HttpStatus.FORBIDDEN}' if the user does not have the 'user:list' permission`, async () => {
+        const userWithoutListPermission = users[1]!;
 
+        const { status } = await request(application.getHttpServer())
+          .get('/users')
+          .set('Cookie', userWithoutListPermission.cookies.accessToken);
+
+        expect(status).toBe(HttpStatus.FORBIDDEN);
+      });
+    });
+  });
+
+  describe('GET /user', () => {
+    let userWithReadPermission: Awaited<
+      ReturnType<typeof createUserAndGetAuthenticationCookies>
+    >;
+    let userWithoutReadPermission: Awaited<
+      ReturnType<typeof createUserAndGetAuthenticationCookies>
+    >;
+
+    beforeAll(async () => {
+      [userWithReadPermission, userWithoutReadPermission] = await Promise.all([
+        createUserAndGetAuthenticationCookies(
+          { permissions: ['user:read:own'] },
+          application,
+        ),
+        createUserAndGetAuthenticationCookies({}, application),
+      ]);
+    });
+
+    afterAll(async () => {
+      await Promise.all(
+        [userWithReadPermission, userWithoutReadPermission].map(({ user }) =>
+          deleteUser(user._id, application),
+        ),
+      );
+    });
+
+    describe('[succeeds because]', () => {
       it(`returns 'HTTP ${HttpStatus.OK}' with the current user's data - without the user's password`, async () => {
         const { status, body } = await request(application.getHttpServer())
           .get('/user')
-          .set('Cookie', accessTokenCookie);
+          .set('Cookie', userWithReadPermission.cookies.accessToken);
 
         expect(status).toBe(HttpStatus.OK);
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { password: _, ...userData } = user;
+        const { password: _, ...userData } = userWithReadPermission.user;
 
         expect(body).toStrictEqual({
           ...userData,
@@ -73,23 +152,6 @@ describe(`${UserController.name} (e2e)`, () => {
     });
 
     describe('[fails because]', () => {
-      let user: WithId<User>;
-      let accessTokenCookie: string;
-
-      beforeAll(async () => {
-        ({
-          user,
-          cookies: { accessToken: accessTokenCookie },
-        } = await createUserAndGetAuthenticationCookies(
-          { email: 'user@email.dev', password: 'P@ssw0rd' },
-          application,
-        ));
-      });
-
-      afterAll(async () => {
-        await deleteUser(user._id, application);
-      });
-
       it(`returns 'HTTP ${HttpStatus.UNAUTHORIZED}' if the user is unauthenticated`, async () => {
         const { status } = await request(application.getHttpServer()).get(
           '/user',
@@ -101,87 +163,321 @@ describe(`${UserController.name} (e2e)`, () => {
       it(`returns 'HTTP ${HttpStatus.FORBIDDEN}' if the user does not have the 'user:read:own' permission`, async () => {
         const { status } = await request(application.getHttpServer())
           .get('/user')
-          .set('Cookie', accessTokenCookie);
+          .set('Cookie', userWithoutReadPermission.cookies.accessToken);
 
         expect(status).toBe(HttpStatus.FORBIDDEN);
       });
+    });
+  });
+
+  describe('GET /user/:id', () => {
+    let userWithFullReadPermissions: Awaited<
+      ReturnType<typeof createUserAndGetAuthenticationCookies>
+    >;
+    let userWithOnlyOtherReadPermission: Awaited<
+      ReturnType<typeof createUserAndGetAuthenticationCookies>
+    >;
+    let userWithoutReadPermissions: Awaited<
+      ReturnType<typeof createUserAndGetAuthenticationCookies>
+    >;
+
+    beforeAll(async () => {
+      [
+        userWithFullReadPermissions,
+        userWithOnlyOtherReadPermission,
+        userWithoutReadPermissions,
+      ] = await Promise.all([
+        createUserAndGetAuthenticationCookies(
+          { permissions: ['user:read:own', 'user:read:others'] },
+          application,
+        ),
+        createUserAndGetAuthenticationCookies(
+          { permissions: ['user:read:others'] },
+          application,
+        ),
+        createUserAndGetAuthenticationCookies({}, application),
+      ]);
+    });
+
+    afterAll(async () => {
+      await Promise.all(
+        [
+          userWithFullReadPermissions,
+          userWithOnlyOtherReadPermission,
+          userWithoutReadPermissions,
+        ].map(({ user }) => deleteUser(user._id, application)),
+      );
+    });
+
+    describe('[succeeds because]', () => {
+      it(`returns 'HTTP ${HttpStatus.OK}' with the queried user's data without the user's password`, async () => {
+        const { status, body } = await request(application.getHttpServer())
+          .get(`/user/${userWithOnlyOtherReadPermission.user._id.toString()}`)
+          .set('Cookie', userWithFullReadPermissions.cookies.accessToken);
+
+        expect(status).toBe(HttpStatus.OK);
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { password: _, ...userData } =
+          userWithOnlyOtherReadPermission.user;
+
+        expect(body).toStrictEqual({
+          ...userData,
+          _id: userData._id.toString(),
+        });
+      });
+
+      it(`returns 'HTTP ${HttpStatus.OK}' if the authenticated user queries itself and it has the 'user:read:own' permission`, async () => {
+        const { status, body } = await request(application.getHttpServer())
+          .get(`/user/${userWithFullReadPermissions.user._id.toString()}`)
+          .set('Cookie', userWithFullReadPermissions.cookies.accessToken);
+
+        expect(status).toBe(HttpStatus.OK);
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { password: _, ...userData } = userWithFullReadPermissions.user;
+
+        expect(body).toStrictEqual({
+          ...userData,
+          _id: userData._id.toString(),
+        });
+      });
+    });
+
+    describe('[fails because]', () => {
+      it(`returns 'HTTP ${HttpStatus.UNAUTHORIZED}' if the user is unauthenticated`, async () => {
+        const { status } = await request(application.getHttpServer()).get(
+          `/user/${userWithFullReadPermissions.user._id.toString()}`,
+        );
+
+        expect(status).toBe(HttpStatus.UNAUTHORIZED);
+      });
+
+      it(`returns 'HTTP ${HttpStatus.FORBIDDEN}' if the user does not have the 'user:read:others' permission`, async () => {
+        const { status } = await request(application.getHttpServer())
+          .get(`/user/${userWithFullReadPermissions.user._id.toString()}`)
+          .set('Cookie', userWithoutReadPermissions.cookies.accessToken);
+
+        expect(status).toBe(HttpStatus.FORBIDDEN);
+      });
+
+      it(`returns 'HTTP ${HttpStatus.FORBIDDEN}' if the authenticated user queries itself but it does not have the 'user:read:own' permission`, async () => {
+        const { status } = await request(application.getHttpServer())
+          .get(`/user/${userWithOnlyOtherReadPermission.user._id.toString()}`)
+          .set('Cookie', userWithOnlyOtherReadPermission.cookies.accessToken);
+
+        expect(status).toBe(HttpStatus.FORBIDDEN);
+      });
+    });
+  });
+
+  describe('POST /user', () => {
+    let userWithCreatePermission: Awaited<
+      ReturnType<typeof createUserAndGetAuthenticationCookies>
+    >;
+    let userWithoutCreatePermission: Awaited<
+      ReturnType<typeof createUserAndGetAuthenticationCookies>
+    >;
+
+    beforeAll(async () => {
+      [userWithCreatePermission, userWithoutCreatePermission] =
+        await Promise.all([
+          createUserAndGetAuthenticationCookies(
+            { permissions: ['user:create'] },
+            application,
+          ),
+          createUserAndGetAuthenticationCookies({}, application),
+        ]);
+    });
+
+    afterAll(async () => {
+      await Promise.all(
+        [userWithCreatePermission, userWithoutCreatePermission].map(
+          ({ user }) => deleteUser(user._id, application),
+        ),
+      );
+    });
+
+    describe('[succeeds because]', () => {
+      it(`returns 'HTTP ${HttpStatus.CREATED}' with the new user's data - without the user's password`, async () => {
+        const newUserData: CreateUserDto = fakeUserData();
+
+        const { status, body } = await request(application.getHttpServer())
+          .post('/user')
+          .set('Cookie', userWithCreatePermission.cookies.accessToken)
+          .send(newUserData);
+
+        expect(status).toBe(HttpStatus.CREATED);
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { password: _, ...newUserDataWithoutPassword } = newUserData;
+
+        expect(body).toMatchObject({
+          ...newUserDataWithoutPassword,
+        });
+      });
+    });
+
+    describe('[fails because]', () => {
+      const newUserData: CreateUserDto = fakeUserData();
+
+      it(`returns 'HTTP ${HttpStatus.UNAUTHORIZED}' if the user is unauthenticated`, async () => {
+        const { status } = await request(application.getHttpServer())
+          .post('/user')
+          .send(newUserData);
+
+        expect(status).toBe(HttpStatus.UNAUTHORIZED);
+      });
+
+      it(`returns 'HTTP ${HttpStatus.FORBIDDEN}' if the user does not have the 'user:create' permission`, async () => {
+        const { status } = await request(application.getHttpServer())
+          .post('/user')
+          .set('Cookie', userWithoutCreatePermission.cookies.accessToken)
+          .send(newUserData);
+
+        expect(status).toBe(HttpStatus.FORBIDDEN);
+      });
+
+      it.each<Partial<CreateUserDto>>([
+        { ...newUserData, firstName: '' },
+        { ...newUserData, lastName: '' },
+        { ...newUserData, email: '' },
+        { ...newUserData, password: '' },
+        { ...newUserData, permissions: ['invalid:permission'] },
+      ])(
+        `returns 'HTTP ${HttpStatus.BAD_REQUEST}' if invalid data is sent`,
+        async (invalidUserData) => {
+          const { status } = await request(application.getHttpServer())
+            .post('/user')
+            .set('Cookie', userWithCreatePermission.cookies.accessToken)
+            .send(invalidUserData);
+
+          expect(status).toBe(HttpStatus.BAD_REQUEST);
+        },
+      );
     });
   });
 
   describe('PATCH /user', () => {
-    describe('[succeeds because]', () => {
-      let user: WithId<User>;
-      let accessTokenCookie: string;
+    let userToUpdateWithUpdatePermission: Awaited<
+      ReturnType<typeof createUserAndGetAuthenticationCookies>
+    >;
+    let userWithUpdatePermission: Awaited<
+      ReturnType<typeof createUserAndGetAuthenticationCookies>
+    >;
+    let userWithoutUpdatePermission: Awaited<
+      ReturnType<typeof createUserAndGetAuthenticationCookies>
+    >;
 
-      beforeAll(async () => {
-        ({
-          user,
-          cookies: { accessToken: accessTokenCookie },
-        } = await createUserAndGetAuthenticationCookies(
-          {
-            email: 'user@email.dev',
-            password: 'P@ssw0rd',
-            permissions: ['user:update:own'],
-          },
+    beforeAll(async () => {
+      [
+        userToUpdateWithUpdatePermission,
+        userWithUpdatePermission,
+        userWithoutUpdatePermission,
+      ] = await Promise.all([
+        createUserAndGetAuthenticationCookies(
+          { permissions: ['user:update:own'] },
           application,
-        ));
-      });
+        ),
+        createUserAndGetAuthenticationCookies(
+          { permissions: ['user:update:own'] },
+          application,
+        ),
+        createUserAndGetAuthenticationCookies({}, application),
+      ]);
+    });
 
-      afterAll(async () => {
-        await deleteUser(user._id, application);
-      });
+    afterAll(async () => {
+      await Promise.all(
+        [
+          userToUpdateWithUpdatePermission,
+          userWithUpdatePermission,
+          userWithoutUpdatePermission,
+        ].map(({ user }) => deleteUser(user._id, application)),
+      );
+    });
 
-      it(`returns 'HTTP ${HttpStatus.OK}' with the updated user's data - without the user's password`, async () => {
-        const updatedUserData: UpdateGeneralUserDataDto = {
-          firstName: 'Updated FirstName',
-          lastName: 'Updated LastName',
+    describe('[succeeds because]', () => {
+      it.each<UpdateUserDto>([
+        { firstName: 'UpdatedFirstName' },
+        { lastName: 'UpdatedLastName' },
+        { permissions: ['user:update:own', 'user:read:own'] },
+      ])(
+        `returns 'HTTP ${HttpStatus.OK}' with the updated user's (non-credentials) data - without the user's password`,
+        async (updatedUserData) => {
+          const { status, body } = await request(application.getHttpServer())
+            .patch('/user')
+            .set('Cookie', [
+              userToUpdateWithUpdatePermission.cookies.accessToken,
+              userToUpdateWithUpdatePermission.cookies.confirmPassword,
+            ])
+            .send(updatedUserData);
+
+          expect(status).toBe(HttpStatus.OK);
+
+          const {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            password: _authenticatedUserPassword,
+            ...authenticatedUserData
+          } = userToUpdateWithUpdatePermission.user;
+
+          expect(body).toMatchObject({
+            _id: authenticatedUserData._id.toString(),
+            ...updatedUserData,
+          });
+        },
+      );
+
+      it('successfully updates the user credentials', async () => {
+        const newCredentials = {
+          email: 'updated-user@email.dev',
+          password: 'Updated-P@ssw0rd',
         };
 
-        const { status, body } = await request(application.getHttpServer())
+        const { status: updateStatus } = await request(
+          application.getHttpServer(),
+        )
           .patch('/user')
-          .set('Cookie', accessTokenCookie)
-          .send(updatedUserData);
+          .set('Cookie', [
+            userToUpdateWithUpdatePermission.cookies.accessToken,
+            userToUpdateWithUpdatePermission.cookies.confirmPassword,
+          ])
+          .send(newCredentials);
 
-        expect(status).toBe(HttpStatus.OK);
+        expect(updateStatus).toBe(HttpStatus.OK);
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { password: _, ...userData } = user;
+        const { status: loginStatus } = await request(
+          application.getHttpServer(),
+        )
+          .post(`/${LOGIN_ROUTE}`)
+          .send({
+            username: newCredentials.email,
+            password: newCredentials.password,
+          });
 
-        expect(body).toStrictEqual({
-          ...userData,
-          _id: userData._id.toString(),
-          ...updatedUserData,
-        });
+        expect(loginStatus).toBe(HttpStatus.NO_CONTENT);
       });
     });
 
     describe('[fails because]', () => {
-      const updatedUserData: UpdateGeneralUserDataDto = {
+      const userUpdateData: UpdateUserDto = {
         firstName: 'Updated FirstName',
         lastName: 'Updated LastName',
       };
 
-      let user: WithId<User>;
-      let accessTokenCookie: string;
-
-      beforeAll(async () => {
-        ({
-          user,
-          cookies: { accessToken: accessTokenCookie },
-        } = await createUserAndGetAuthenticationCookies(
-          { email: 'user@email.dev', password: 'P@ssw0rd' },
-          application,
-        ));
-      });
-
-      afterAll(async () => {
-        await deleteUser(user._id, application);
-      });
-
       it(`returns 'HTTP ${HttpStatus.UNAUTHORIZED}' if the user is unauthenticated`, async () => {
         const { status } = await request(application.getHttpServer())
           .patch('/user')
-          .send(updatedUserData);
+          .send(userUpdateData);
+
+        expect(status).toBe(HttpStatus.UNAUTHORIZED);
+      });
+
+      it(`returns 'HTTP ${HttpStatus.UNAUTHORIZED}' if the user does not have the password-confirmation cookie`, async () => {
+        const { status } = await request(application.getHttpServer())
+          .patch('/user')
+          .set('Cookie', userWithUpdatePermission.cookies.accessToken)
+          .send(userUpdateData);
 
         expect(status).toBe(HttpStatus.UNAUTHORIZED);
       });
@@ -189,324 +485,251 @@ describe(`${UserController.name} (e2e)`, () => {
       it(`returns 'HTTP ${HttpStatus.FORBIDDEN}' if the user does not have the 'user:update:own' permission`, async () => {
         const { status } = await request(application.getHttpServer())
           .patch('/user')
-          .set('Cookie', accessTokenCookie)
-          .send(updatedUserData);
+          .set('Cookie', [
+            userWithoutUpdatePermission.cookies.accessToken,
+            userWithoutUpdatePermission.cookies.confirmPassword,
+          ])
+          .send(userUpdateData);
 
         expect(status).toBe(HttpStatus.FORBIDDEN);
       });
+
+      it.each<() => UpdateUserDto>([
+        // We use callbacks here because some necessary variables are still uninitialized at this point.
+
+        () => ({ firstName: '' }), // empty string
+        () => ({ lastName: '' }), // empty string
+
+        () => ({ email: '' }), // empty string
+        () => ({ email: 'invalid-email' }), // invalid email
+        () => ({ email: userWithUpdatePermission.user.email }), // existing email
+
+        () => ({ password: '' }), // empty string
+        () => ({ password: 'P@s5' }), // less than min-length
+        () => ({ password: 'p@ssw0rd' }), // no uppercase
+        () => ({ password: 'P@SSW0RD' }), // no lowercase
+        () => ({ password: 'P@ssword' }), // no numbers
+        () => ({ password: 'Passw0rd' }), // no special characters
+      ])(
+        `returns 'HTTP ${HttpStatus.BAD_REQUEST}' if invalid data is sent`,
+        async (getUserUpdateData) => {
+          const { status } = await request(application.getHttpServer())
+            .patch('/user')
+            .set('Cookie', [
+              userWithUpdatePermission.cookies.accessToken,
+              userWithUpdatePermission.cookies.confirmPassword,
+            ])
+            .send(getUserUpdateData());
+
+          expect(status).toBe(HttpStatus.BAD_REQUEST);
+        },
+      );
     });
   });
 
-  describe('PATCH /user/email', () => {
+  describe('PATCH /user/:id', () => {
+    let userWithUpdatePermission: Awaited<
+      ReturnType<typeof createUserAndGetAuthenticationCookies>
+    >;
+    let userWithoutUpdatePermission: Awaited<
+      ReturnType<typeof createUserAndGetAuthenticationCookies>
+    >;
+
+    beforeAll(async () => {
+      [userWithUpdatePermission, userWithoutUpdatePermission] =
+        await Promise.all([
+          createUserAndGetAuthenticationCookies(
+            { permissions: ['user:update:others'] },
+            application,
+          ),
+          createUserAndGetAuthenticationCookies({}, application),
+        ]);
+    });
+
+    afterAll(async () => {
+      await Promise.all(
+        [userWithUpdatePermission, userWithoutUpdatePermission].map(
+          ({ user }) => deleteUser(user._id, application),
+        ),
+      );
+    });
+
     describe('[succeeds because]', () => {
-      let user: WithId<User>;
-      let accessTokenCookie: string;
-      let passwordConfirmationCookie: string;
+      it.each<UpdateUserDto>([
+        { firstName: 'UpdatedFirstName' },
+        { lastName: 'UpdatedLastName' },
+        { permissions: ['user:read:own'] },
+      ])(
+        `returns 'HTTP ${HttpStatus.OK}' with the specified updated user's data - without the user's password`,
+        async (updatedUserData) => {
+          const { status, body } = await request(application.getHttpServer())
+            .patch(`/user/${userWithoutUpdatePermission.user._id}`)
+            .set('Cookie', [
+              userWithUpdatePermission.cookies.accessToken,
+              userWithUpdatePermission.cookies.confirmPassword,
+            ])
+            .send(updatedUserData);
 
-      beforeAll(async () => {
-        ({
-          user,
-          cookies: {
-            accessToken: accessTokenCookie,
-            confirmPassword: passwordConfirmationCookie,
-          },
-        } = await createUserAndGetAuthenticationCookies(
-          {
-            email: 'user@email.dev',
-            password: 'P@ssw0rd',
-            permissions: ['user:update:own'],
-          },
-          application,
-        ));
-      });
+          expect(status).toBe(HttpStatus.OK);
 
-      afterAll(async () => {
-        await deleteUser(user._id, application);
-      });
+          const {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            password: _,
+            ...userData
+          } = userWithoutUpdatePermission.user;
 
-      it(`returns 'HTTP ${HttpStatus.OK}' with the updated user's email - without the user's password`, async () => {
-        const updatedUserEmail: UpdateUserEmailDto = {
+          expect(body).toMatchObject({
+            _id: userData._id.toString(),
+            ...updatedUserData,
+          });
+        },
+      );
+
+      it('successfully updates the user credentials', async () => {
+        const newCredentials = {
           email: 'updated-user@email.dev',
+          password: 'Updated-P@ssw0rd',
         };
 
-        const { status, body } = await request(application.getHttpServer())
-          .patch('/user/email')
-          .send(updatedUserEmail)
-          .set('Cookie', [accessTokenCookie, passwordConfirmationCookie]);
+        const { status: updateStatus } = await request(
+          application.getHttpServer(),
+        )
+          .patch(`/user/${userWithoutUpdatePermission.user._id}`)
+          .set('Cookie', [
+            userWithUpdatePermission.cookies.accessToken,
+            userWithUpdatePermission.cookies.confirmPassword,
+          ])
+          .send(newCredentials);
 
-        expect(status).toBe(HttpStatus.OK);
+        expect(updateStatus).toBe(HttpStatus.OK);
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { password: _, ...userData } = user;
+        const { status: loginStatus } = await request(
+          application.getHttpServer(),
+        )
+          .post(`/${LOGIN_ROUTE}`)
+          .send({
+            username: newCredentials.email,
+            password: newCredentials.password,
+          });
 
-        expect(body).toStrictEqual({
-          ...userData,
-          _id: userData._id.toString(),
-          ...updatedUserEmail,
-        });
+        expect(loginStatus).toBe(HttpStatus.NO_CONTENT);
       });
     });
 
     describe('[fails because]', () => {
-      const updatedUserEmail: UpdateUserEmailDto = {
-        email: 'updated-user@email.dev',
+      const userUpdateData: UpdateUserDto = {
+        firstName: 'Updated FirstName',
+        lastName: 'Updated LastName',
       };
-
-      let userWithPermission: Awaited<
-        ReturnType<typeof createUserAndGetAuthenticationCookies>
-      >;
-      let userWithoutPermission: Awaited<
-        ReturnType<typeof createUserAndGetAuthenticationCookies>
-      >;
-
-      beforeAll(async () => {
-        userWithPermission = await createUserAndGetAuthenticationCookies(
-          {
-            email: 'user-1@email.dev',
-            password: 'P@ssw0rd-1',
-            permissions: ['user:update:own'],
-          },
-          application,
-        );
-        userWithoutPermission = await createUserAndGetAuthenticationCookies(
-          { email: 'user-2@email.dev', password: 'P@ssw0rd-2' },
-          application,
-        );
-      });
-
-      afterAll(async () => {
-        await Promise.all(
-          [userWithPermission, userWithoutPermission].map(({ user }) =>
-            deleteUser(user._id, application),
-          ),
-        );
-      });
 
       it(`returns 'HTTP ${HttpStatus.UNAUTHORIZED}' if the user is unauthenticated`, async () => {
         const { status } = await request(application.getHttpServer())
-          .patch('/user/email')
-          .send(updatedUserEmail);
+          .patch(`/user/${userWithoutUpdatePermission.user._id}`)
+          .send(userUpdateData);
 
         expect(status).toBe(HttpStatus.UNAUTHORIZED);
       });
 
-      it(`returns 'HTTP ${HttpStatus.UNAUTHORIZED}' if the user is authenticated, but lacks the password-confirmation cookie`, async () => {
+      it(`returns 'HTTP ${HttpStatus.FORBIDDEN}' if the user does not have the 'user:update:others' permission`, async () => {
         const { status } = await request(application.getHttpServer())
-          .patch('/user/email')
-          .set('Cookie', userWithPermission.cookies.accessToken)
-          .send(updatedUserEmail);
-
-        expect(status).toBe(HttpStatus.UNAUTHORIZED);
-      });
-
-      it(`returns 'HTTP ${HttpStatus.FORBIDDEN}' if the user does not have the 'user:update:own' permission`, async () => {
-        const { status } = await request(application.getHttpServer())
-          .patch('/user/email')
+          .patch(`/user/${userWithUpdatePermission.user._id}`)
           .set('Cookie', [
-            userWithoutPermission.cookies.accessToken,
-            userWithoutPermission.cookies.confirmPassword,
+            userWithoutUpdatePermission.cookies.accessToken,
+            userWithoutUpdatePermission.cookies.confirmPassword,
           ])
-          .send(updatedUserEmail);
+          .send(userUpdateData);
 
         expect(status).toBe(HttpStatus.FORBIDDEN);
       });
 
-      it(`returns 'HTTP ${HttpStatus.BAD_REQUEST}' if the provided email address already exists in the collection.`, async () => {
-        const { status } = await request(application.getHttpServer())
-          .patch('/user/email')
-          .set('Cookie', [
-            userWithPermission.cookies.accessToken,
-            userWithPermission.cookies.confirmPassword,
-          ])
-          .send(userWithoutPermission.user.email);
+      it.each<() => UpdateUserDto>([
+        // We use callbacks here because some necessary variables are still uninitialized at this point.
 
-        expect(status).toBe(HttpStatus.BAD_REQUEST);
-      });
-    });
-  });
+        () => ({ firstName: '' }), // empty string
+        () => ({ lastName: '' }), // empty string
 
-  describe('PATCH /user/password', () => {
-    describe('[succeeds because]', () => {
-      const updatedUserPassword: UpdateUserPasswordDto = {
-        password: 'Upd@t3d-P@ssw0rd',
-      };
+        () => ({ email: '' }), // empty string
+        () => ({ email: 'invalid-email' }), // invalid email
+        () => ({ email: userWithUpdatePermission.user.email }), // existing email
 
-      let user: WithId<User>;
-      let accessTokenCookie: string;
-      let passwordConfirmationCookie: string;
+        () => ({ password: '' }), // empty string
+        () => ({ password: 'P@s5' }), // less than min-length
+        () => ({ password: 'p@ssw0rd' }), // no uppercase
+        () => ({ password: 'P@SSW0RD' }), // no lowercase
+        () => ({ password: 'P@ssword' }), // no numbers
+        () => ({ password: 'Passw0rd' }), // no special characters
+      ])(
+        `returns 'HTTP ${HttpStatus.BAD_REQUEST}' if invalid data is sent`,
+        async (getUserUpdateData) => {
+          const { status } = await request(application.getHttpServer())
+            .patch(`/user/${userWithoutUpdatePermission.user._id}`)
+            .set('Cookie', [
+              userWithUpdatePermission.cookies.accessToken,
+              userWithUpdatePermission.cookies.confirmPassword,
+            ])
+            .send(getUserUpdateData());
 
-      beforeAll(async () => {
-        ({
-          user,
-          cookies: {
-            accessToken: accessTokenCookie,
-            confirmPassword: passwordConfirmationCookie,
-          },
-        } = await createUserAndGetAuthenticationCookies(
-          {
-            email: 'user@email.dev',
-            password: 'P@ssw0rd',
-            permissions: ['user:update:own'],
-          },
-          application,
-        ));
-      });
-
-      afterAll(async () => {
-        await deleteUser(user._id, application);
-      });
-
-      it(`returns 'HTTP ${HttpStatus.OK}' without the user's password`, async () => {
-        const { status, body } = await request(application.getHttpServer())
-          .patch('/user/password')
-          .send(updatedUserPassword)
-          .set('Cookie', [accessTokenCookie, passwordConfirmationCookie]);
-
-        expect(status).toBe(HttpStatus.OK);
-
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { password: _, ...userData } = user;
-
-        expect(body).toStrictEqual({
-          ...userData,
-          _id: userData._id.toString(),
-          // We should not expect the password here.
-        });
-      });
-    });
-
-    describe('[fails because]', () => {
-      const updatedUserPassword: UpdateUserPasswordDto = {
-        password: 'Upd@t3d-P@ssw0rd',
-      };
-
-      let userWithPermission: Awaited<
-        ReturnType<typeof createUserAndGetAuthenticationCookies>
-      >;
-      let userWithoutPermission: Awaited<
-        ReturnType<typeof createUserAndGetAuthenticationCookies>
-      >;
-
-      beforeAll(async () => {
-        userWithPermission = await createUserAndGetAuthenticationCookies(
-          {
-            email: 'user-1@email.dev',
-            password: 'P@ssw0rd-1',
-            permissions: ['user:update:own'],
-          },
-          application,
-        );
-        userWithoutPermission = await createUserAndGetAuthenticationCookies(
-          { email: 'user-2@email.dev', password: 'P@ssw0rd-2' },
-          application,
-        );
-      });
-
-      afterAll(async () => {
-        await Promise.all(
-          [userWithPermission, userWithoutPermission].map(({ user }) =>
-            deleteUser(user._id, application),
-          ),
-        );
-      });
-
-      it(`returns 'HTTP ${HttpStatus.UNAUTHORIZED}' if the user is unauthenticated`, async () => {
-        const { status } = await request(application.getHttpServer())
-          .patch('/user/password')
-          .send(updatedUserPassword);
-
-        expect(status).toBe(HttpStatus.UNAUTHORIZED);
-      });
-
-      it(`returns 'HTTP ${HttpStatus.UNAUTHORIZED}' if the user is authenticated, but lacks the password-confirmation cookie`, async () => {
-        const { status } = await request(application.getHttpServer())
-          .patch('/user/password')
-          .set('Cookie', userWithPermission.cookies.accessToken)
-          .send(updatedUserPassword);
-
-        expect(status).toBe(HttpStatus.UNAUTHORIZED);
-      });
-
-      it(`returns 'HTTP ${HttpStatus.FORBIDDEN}' if the user does not have the 'user:update:own' permission`, async () => {
-        const { status } = await request(application.getHttpServer())
-          .patch('/user/password')
-          .set('Cookie', [
-            userWithoutPermission.cookies.accessToken,
-            userWithoutPermission.cookies.confirmPassword,
-          ])
-          .send(updatedUserPassword);
-
-        expect(status).toBe(HttpStatus.FORBIDDEN);
-      });
+          expect(status).toBe(HttpStatus.BAD_REQUEST);
+        },
+      );
     });
   });
 
   describe('DELETE /user', () => {
-    describe('[succeeds because]', () => {
-      let accessTokenCookie: string;
-      let passwordConfirmationCookie: string;
+    let userToDeleteWithDeletePermission: Awaited<
+      ReturnType<typeof createUserAndGetAuthenticationCookies>
+    >;
+    let userWithDeletePermission: Awaited<
+      ReturnType<typeof createUserAndGetAuthenticationCookies>
+    >;
+    let userWithoutDeletePermission: Awaited<
+      ReturnType<typeof createUserAndGetAuthenticationCookies>
+    >;
 
-      beforeAll(async () => {
-        ({
-          cookies: {
-            accessToken: accessTokenCookie,
-            confirmPassword: passwordConfirmationCookie,
-          },
-        } = await createUserAndGetAuthenticationCookies(
-          {
-            email: 'user@email.dev',
-            password: 'P@ssw0rd',
-            permissions: ['user:delete:own'],
-          },
+    beforeAll(async () => {
+      [
+        userToDeleteWithDeletePermission,
+        userWithDeletePermission,
+        userWithoutDeletePermission,
+      ] = await Promise.all([
+        createUserAndGetAuthenticationCookies(
+          { permissions: ['user:delete:own'] },
           application,
-        ));
-      });
+        ),
+        createUserAndGetAuthenticationCookies(
+          { permissions: ['user:delete:own'] },
+          application,
+        ),
+        createUserAndGetAuthenticationCookies({}, application),
+      ]);
+    });
 
-      /**
-       * We do not have to delete the user after the test because it will
-       * be deleted during the test.
-       */
+    afterAll(async () => {
+      await Promise.all(
+        /**
+         * `userToDeleteWithDeletePermission` is already deleted during the
+         * 'success' test, and therefore, does not have to be deleted.
+         */
+        [userWithDeletePermission, userWithoutDeletePermission].map(
+          ({ user }) => deleteUser(user._id, application),
+        ),
+      );
+    });
 
+    describe('[succeeds because]', () => {
       it(`returns 'HTTP ${HttpStatus.NO_CONTENT}'`, async () => {
         const { status } = await request(application.getHttpServer())
           .delete('/user')
-          .set('Cookie', [accessTokenCookie, passwordConfirmationCookie]);
+          .set('Cookie', [
+            userToDeleteWithDeletePermission.cookies.accessToken,
+            userToDeleteWithDeletePermission.cookies.confirmPassword,
+          ]);
 
         expect(status).toBe(HttpStatus.NO_CONTENT);
       });
     });
 
     describe('[fails because]', () => {
-      let userWithPermission: Awaited<
-        ReturnType<typeof createUserAndGetAuthenticationCookies>
-      >;
-      let userWithoutPermission: Awaited<
-        ReturnType<typeof createUserAndGetAuthenticationCookies>
-      >;
-
-      beforeAll(async () => {
-        userWithPermission = await createUserAndGetAuthenticationCookies(
-          {
-            email: 'user-1@email.dev',
-            password: 'P@ssw0rd-1',
-            permissions: ['user:delete:own'],
-          },
-          application,
-        );
-        userWithoutPermission = await createUserAndGetAuthenticationCookies(
-          { email: 'user-2@email.dev', password: 'P@ssw0rd-2' },
-          application,
-        );
-      });
-
-      afterAll(async () => {
-        await Promise.all(
-          [userWithPermission, userWithoutPermission].map(({ user }) =>
-            deleteUser(user._id, application),
-          ),
-        );
-      });
-
       it(`returns 'HTTP ${HttpStatus.UNAUTHORIZED}' if the user is unauthenticated`, async () => {
         const { status } = await request(application.getHttpServer()).delete(
           '/user',
@@ -518,7 +741,7 @@ describe(`${UserController.name} (e2e)`, () => {
       it(`returns 'HTTP ${HttpStatus.UNAUTHORIZED}' if the user is authenticated, but lacks the password-confirmation cookie`, async () => {
         const { status } = await request(application.getHttpServer())
           .delete('/user')
-          .set('Cookie', userWithPermission.cookies.accessToken);
+          .set('Cookie', userWithDeletePermission.cookies.accessToken);
 
         expect(status).toBe(HttpStatus.UNAUTHORIZED);
       });
@@ -527,9 +750,80 @@ describe(`${UserController.name} (e2e)`, () => {
         const { status } = await request(application.getHttpServer())
           .delete('/user')
           .set('Cookie', [
-            userWithoutPermission.cookies.accessToken,
-            userWithoutPermission.cookies.confirmPassword,
+            userWithoutDeletePermission.cookies.accessToken,
+            userWithoutDeletePermission.cookies.confirmPassword,
           ]);
+
+        expect(status).toBe(HttpStatus.FORBIDDEN);
+      });
+    });
+  });
+
+  describe('DELETE /user/:id', () => {
+    let userWithDeletePermission: Awaited<
+      ReturnType<typeof createUserAndGetAuthenticationCookies>
+    >;
+    let userToDelete: Awaited<
+      ReturnType<typeof createUserAndGetAuthenticationCookies>
+    >;
+    let userWithoutDeletePermission: Awaited<
+      ReturnType<typeof createUserAndGetAuthenticationCookies>
+    >;
+
+    beforeAll(async () => {
+      [userWithDeletePermission, userToDelete, userWithoutDeletePermission] =
+        await Promise.all([
+          createUserAndGetAuthenticationCookies(
+            { permissions: ['user:delete:others'] },
+            application,
+          ),
+          createUserAndGetAuthenticationCookies({}, application),
+          createUserAndGetAuthenticationCookies({}, application),
+        ]);
+    });
+
+    afterAll(async () => {
+      await Promise.all(
+        /**
+         * We only delete the users that have not been deleted by the tests.
+         */
+        [userWithDeletePermission, userWithoutDeletePermission].map(
+          ({ user }) => deleteUser(user._id, application),
+        ),
+      );
+    });
+
+    describe('[succeeds because]', () => {
+      it(`returns 'HTTP ${HttpStatus.NO_CONTENT}' if the user has 'user:delete:others' and tries to delete another user`, async () => {
+        const { status } = await request(application.getHttpServer())
+          .delete(`/user/${userToDelete.user._id.toString()}`)
+          .set('Cookie', userWithDeletePermission.cookies.accessToken);
+
+        expect(status).toBe(HttpStatus.NO_CONTENT);
+      });
+    });
+
+    describe('[fails because]', () => {
+      it(`returns 'HTTP ${HttpStatus.UNAUTHORIZED}' if the user is unauthenticated`, async () => {
+        const { status } = await request(application.getHttpServer()).delete(
+          `/user/${userWithoutDeletePermission.user._id.toString()}`,
+        );
+
+        expect(status).toBe(HttpStatus.UNAUTHORIZED);
+      });
+
+      it(`returns 'HTTP ${HttpStatus.FORBIDDEN}' if the user does not have the 'user:delete:others' permission`, async () => {
+        const { status } = await request(application.getHttpServer())
+          .delete(`/user/${userWithoutDeletePermission.user._id.toString()}`)
+          .set('Cookie', userWithoutDeletePermission.cookies.accessToken);
+
+        expect(status).toBe(HttpStatus.FORBIDDEN);
+      });
+
+      it(`returns 'HTTP ${HttpStatus.FORBIDDEN}' if the user tries to delete itself`, async () => {
+        const { status } = await request(application.getHttpServer())
+          .delete(`/user/${userWithDeletePermission.user._id.toString()}`)
+          .set('Cookie', userWithDeletePermission.cookies.accessToken);
 
         expect(status).toBe(HttpStatus.FORBIDDEN);
       });

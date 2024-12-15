@@ -12,6 +12,14 @@ export class UserRepository {
     this.collection = database.collection<User>(UserSchema.collectionName);
   }
 
+  count() {
+    return this.collection.countDocuments();
+  }
+
+  list(skip: number, limit: number) {
+    return this.collection.find().skip(skip).limit(limit).toArray();
+  }
+
   findById(id: ObjectId) {
     return this.collection.findOne({ _id: id });
   }

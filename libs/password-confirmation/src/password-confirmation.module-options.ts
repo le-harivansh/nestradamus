@@ -47,7 +47,7 @@ export const passwordConfirmationModuleOptionsValidationSchema = z.object({
        * (request: Request) => request.user,
        * ```
        */
-      retrieveFrom: z.function().args(z.any()).returns(z.unknown()),
+      retrieveFromRequest: z.function().args(z.any()).returns(z.unknown()),
 
       /**
        * The callback that is used to verify whether the provided password is

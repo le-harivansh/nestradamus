@@ -11,6 +11,7 @@ import {
 import { AUTHORIZATION_PERMISSIONS_CONTAINER } from './constant';
 import { PermissionContainer } from './helper/permission-container';
 import { UserCallbackService } from './service/user-callback.service';
+import { PermissionValidatorConstraint } from './validator/constraint/permission.validator-constraint';
 
 @Module({
   providers: [
@@ -25,8 +26,14 @@ import { UserCallbackService } from './service/user-callback.service';
     },
 
     UserCallbackService,
+
+    PermissionValidatorConstraint,
   ],
-  exports: [AUTHORIZATION_PERMISSIONS_CONTAINER, UserCallbackService],
+  exports: [
+    AUTHORIZATION_PERMISSIONS_CONTAINER,
+    UserCallbackService,
+    PermissionValidatorConstraint,
+  ],
 })
 export class AuthorizationModule extends AuthorizationConfigurableModuleClass {
   constructor(

@@ -36,7 +36,7 @@ This module also exposes some [custom `class-validator` validators](https://gith
 
 ### Configuration
 
-To be able to use the validators, we need to [configure](https://github.com/typestack/class-validator?tab=readme-ov-file#custom-validation-classes) `class-validator` to use the NestJs IOC container for any model resolution.
+To be able to use the validators, we need to [configure](https://github.com/typestack/class-validator?tab=readme-ov-file#custom-validation-classes) `class-validator` to use the NestJs IOC container for any entity resolution.
 This is done by adding the following to the `main.ts` file of the application:
 
 ```ts
@@ -55,19 +55,19 @@ This validator-factory creates a validator which validates the existence or non-
 
 ##### Setup
 
-We need to provide the validator-factory with a map of the models and the associated schema name; as well as whether we are checking for the existence or absence of the specified value.
+We need to provide the validator-factory with a map of the entities and the associated schema name; as well as whether we are checking for the existence or absence of the specified value.
 
 e.g.: We would create two validators checking for the existence or absence of the specified value as follows:
 
 ```ts
-const modelCollectionMap = new Map([
+const entityCollectionMap = new Map([
   [User, 'user-collection'],
   [PasswordReset, 'password-reset-collection'],
 ]);
 
-export const ShouldExist = existenceValidatorFactory(modelCollectionMap, true);
+export const ShouldExist = existenceValidatorFactory(entityCollectionMap, true);
 export const ShouldNotExist = existenceValidatorFactory(
-  modelCollectionMap,
+  entityCollectionMap,
   false,
 );
 ```
@@ -100,7 +100,7 @@ Note: The created validator accepts an optional second argument; which is the na
 
 ## Pipes
 
-This module also exposes a pipe-factory which is used to create a pipe - which can be used to resolve a model from the database.
+This module also exposes a pipe-factory which is used to create a pipe - which can be used to resolve an entity from the database.
 
 ### `routeParameterResolverPipeFactory`
 
@@ -108,22 +108,22 @@ This pipe-factory is used to create a pipe which can find an entity from the dat
 
 #### Setup
 
-We need to provide the pipe-factory with a map of the models and the associated schema name.
+We need to provide the pipe-factory with a map of the entities and the associated schema name.
 
 e.g.: We would create a pipe which can resolve `User` & `PasswordReset` records from the database as follows:
 
 ```ts
-const modelCollectionMap = new Map([
+const entityCollectionMap = new Map([
   [User, 'user-collection'],
   [PasswordReset, 'password-reset-collection'],
 ]);
 
-export const Model = routeParameterResolverPipeFactory(modelCollectionMap);
+export const Entity = routeParameterResolverPipeFactory(entityCollectionMap);
 ```
 
 #### Usage
 
-We would then use the previously created pipe in controller methods - to resolve the specified models from the database - as follows:
+We would then use the previously created pipe in controller methods - to resolve the specified entities from the database - as follows:
 
 ```ts
 @Controller('user')
@@ -135,10 +135,10 @@ export class UserController {
    * In this case, and only if the request-parameter is 'id', the '_id' field
    * is used to search for the document in the collection.
    *
-   * If the model is not found, a `NotFoundException` error is thrown.
+   * If the entity is not found, a `NotFoundException` error is thrown.
    */
   @Get('/id/implicit/:id')
-  showUsingIdImplicitly(@Param('id', Model(User)) user: WithId<User>) {
+  showUsingIdImplicitly(@Param('id', Entity(User)) user: WithId<User>) {
     return user;
   }
 
@@ -146,10 +146,10 @@ export class UserController {
    * This pipe explicitly uses the '_id' field to search the document in the
    * collection.
    *
-   * If the model is not found, a `NotFoundException` error is thrown.
+   * If the entity is not found, a `NotFoundException` error is thrown.
    */
   @Get('/id/explicit/:id')
-  showUsingIdExplicitly(@Param('id', Model(User, '_id')) user: WithId<User>) {
+  showUsingIdExplicitly(@Param('id', Entity(User, '_id')) user: WithId<User>) {
     return user;
   }
 
@@ -157,10 +157,10 @@ export class UserController {
    * This pipe implicitly uses the request-parameter key as the field to search
    * the document in the collection. In this case 'username'.
    *
-   * If the model is not found, a `NotFoundException` error is thrown.
+   * If the entity is not found, a `NotFoundException` error is thrown.
    */
   @Get('/username/implicit/:username')
-  showUsingIdImplicitly(@Param('username', Model(User)) user: WithId<User>) {
+  showUsingIdImplicitly(@Param('username', Entity(User)) user: WithId<User>) {
     return user;
   }
 
@@ -168,11 +168,11 @@ export class UserController {
    * This pipe explicitly uses the 'username' field to search the document in
    * the collection.
    *
-   * If the model is not found, a `NotFoundException` error is thrown.
+   * If the entity is not found, a `NotFoundException` error is thrown.
    */
   @Get('/username/explicit/:username')
   showUsingIdExplicitly(
-    @Param('username', Model(User, 'username')) user: WithId<User>,
+    @Param('username', Entity(User, 'username')) user: WithId<User>,
   ) {
     return user;
   }

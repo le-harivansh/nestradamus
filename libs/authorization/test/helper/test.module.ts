@@ -23,13 +23,15 @@ import { TEST_BASE_ROUTE, TestController } from './test.controller';
       useFactory: () => ({
         permissionsMap,
         permissionStringSeparator: PERMISSION_STRING_SEPARATOR,
-        user: {
-          retrieveFromRequest: (request: Request) =>
-            (request as unknown as Record<string, unknown>)[
-              REQUEST_PROPERTY_HOLDING_USER
-            ],
-          getPermissions: ({ permissions }: TestUser) =>
-            permissions as unknown as string[],
+        callback: {
+          user: {
+            retrieveFromRequest: (request: Request) =>
+              (request as unknown as Record<string, unknown>)[
+                REQUEST_PROPERTY_HOLDING_USER
+              ],
+            getPermissions: ({ permissions }: TestUser) =>
+              permissions as unknown as string[],
+          },
         },
       }),
       isGlobal: true,

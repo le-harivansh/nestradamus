@@ -12,7 +12,9 @@ export class UserCallbackService {
 
   async retrieveFrom(request: unknown): Promise<unknown> {
     const user: unknown =
-      await this.authorizationModuleOptions.user.retrieveFromRequest(request);
+      await this.authorizationModuleOptions.callback.user.retrieveFromRequest(
+        request,
+      );
 
     if (!user) {
       throw new UnauthorizedException('User not found in request.');
@@ -22,6 +24,8 @@ export class UserCallbackService {
   }
 
   async getPermissionsFor(user: unknown) {
-    return await this.authorizationModuleOptions.user.getPermissions(user);
+    return await this.authorizationModuleOptions.callback.user.getPermissions(
+      user,
+    );
   }
 }

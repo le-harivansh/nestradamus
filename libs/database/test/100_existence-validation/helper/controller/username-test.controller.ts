@@ -1,7 +1,7 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 
 import { ROUTES } from '../constant';
-import { User } from '../user.model';
+import { User } from '../user.entity';
 import { ShouldExist, ShouldNotExist } from '../validator';
 
 // DTOs

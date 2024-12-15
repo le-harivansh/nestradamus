@@ -18,14 +18,14 @@ export class CookieService {
     private readonly passwordConfirmationModuleOptions: PasswordConfirmationModuleOptions,
   ) {}
 
-  createPayload(user: unknown): Promise<string> {
-    return this.passwordConfirmationModuleOptions.callback.cookie.createPayload(
+  async createPayload(user: unknown): Promise<string> {
+    return await this.passwordConfirmationModuleOptions.callback.cookie.createPayload(
       user,
     );
   }
 
-  validatePayload(user: unknown, payload: string): Promise<boolean> {
-    return this.passwordConfirmationModuleOptions.callback.cookie.validatePayload(
+  async validatePayload(user: unknown, payload: string): Promise<boolean> {
+    return await this.passwordConfirmationModuleOptions.callback.cookie.validatePayload(
       user,
       payload,
     );

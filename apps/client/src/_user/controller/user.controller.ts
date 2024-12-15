@@ -1,12 +1,17 @@
 import {
   Body,
+  ClassSerializerInterceptor,
   Controller,
   Delete,
   Get,
   HttpCode,
   HttpStatus,
+  Param,
   Patch,
+  Post,
+  Query,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { WithId } from 'mongodb';
 
@@ -14,81 +19,91 @@ import { RequiresPasswordConfirmation } from '@library/password-confirmation';
 
 import { AuthenticatedUser } from '../../_authentication/decorator/authenticated-user.decorator';
 import { RequiresPermission } from '../../_authorization/decorator/requires-permission.decorator';
-import { UpdateGeneralUserDataDto } from '../dto/update-general-user-data.dto';
-import { UpdateUserEmailDto } from '../dto/update-user-email.dto';
-import { UpdateUserPasswordDto } from '../dto/update-user-password.dto';
-import { User } from '../schema/user.schema';
+import { Entity } from '../../_database/pipe';
+import { CreateUserDto } from '../dto/create-user.dto';
+import { ListUserDto } from '../dto/list-user.dto';
+import { UpdateUserDto } from '../dto/update-user.dto';
+import { SerializedUser, User } from '../schema/user.schema';
 import { UserService } from '../service/user.service';
 
-@Controller('user')
+@Controller()
+@UseInterceptors(ClassSerializerInterceptor)
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Get()
+  @Get('users')
+  @RequiresPermission('user:list')
+  async list(@Query() { skip, limit }: ListUserDto) {
+    const [users, total] = await Promise.all([
+      this.userService.list(skip, limit),
+      this.userService.count(),
+    ]);
+
+    return {
+      total,
+      skip,
+      limit,
+      users: users.map((user) => new SerializedUser(user)),
+    };
+  }
+
+  @Get('user')
   @RequiresPermission('user:read:own')
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  show(@AuthenticatedUser() { password: _, ...userData }: WithId<User>) {
-    return userData;
+  showAuthenticatedUser(@AuthenticatedUser() authenticatedUser: WithId<User>) {
+    return new SerializedUser(authenticatedUser);
   }
 
-  @Patch()
-  @RequiresPermission('user:update:own')
-  async updateGeneralData(
-    @AuthenticatedUser() { _id: userId }: WithId<User>,
-    @Body() updateGeneralUserDataDto: UpdateGeneralUserDataDto,
-  ) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _, ...updatedUserData } = await this.userService.update(
-      userId,
-      updateGeneralUserDataDto,
-    );
-
-    return updatedUserData;
+  @Get('user/:id')
+  @RequiresPermission(['user:read:others', { userId: 'id' }])
+  show(@Param('id', Entity(User)) user: WithId<User>) {
+    return new SerializedUser(user);
   }
 
-  @Patch('email')
+  @Post('user')
+  @RequiresPermission('user:create')
+  async create(@Body() createUserDto: CreateUserDto) {
+    const newUser = await this.userService.create(createUserDto);
+
+    return new SerializedUser(newUser);
+  }
+
+  @Patch('user')
   @UseGuards(RequiresPasswordConfirmation)
   @RequiresPermission('user:update:own')
-  async updateEmail(
+  async updateAuthenticatedUser(
     @AuthenticatedUser() { _id: userId }: WithId<User>,
-    @Body() { email }: UpdateUserEmailDto,
+    @Body() updateUserDto: UpdateUserDto,
   ) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _, ...updatedUserData } = await this.userService.update(
-      userId,
-      { email },
-    );
+    const updatedUser = await this.userService.update(userId, updateUserDto);
 
-    return updatedUserData;
+    return new SerializedUser(updatedUser);
   }
 
-  @Patch('password')
-  @UseGuards(RequiresPasswordConfirmation)
-  @RequiresPermission('user:update:own')
-  async updatePassword(
-    @AuthenticatedUser() { _id: userId }: WithId<User>,
-    @Body() { password }: UpdateUserPasswordDto,
+  @Patch('user/:id')
+  @RequiresPermission(['user:update:others', { userId: 'id' }])
+  async update(
+    @Param('id', Entity(User)) { _id: userId }: WithId<User>,
+    @Body() updateUserDto: UpdateUserDto,
   ) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _, ...updatedUserData } = await this.userService.update(
-      userId,
-      { password },
-    );
+    const updatedUser = await this.userService.update(userId, updateUserDto);
 
-    return updatedUserData;
+    return new SerializedUser(updatedUser);
   }
 
-  /**
-   * Note: Permissions are not GENERALLY meant to be updated by the User, but
-   * rather by an Administrator (if such an entity exists) within the
-   * application.
-   */
-
-  @Delete()
+  @Delete('user')
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(RequiresPasswordConfirmation)
   @RequiresPermission('user:delete:own')
-  delete(@AuthenticatedUser() { _id: userId }: WithId<User>) {
-    return this.userService.delete(userId);
+  async deleteAuthenticatedUser(
+    @AuthenticatedUser() { _id: userId }: WithId<User>,
+  ) {
+    await this.userService.delete(userId);
+  }
+
+  @Delete('user/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @RequiresPermission(['user:delete:others', { userId: 'id' }])
+  async delete(@Param('id', Entity(User)) { _id: userId }: WithId<User>) {
+    await this.userService.delete(userId);
   }
 }

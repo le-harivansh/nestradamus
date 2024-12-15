@@ -14,7 +14,7 @@ import { User } from '../../src/_user/schema/user.schema';
 import { UserService } from '../../src/_user/service/user.service';
 
 export function fakeUserData(defaults?: Partial<User>): User {
-  const PASSWORD = 'password';
+  const PASSWORD = 'P@ssw0rd';
 
   return new User(
     defaults?.firstName ?? faker.person.firstName(),
@@ -41,13 +41,16 @@ export function deleteUser(userId: ObjectId, application: INestApplication) {
 }
 
 export async function createUserAndGetAuthenticationCookies(
-  userData: Partial<Omit<User, 'password'>> & Required<Pick<User, 'password'>>,
+  { password = 'password', ...userData }: Partial<User>,
   application: INestApplication,
 ) {
-  const user = await createUser(fakeUserData(userData), application);
+  const user = await createUser(
+    fakeUserData({ ...userData, password }),
+    application,
+  );
 
   const cookies = await getAuthenticationTokens(
-    { username: user.email, password: userData.password },
+    { username: user.email, password },
     application,
     `/${LOGIN_ROUTE}`,
     {

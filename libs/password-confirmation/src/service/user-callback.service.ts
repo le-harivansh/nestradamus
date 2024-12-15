@@ -11,13 +11,13 @@ export class UserCallbackService {
   ) {}
 
   retrieveFrom(request: unknown): unknown {
-    return this.passwordConfirmationModuleOptions.callback.user.retrieveFrom(
+    return this.passwordConfirmationModuleOptions.callback.user.retrieveFromRequest(
       request,
     );
   }
 
-  validatePassword(user: unknown, password: string): Promise<boolean> {
-    return this.passwordConfirmationModuleOptions.callback.user.validatePassword(
+  async validatePassword(user: unknown, password: string): Promise<boolean> {
+    return await this.passwordConfirmationModuleOptions.callback.user.validatePassword(
       user,
       password,
     );

@@ -22,7 +22,7 @@ import {
         },
         callback: {
           user: {
-            retrieveFrom: ({ user }: Request) => user,
+            retrieveFromRequest: ({ user }: Request) => user,
 
             validatePassword: async (user: WithId<User>, password: string) =>
               await verify(user.password, password),

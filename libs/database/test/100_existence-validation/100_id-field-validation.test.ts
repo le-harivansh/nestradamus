@@ -6,7 +6,7 @@ import request from 'supertest';
 import { DATABASE } from '../../src';
 import { ROUTES, TEST_COLLECTION_NAME } from './helper/constant';
 import { setupTestApplication, shutDownTestApplication } from './helper/setup';
-import { User } from './helper/user.model';
+import { User } from './helper/user.entity';
 
 describe('Entity Existence Validation [id field validation] (e2e)', () => {
   const user: User & { _id: ObjectId | null } = {

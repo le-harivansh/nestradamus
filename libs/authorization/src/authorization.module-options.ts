@@ -98,28 +98,35 @@ export const authorizationModuleOptionsValidationSchema = z.object({
   permissionStringSeparator: z.string().max(1),
 
   /**
-   * This block defines user-centric validators
+   * This block defines the callbacks used in this module.
    */
-  user: z.object({
+  callback: z.object({
     /**
-     * The callback used to retrieve the currently authenticated
-     * user.
+     * This block defines user-centric callbacks.
      */
-    retrieveFromRequest: z
-      .function()
-      .args(z.any())
-      .returns(z.union([z.unknown(), z.promise(z.unknown())])),
+    user: z.object({
+      /**
+       * The callback used to retrieve the currently authenticated
+       * user.
+       */
+      retrieveFromRequest: z
+        .function()
+        .args(z.any())
+        .returns(z.union([z.unknown(), z.promise(z.unknown())])),
 
-    /**
-     * The callback used to retrieve the permissions from the authenticated user
-     * instance.
-     *
-     * e.g.: `(user: WithId<User>) => user.permissions`
-     */
-    getPermissions: z
-      .function()
-      .args(z.any())
-      .returns(z.union([z.array(z.string()), z.promise(z.array(z.string()))])),
+      /**
+       * The callback used to retrieve the permissions from the authenticated user
+       * instance.
+       *
+       * e.g.: `(user: WithId<User>) => user.permissions`
+       */
+      getPermissions: z
+        .function()
+        .args(z.any())
+        .returns(
+          z.union([z.array(z.string()), z.promise(z.array(z.string()))]),
+        ),
+    }),
   }),
 });
 

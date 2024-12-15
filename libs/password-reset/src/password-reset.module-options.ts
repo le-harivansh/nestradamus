@@ -106,7 +106,7 @@ export const passwordResetModuleOptionsValidationSchema = z.object({
      *
      * e.g.:
      * ```
-     * (user: User) => { return PasswordReset(...); };
+     * async (user: User) => { return await PasswordReset(...); };
      * ```
      */
     createPasswordReset: z
@@ -122,7 +122,7 @@ export const passwordResetModuleOptionsValidationSchema = z.object({
      *
      * e.g.:
      * ```
-     * (id: string) => { ... };
+     * async (id: string) => { await ... };
      * ```
      */
     deletePasswordReset: z

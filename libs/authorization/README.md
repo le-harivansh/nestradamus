@@ -104,3 +104,21 @@ export class TestController {
   }
 }
 ```
+
+### Permissions Validator
+
+A permissions validator is also provided to validate the permission strings available in the consuming application.
+
+#### Usage
+
+The permissions validator `IsPermission` can be used as follows:
+
+```ts
+export class UpdateUserPermissionsDto {
+  @IsArray()
+  @IsPermission({ each: true })
+  readonly permissions!: string[];
+}
+```
+
+The above will validate the permissions provided with the ones available within the application.

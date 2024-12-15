@@ -109,11 +109,12 @@ import {
           },
 
           accessToken: {
-            createJwtPayload: async (user: WithId<User>) =>
-              await Promise.resolve({ id: user._id.toString() }),
+            createJwtPayload: (user: WithId<User>) => ({
+              id: user._id.toString(),
+            }),
 
-            validateJwtPayload: async (payload: Record<string, unknown>) =>
-              await Promise.resolve(Boolean(payload['id'])),
+            validateJwtPayload: (payload: Record<string, unknown>) =>
+              ObjectId.isValid(payload['id'] as string),
 
             resolveUserFromJwtPayload: async (
               payload: Record<string, unknown>,
@@ -138,11 +139,12 @@ import {
           },
 
           refreshToken: {
-            createJwtPayload: (user: WithId<User>) =>
-              Promise.resolve({ id: user._id.toString() }),
+            createJwtPayload: (user: WithId<User>) => ({
+              id: user._id.toString(),
+            }),
 
             validateJwtPayload: (payload: Record<string, unknown>) =>
-              Promise.resolve(Boolean(payload['id'])),
+              ObjectId.isValid(payload['id'] as string),
 
             resolveUserFromJwtPayload: async (
               payload: Record<string, unknown>,

@@ -5,22 +5,22 @@ import { WithId } from 'mongodb';
 import { ExistenceValidatorConstraint } from './constraint/existence.validator-constraint';
 
 export function existenceValidatorFactory<T extends Type>(
-  modelCollectionMap: Map<T, string>,
+  entityCollectionMap: Map<T, string>,
   validatesExistence: boolean,
 ) {
   return function (
-    model: T,
+    entity: T,
     field?: keyof WithId<T['prototype']> | undefined,
     validationOptions?: ValidationOptions | undefined,
   ) {
-    if (!modelCollectionMap.has(model)) {
+    if (!entityCollectionMap.has(entity)) {
       throw new InternalServerErrorException(
-        `The model '${model.name}' does not exist in the provided modelCollectionMap.`,
+        `The entity '${entity.name}' does not exist in the provided entityCollectionMap.`,
       );
     }
 
     return function (object: object, propertyName: string) {
-      const collectionName = modelCollectionMap.get(model)!;
+      const collectionName = entityCollectionMap.get(entity)!;
       const fieldName = field ?? propertyName;
       const isInverse = !validatesExistence;
 

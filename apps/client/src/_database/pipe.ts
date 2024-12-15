@@ -1,8 +1,8 @@
 import { routeParameterResolverPipeFactory } from '@library/database';
 
-import { MODEL_COLLECTION_MAP } from './constant';
+import { ENTITY_COLLECTION_MAP } from './constant';
 
 /**
- * Pipe resolving the specified model from the database.
+ * Pipe resolving the specified entity from the database.
  */
-export const Model = routeParameterResolverPipeFactory(MODEL_COLLECTION_MAP);
+export const Entity = routeParameterResolverPipeFactory(ENTITY_COLLECTION_MAP);

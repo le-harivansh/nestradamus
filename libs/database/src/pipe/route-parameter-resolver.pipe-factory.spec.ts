@@ -20,7 +20,7 @@ describe(routeParameterResolverPipeFactory.name, () => {
     .mockImplementation(() => ({ findOne: findOneDocument }));
 
   const database = { collection: getCollection } as unknown as Db;
-  const modelCollectionMap = new Map([[User, USER_COLLECTION_NAME]]);
+  const entityCollectionMap = new Map([[User, USER_COLLECTION_NAME]]);
 
   afterEach(() => {
     jest.clearAllMocks();
@@ -28,16 +28,16 @@ describe(routeParameterResolverPipeFactory.name, () => {
 
   it('can initialize the route-parameter resolver-pipe', () => {
     const routeParameterResolverPipe = new (routeParameterResolverPipeFactory(
-      modelCollectionMap,
+      entityCollectionMap,
     )(User, 'username'))(database);
 
     expect(routeParameterResolverPipe).toBeDefined();
   });
 
   describe('transform', () => {
-    it(`throws an '${InternalServerErrorException.name}' if the specified model is not in the provided model-collection map`, async () => {
+    it(`throws an '${InternalServerErrorException.name}' if the specified entity is not in the provided entity-collection map`, async () => {
       const routeParameterResolverPipe = new (routeParameterResolverPipeFactory(
-        modelCollectionMap,
+        entityCollectionMap,
       )({} as unknown as typeof User, 'username'))(database);
 
       await expect(() =>
@@ -47,7 +47,7 @@ describe(routeParameterResolverPipeFactory.name, () => {
 
     it(`throws an '${InternalServerErrorException.name}' if both the field-name and the route-parameter key are unspecified`, async () => {
       const routeParameterResolverPipe = new (routeParameterResolverPipeFactory(
-        modelCollectionMap,
+        entityCollectionMap,
       )(User))(database);
 
       await expect(() =>
@@ -58,14 +58,14 @@ describe(routeParameterResolverPipeFactory.name, () => {
       ).rejects.toThrow(InternalServerErrorException);
     });
 
-    it("calls the database methods with the specified collection-name, the model's field-name, and the resolved value from the request", async () => {
+    it("calls the database methods with the specified collection-name, the entity's field-name, and the resolved value from the request", async () => {
       const value = 'user@email.dev';
 
       findOneDocument.mockResolvedValueOnce({ username: value });
 
       const field = 'username';
       const routeParameterResolverPipe = new (routeParameterResolverPipeFactory(
-        modelCollectionMap,
+        entityCollectionMap,
       )(User, field))(database);
 
       await routeParameterResolverPipe.transform(
@@ -87,7 +87,7 @@ describe(routeParameterResolverPipeFactory.name, () => {
 
       const routeParameterKey = 'username';
       const routeParameterResolverPipe = new (routeParameterResolverPipeFactory(
-        modelCollectionMap,
+        entityCollectionMap,
       )(User))(database);
 
       await routeParameterResolverPipe.transform(value, {
@@ -108,7 +108,7 @@ describe(routeParameterResolverPipeFactory.name, () => {
 
       const routeParameterKey = 'id';
       const routeParameterResolverPipe = new (routeParameterResolverPipeFactory(
-        modelCollectionMap,
+        entityCollectionMap,
       )(User))(database);
 
       await routeParameterResolverPipe.transform(new ObjectId().toString(), {
@@ -121,11 +121,11 @@ describe(routeParameterResolverPipeFactory.name, () => {
       ).toBe(true);
     });
 
-    it(`throws a '${NotFoundException.name}' if the model resolves to 'null'`, async () => {
+    it(`throws a '${NotFoundException.name}' if the entity resolves to 'null'`, async () => {
       findOneDocument.mockResolvedValueOnce(null);
 
       const routeParameterResolverPipe = new (routeParameterResolverPipeFactory(
-        modelCollectionMap,
+        entityCollectionMap,
       )(User, 'username'))(database);
 
       await expect(() =>
@@ -142,7 +142,7 @@ describe(routeParameterResolverPipeFactory.name, () => {
       findOneDocument.mockResolvedValueOnce(user);
 
       const routeParameterResolverPipe = new (routeParameterResolverPipeFactory(
-        modelCollectionMap,
+        entityCollectionMap,
       )(User, 'username'))(database);
 
       await expect(

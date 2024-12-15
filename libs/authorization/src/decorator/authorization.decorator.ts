@@ -7,7 +7,7 @@ import { Permission, PermissionAndRequestParameterPair } from '../type';
  * This function is used to set the required permissions on controllers or
  * request handlers.
  *
- * It will, however, (most of the time) be used in a type-safe decorator to
+ * It will, however (most of the time), be used in a type-safe decorator to
  * set the permissions on controllers or request handlers.
  *
  * e.g.:

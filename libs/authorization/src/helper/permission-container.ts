@@ -34,6 +34,39 @@ export class PermissionContainer {
     return item as PermissionCallback;
   }
 
+  getPermissions(): string[] {
+    return PermissionContainer.extractPermissionsFrom(
+      this.permissionsMap,
+      this.permissionStringSeparator,
+    );
+  }
+
+  private static extractPermissionsFrom(
+    permissionsMap: PermissionsMap,
+    permissionStringSeparator: string,
+    currentPermissionPrefix: string = '',
+  ): string[] {
+    const permissions: string[] = [];
+
+    for (const [key, value] of Object.entries(permissionsMap)) {
+      const permissionOrPrefix = `${currentPermissionPrefix === '' ? '' : `${currentPermissionPrefix}${permissionStringSeparator}`}${key}`;
+
+      if (typeof value === 'function') {
+        permissions.push(permissionOrPrefix);
+      }
+
+      permissions.push(
+        ...PermissionContainer.extractPermissionsFrom(
+          value as PermissionsMap,
+          permissionStringSeparator,
+          permissionOrPrefix,
+        ),
+      );
+    }
+
+    return permissions;
+  }
+
   private static isFunction(
     value: unknown,
   ): value is (...args: unknown[]) => unknown {

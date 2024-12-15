@@ -10,22 +10,22 @@ export class AccessTokenCallbackService {
     private readonly authenticationModuleOptions: AuthenticationModuleOptions,
   ) {}
 
-  createJwtPayload(user: unknown): Promise<Record<string, unknown>> {
-    return this.authenticationModuleOptions.callback.accessToken.createJwtPayload(
+  async createJwtPayload(user: unknown): Promise<Record<string, unknown>> {
+    return await this.authenticationModuleOptions.callback.accessToken.createJwtPayload(
       user,
     );
   }
 
-  validateJwtPayload(payload: Record<string, unknown>): Promise<boolean> {
-    return this.authenticationModuleOptions.callback.accessToken.validateJwtPayload(
+  async validateJwtPayload(payload: Record<string, unknown>): Promise<boolean> {
+    return await this.authenticationModuleOptions.callback.accessToken.validateJwtPayload(
       payload,
     );
   }
 
-  resolveUserFromJwtPayload(
+  async resolveUserFromJwtPayload(
     payload: Record<string, unknown>,
   ): Promise<unknown> {
-    return this.authenticationModuleOptions.callback.accessToken.resolveUserFromJwtPayload(
+    return await this.authenticationModuleOptions.callback.accessToken.resolveUserFromJwtPayload(
       payload,
     );
   }

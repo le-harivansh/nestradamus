@@ -190,7 +190,9 @@ export const authenticationModuleOptionsValidationSchema = z.object({
       createJwtPayload: z
         .function()
         .args(z.any())
-        .returns(z.promise(z.record(z.unknown()))),
+        .returns(
+          z.union([z.record(z.unknown()), z.promise(z.record(z.unknown()))]),
+        ),
 
       /**
        * The callback used to validate the JWT payload.
@@ -206,7 +208,7 @@ export const authenticationModuleOptionsValidationSchema = z.object({
       validateJwtPayload: z
         .function()
         .args(z.record(z.unknown()))
-        .returns(z.promise(z.boolean())),
+        .returns(z.union([z.boolean(), z.promise(z.boolean())])),
 
       /**
        * The callback that used to resolve the authenticated user from the data
@@ -244,7 +246,9 @@ export const authenticationModuleOptionsValidationSchema = z.object({
       createJwtPayload: z
         .function()
         .args(z.any())
-        .returns(z.promise(z.record(z.unknown()))),
+        .returns(
+          z.union([z.record(z.unknown()), z.promise(z.record(z.unknown()))]),
+        ),
 
       /**
        * The callback used to validate the JWT payload.
@@ -260,7 +264,7 @@ export const authenticationModuleOptionsValidationSchema = z.object({
       validateJwtPayload: z
         .function()
         .args(z.record(z.unknown()))
-        .returns(z.promise(z.boolean())),
+        .returns(z.union([z.boolean(), z.promise(z.boolean())])),
 
       /**
        * The callback that used to resolve the authenticated user from the data

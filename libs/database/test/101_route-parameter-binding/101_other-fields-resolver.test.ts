@@ -6,7 +6,7 @@ import request from 'supertest';
 import { DATABASE } from '../../src';
 import { ROUTES, TEST_COLLECTION_NAME } from './helper/constant';
 import { setupTestApplication, shutDownTestApplication } from './helper/setup';
-import { User } from './helper/user.model';
+import { User } from './helper/user.entity';
 
 describe('Route-Parameter Binding [other fields resolution] (e2e)', () => {
   const user: User & { _id: ObjectId | null } = {
@@ -49,7 +49,7 @@ describe('Route-Parameter Binding [other fields resolution] (e2e)', () => {
     },
   ])('- $type', ({ route }) => {
     describe('[succeeds because]', () => {
-      it('resolves the specified model when it EXISTS in the database', async () => {
+      it('resolves the specified entity when it EXISTS in the database', async () => {
         const response = await request(application.getHttpServer()).get(
           `${route}/${user.username}`,
         );

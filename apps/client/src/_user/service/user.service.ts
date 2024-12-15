@@ -13,6 +13,14 @@ import { User } from '../schema/user.schema';
 export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
 
+  count() {
+    return this.userRepository.count();
+  }
+
+  list(skip: number, limit: number) {
+    return this.userRepository.list(skip, limit);
+  }
+
   async findById(id: ObjectId) {
     const fetchedUser = await this.userRepository.findById(id);
 

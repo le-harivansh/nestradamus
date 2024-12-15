@@ -10,12 +10,14 @@ export class UserCallbackService {
     private readonly authenticationModuleOptions: AuthenticationModuleOptions,
   ) {}
 
-  retrieveUser(username: string): Promise<unknown> {
-    return this.authenticationModuleOptions.callback.user.retrieve(username);
+  async retrieveUser(username: string): Promise<unknown> {
+    return await this.authenticationModuleOptions.callback.user.retrieve(
+      username,
+    );
   }
 
-  validatePassword(user: unknown, password: string): Promise<boolean> {
-    return this.authenticationModuleOptions.callback.user.validatePassword(
+  async validatePassword(user: unknown, password: string): Promise<boolean> {
+    return await this.authenticationModuleOptions.callback.user.validatePassword(
       user,
       password,
     );

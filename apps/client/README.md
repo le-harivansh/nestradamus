@@ -52,3 +52,12 @@ yarn run cli:client db seed
 
 A health-check route is available at `/_health-check`. More health-check services can be added to the `HealthCheckController`'s `check` method.
 See [NestJs health-check](https://docs.nestjs.com/recipes/terminus) for more details.
+
+### Miscellaneous
+
+If you are encountering assets errors (the .mjml.mustache files not being copied in the development environment), it's most probably due to the development server not being started using the proper command.
+To properly start the development server, you need to specify `client` in the start command. E.g.:
+
+```shell
+yarn run start:dev client
+```

@@ -179,8 +179,8 @@ describe('Password-Reset (e2e)', () => {
         expect(response.status).toBe(HttpStatus.OK);
       });
 
-      it("returns returns the associated user's data", () => {
-        expect(response.body).toEqual({
+      it("returns the associated user's data", () => {
+        expect(response.body).toStrictEqual({
           _id: passwordResetId.toString(),
           createdAt: expect.anything(),
           user: {

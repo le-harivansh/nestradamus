@@ -25,7 +25,7 @@ export const passwordConfirmationModuleOptions: PasswordConfirmationModuleOption
 
     callback: {
       user: {
-        retrieveFrom: (request: Request) =>
+        retrieveFromRequest: (request: Request) =>
           (
             request as unknown as {
               [REQUEST_PROPERTY_HOLDING_AUTHENTICATED_USER]: User;
