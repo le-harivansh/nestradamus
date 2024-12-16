@@ -15,10 +15,19 @@ export class Mail {
   // [ ENVELOPE ]
 
   /**
-   * Set the sender of the e-mail.
+   * Set the author of the e-mail.
    */
   from(from: NonNullable<Mailer.Options['from']>): this {
     this.mailOptions['from'] = from;
+
+    return this;
+  }
+
+  /**
+   * Set the sender of the e-mail.
+   */
+  sender(sender: NonNullable<Mailer.Options['sender']>): this {
+    this.mailOptions['sender'] = sender;
 
     return this;
   }
@@ -28,6 +37,15 @@ export class Mail {
    */
   to(to: NonNullable<Mailer.Options['to']>): this {
     this.mailOptions['to'] = to;
+
+    return this;
+  }
+
+  /**
+   * Set the reply-address of the e-mail.
+   */
+  replyTo(replyTo: NonNullable<Mailer.Options['replyTo']>): this {
+    this.mailOptions['replyTo'] = replyTo;
 
     return this;
   }

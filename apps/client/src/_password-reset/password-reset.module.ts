@@ -65,15 +65,12 @@ import { PasswordResetService } from './service/password-reset.service';
               .mail()
               .to(user.email)
               .subject(`Forgot your ${applicationName} password?`)
-              .mjml(
-                mailTemplate, // todo: Style template & review message.
-                {
-                  applicationName,
-                  user,
-                  passwordResetLink: `${configurationService.getOrThrow('application.frontendUrl')}/password-reset/${passwordReset._id}`,
-                  currentYear: new Date().getFullYear(),
-                },
-              )
+              .mjml(mailTemplate, {
+                applicationName,
+                user,
+                passwordResetLink: `${configurationService.getOrThrow('application.frontendUrl')}/reset-password/${passwordReset._id}`,
+                currentYear: new Date().getFullYear(),
+              })
               .send();
           },
 

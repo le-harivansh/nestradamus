@@ -47,4 +47,15 @@ export class MailModule extends MailConfigurableModuleClass {
     // Validate the configuration object passed to the module.
     mailModuleOptionsValidationSchema.parse(mailModuleOptions);
   }
+
+  /**
+   * @todo: To reduce the spamminess of emails, do not forget to do the
+   * following:
+   *
+   * 1. Setup SPF.
+   * 2. Setup DKIM.
+   * 3. Setup DMARC.
+   *
+   * 4. Add an unsubscribe button/link to the email.
+   */
 }
