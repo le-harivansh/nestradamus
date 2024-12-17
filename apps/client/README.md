@@ -6,6 +6,10 @@ This application is the one used by the ultimate end-user of the application - i
 
 [Helmet](https://docs.nestjs.com/security/helmet) and [CORS](https://docs.nestjs.com/security/cors) have been setup in this application. See the `main.ts` file for more details.
 
+## Swagger (OpenAPI)
+
+Details about the routes and their requirements are available at: [/\_api](http://localhost:3000/_api) - only in development.
+
 ### Authentication
 
 See the authentication library module, and the client's authentication module for more details.

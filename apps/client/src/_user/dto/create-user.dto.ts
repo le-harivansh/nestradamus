@@ -1,3 +1,4 @@
+import { ApiProperty, ApiSchema } from '@nestjs/swagger';
 import {
   IsArray,
   IsEmail,
@@ -12,19 +13,24 @@ import { ShouldNotExist } from '../../_database/validator';
 import { PASSWORD_CONSTRAINTS } from '../constant';
 import { User } from '../schema/user.schema';
 
+@ApiSchema({ description: 'The data of the user to create.' })
 export class CreateUserDto {
+  @ApiProperty({ example: 'FirstName' })
   @IsString()
   @IsNotEmpty()
   readonly firstName!: string;
 
+  @ApiProperty({ example: 'LastName' })
   @IsString()
   @IsNotEmpty()
   readonly lastName!: string;
 
+  @ApiProperty({ example: 'user@email.dev' })
   @IsEmail()
   @ShouldNotExist(User)
   readonly email!: string;
 
+  @ApiProperty({ example: 'P@ssw0rd' })
   @IsStrongPassword({
     minLength: PASSWORD_CONSTRAINTS.MIN_LENGTH,
     minLowercase: PASSWORD_CONSTRAINTS.MIN_LOWERCASE,
@@ -34,6 +40,7 @@ export class CreateUserDto {
   })
   readonly password!: string;
 
+  @ApiProperty({ example: ['user:read:own'] })
   @IsArray()
   @IsPermission({ each: true })
   readonly permissions!: string[];

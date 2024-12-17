@@ -12,6 +12,13 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
+  ApiCookieAuth,
+  ApiNoContentResponse,
+  ApiOperation,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
+import {
   Request as ExpressRequest,
   Response as ExpressResponse,
 } from 'express';
@@ -47,6 +54,14 @@ export class PasswordConfirmationController {
     );
   }
 
+  @ApiCookieAuth()
+  @ApiOperation({ summary: "Confirm the authenticated user's password." })
+  @ApiNoContentResponse({
+    description:
+      "The authenticated user's password was successfully confirmed.",
+  })
+  @ApiBadRequestResponse({ description: 'An invalid password was provided.' })
+  @ApiUnauthorizedResponse({ description: 'The wrong password was provided.' })
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.NO_CONTENT)
   async confirmPassword(

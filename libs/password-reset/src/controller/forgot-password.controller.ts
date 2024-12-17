@@ -10,6 +10,12 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
+import {
+  ApiBadRequestResponse,
+  ApiNoContentResponse,
+  ApiOperation,
+  ApiTooManyRequestsResponse,
+} from '@nestjs/swagger';
 import { seconds, Throttle } from '@nestjs/throttler';
 
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
@@ -46,6 +52,18 @@ export class ForgotPasswordController {
     );
   }
 
+  @ApiOperation({
+    summary:
+      "Send a 'forgot-password' message (e-mail/sms/etc...) to a registered user.",
+  })
+  @ApiNoContentResponse({
+    description:
+      "A 'forgot-password' message (e-mail/sms/etc...) was successfully sent to the user.",
+  })
+  @ApiBadRequestResponse({ description: 'An invalid username was provided.' })
+  @ApiTooManyRequestsResponse({
+    description: 'Too many requests came from the same origin.',
+  })
   @Throttle({ default: { limit: 2, ttl: seconds(60) } })
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.NO_CONTENT)

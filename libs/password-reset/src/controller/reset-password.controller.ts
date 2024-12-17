@@ -10,6 +10,14 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
+import {
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+} from '@nestjs/swagger';
+import { ObjectId } from 'mongodb';
 
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { PASSWORD_RESET_MODULE_OPTIONS_TOKEN } from '../password-reset.module-definition';
@@ -53,10 +61,48 @@ export class ResetPasswordController {
     );
   }
 
+  @ApiOperation({ summary: "Retrieve a user's 'password-reset' record." })
+  @ApiParam({
+    name: 'id',
+    required: true,
+    description: "The 'id' of the 'password-reset' record to retrieve.",
+    example: new ObjectId(),
+  })
+  @ApiOkResponse({
+    description:
+      "The specified 'password-reset' record was successfully retrieved.",
+    example: {
+      _id: new ObjectId(),
+      createdAt: new Date(),
+      user: {
+        _id: new ObjectId(),
+        firstName: 'FirstName',
+        lastName: 'LastName',
+        email: 'user@email.dev',
+      },
+    },
+  })
+  @ApiNotFoundResponse({
+    description: "The specified 'password-reset' record could not be found.",
+  })
   getPasswordReset(@Param('id') passwordResetId: string) {
     return this.passwordResetService.findById(passwordResetId);
   }
 
+  @ApiOperation({ summary: "Reset a user's password." })
+  @ApiParam({
+    name: 'id',
+    required: true,
+    description:
+      "The 'id' of the 'password-reset' record for this update operation.",
+    example: new ObjectId(),
+  })
+  @ApiNoContentResponse({
+    description: "The user's password was successfully reset.",
+  })
+  @ApiNotFoundResponse({
+    description: "The specified 'password-reset' record could not be found.",
+  })
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.NO_CONTENT)
   async updateUserPassword(

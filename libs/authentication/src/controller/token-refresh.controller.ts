@@ -6,6 +6,12 @@ import {
   Post,
   Response,
 } from '@nestjs/common';
+import {
+  ApiCookieAuth,
+  ApiNoContentResponse,
+  ApiOperation,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { Response as ExpressResponse } from 'express';
 
 import { AUTHENTICATION_MODULE_OPTIONS_TOKEN } from '../authentication.module-definition';
@@ -69,6 +75,18 @@ export class TokenRefreshController {
   /**
    * Refresh access-token
    */
+  @ApiCookieAuth()
+  @ApiOperation({
+    summary: "Refresh the 'access-token' of the currently authenticated user.",
+  })
+  @ApiNoContentResponse({
+    description:
+      "The authenticated user's 'access-token' was successfully refreshed.",
+  })
+  @ApiUnauthorizedResponse({
+    description:
+      "The authenticated user's 'refresh-token' needs to be present on the request.",
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   refreshAccessToken(
     user: unknown,
@@ -80,6 +98,18 @@ export class TokenRefreshController {
   /**
    * Refresh refresh-token
    */
+  @ApiCookieAuth()
+  @ApiOperation({
+    summary: "Refresh the 'refresh-token' of the currently authenticated user.",
+  })
+  @ApiNoContentResponse({
+    description:
+      "The authenticated user's 'refresh-token' was successfully refreshed.",
+  })
+  @ApiUnauthorizedResponse({
+    description:
+      "The authenticated user's 'access-token' needs to be present on the request.",
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   refreshRefreshToken(
     user: unknown,

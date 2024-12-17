@@ -2,9 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ObjectId, WithId } from 'mongodb';
 
 import { DATABASE } from '@library/database';
-import { PASSWORD_CONFIRMATION_MODULE_OPTIONS_TOKEN } from '@library/password-confirmation/password-confirmation.module-definition';
-import { CookieService } from '@library/password-confirmation/service/cookie.service';
-import { UserCallbackService } from '@library/password-confirmation/service/user-callback.service';
 
 import { fakeUserData } from '../../../test/helper/user';
 import { UpdateUserDto } from '../dto/update-user.dto';
@@ -30,20 +27,6 @@ describe(UserController.name, () => {
       controllers: [UserController],
       providers: [
         UserService,
-
-        // `RequiresPasswordConfirmation` guard dependencies
-        {
-          provide: PASSWORD_CONFIRMATION_MODULE_OPTIONS_TOKEN,
-          useValue: undefined,
-        },
-        {
-          provide: UserCallbackService,
-          useValue: undefined,
-        },
-        {
-          provide: CookieService,
-          useValue: undefined,
-        },
 
         // `RouteParameterResolverPipe` dependencies
         {
@@ -104,14 +87,6 @@ describe(UserController.name, () => {
     });
   });
 
-  describe(UserController.prototype.showAuthenticatedUser.name, () => {
-    it('returns the currently authenticated user', () => {
-      expect(userController.showAuthenticatedUser(authenticatedUser)).toEqual(
-        authenticatedUser,
-      );
-    });
-  });
-
   describe(UserController.prototype.show.name, () => {
     it('returns the specified user', () => {
       expect(userController.show(otherUser)).toEqual(otherUser);
@@ -153,56 +128,6 @@ describe(UserController.name, () => {
     });
   });
 
-  describe(UserController.prototype.updateAuthenticatedUser.name, () => {
-    const updatedData: UpdateUserDto = {
-      firstName: 'Updated FirstName',
-      lastName: 'Updated LastName',
-      email: 'updated-user@email.dev',
-      password: 'P@ssw0rd',
-      permissions: [],
-    };
-
-    beforeAll(() => {
-      userService.update.mockResolvedValue({
-        ...authenticatedUser,
-        ...updatedData,
-      });
-    });
-
-    afterEach(() => {
-      jest.clearAllMocks();
-    });
-
-    afterAll(() => {
-      jest.resetAllMocks();
-    });
-
-    it(`calls '${UserService.name}::${UserService.prototype.update.name}' with the authenticated user's id & the user's updated data`, async () => {
-      await userController.updateAuthenticatedUser(
-        authenticatedUser,
-        updatedData,
-      );
-
-      expect(userService.update).toHaveBeenCalledTimes(1);
-      expect(userService.update).toHaveBeenCalledWith(
-        authenticatedUser._id,
-        updatedData,
-      );
-    });
-
-    it(`returns the result of '${UserService.name}::${UserService.prototype.update.name}'`, async () => {
-      const result = await userController.updateAuthenticatedUser(
-        authenticatedUser,
-        updatedData,
-      );
-
-      expect(result).toEqual({
-        ...authenticatedUser,
-        ...updatedData,
-      });
-    });
-  });
-
   describe(UserController.prototype.update.name, () => {
     const updatedData: UpdateUserDto = {
       firstName: 'Updated FirstName',
@@ -228,7 +153,7 @@ describe(UserController.name, () => {
     });
 
     it(`calls '${UserService.name}::${UserService.prototype.update.name}' with the specified user's id & the user's updated data`, async () => {
-      await userController.updateAuthenticatedUser(otherUser, updatedData);
+      await userController.update(otherUser, updatedData);
 
       expect(userService.update).toHaveBeenCalledTimes(1);
       expect(userService.update).toHaveBeenCalledWith(
@@ -238,28 +163,12 @@ describe(UserController.name, () => {
     });
 
     it(`returns the result of '${UserService.name}::${UserService.prototype.update.name}'`, async () => {
-      const result = await userController.updateAuthenticatedUser(
-        otherUser,
-        updatedData,
-      );
+      const result = await userController.update(otherUser, updatedData);
 
       expect(result).toEqual({
         ...otherUser,
         ...updatedData,
       });
-    });
-  });
-
-  describe(UserController.prototype.deleteAuthenticatedUser.name, () => {
-    afterEach(() => {
-      jest.clearAllMocks();
-    });
-
-    it(`calls '${UserService.name}::${UserService.prototype.delete.name}' with the authenticated user's id`, async () => {
-      await userController.deleteAuthenticatedUser(authenticatedUser);
-
-      expect(userService.delete).toHaveBeenCalledTimes(1);
-      expect(userService.delete).toHaveBeenCalledWith(authenticatedUser._id);
     });
   });
 
@@ -269,7 +178,7 @@ describe(UserController.name, () => {
     });
 
     it(`calls '${UserService.name}::${UserService.prototype.delete.name}' with the specified user's id`, async () => {
-      await userController.deleteAuthenticatedUser(authenticatedUser);
+      await userController.delete(authenticatedUser);
 
       expect(userService.delete).toHaveBeenCalledTimes(1);
       expect(userService.delete).toHaveBeenCalledWith(authenticatedUser._id);

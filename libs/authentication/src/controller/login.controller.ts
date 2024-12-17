@@ -13,6 +13,13 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
+  ApiCookieAuth,
+  ApiNoContentResponse,
+  ApiOperation,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
+import {
   Request as ExpressRequest,
   Response as ExpressResponse,
 } from 'express';
@@ -80,6 +87,16 @@ export class LoginController {
   /**
    * Login
    */
+  @ApiOperation({ summary: 'Authenticate a user.' })
+  @ApiNoContentResponse({
+    description: 'The user was successfully authenticated.',
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid authentication credentials were provided.',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Wrong authentication credentials were provided.',
+  })
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.NO_CONTENT)
   async login(
@@ -120,6 +137,15 @@ export class LoginController {
   /**
    * Logout
    */
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'Logout an authenticated user.' })
+  @ApiNoContentResponse({
+    description: 'The user was successfully logged-out.',
+  })
+  @ApiUnauthorizedResponse({
+    description:
+      "The authenticated user's 'access-token' needs to be present on the request.",
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   async logout(
     @Request() request: ExpressRequest,

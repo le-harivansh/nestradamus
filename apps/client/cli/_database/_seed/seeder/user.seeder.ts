@@ -18,7 +18,7 @@ export class UserSeeder {
       firstName: 'FirstName',
       lastName: 'LastName',
       email: 'user@email.dev',
-      password: 'password',
+      password: 'P@ssw0rd',
       permissions: this.permissionsContainer.getPermissions(),
     });
   }

@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { useContainer } from 'class-validator';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
@@ -33,6 +34,26 @@ import { ApplicationModule } from './application.module';
   useContainer(application.select(ApplicationModule), {
     fallbackOnErrors: true,
   });
+
+  // Setup Swagger (only in development)
+  if (
+    configurationService.getOrThrow('application.environment') === 'development'
+  ) {
+    const SWAGGER_PATH = '_api';
+    const applicationName = configurationService.getOrThrow('application.name');
+
+    const swaggerDocumentBuilder = new DocumentBuilder()
+      .setTitle(`${applicationName} API`)
+      .setDescription(
+        `The API definitions of the ${applicationName} application.`,
+      )
+      .setVersion('1.0')
+      .build();
+
+    SwaggerModule.setup(SWAGGER_PATH, application, () =>
+      SwaggerModule.createDocument(application, swaggerDocumentBuilder),
+    );
+  }
 
   // Start listening for requests
   await application.listen(configurationService.getOrThrow('application.port'));

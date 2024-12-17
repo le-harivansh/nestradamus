@@ -1,3 +1,4 @@
+import { ApiPropertyOptional, ApiSchema } from '@nestjs/swagger';
 import {
   IsArray,
   IsEmail,
@@ -13,22 +14,27 @@ import { ShouldNotExist } from '../../_database/validator';
 import { PASSWORD_CONSTRAINTS } from '../constant';
 import { User } from '../schema/user.schema';
 
+@ApiSchema({ description: "The user's data to update." })
 export class UpdateUserDto {
+  @ApiPropertyOptional({ example: 'UpdatedFirstName' })
   @IsOptional()
   @IsString()
   @IsNotEmpty()
   readonly firstName?: string;
 
+  @ApiPropertyOptional({ example: 'UpdatedLastName' })
   @IsOptional()
   @IsString()
   @IsNotEmpty()
   readonly lastName?: string;
 
+  @ApiPropertyOptional({ example: 'updated-user@email.dev' })
   @IsOptional()
   @IsEmail()
   @ShouldNotExist(User)
   readonly email?: string;
 
+  @ApiPropertyOptional({ example: 'n3w-P@ssw0rd' })
   @IsOptional()
   @IsStrongPassword({
     minLength: PASSWORD_CONSTRAINTS.MIN_LENGTH,
@@ -39,6 +45,7 @@ export class UpdateUserDto {
   })
   readonly password?: string;
 
+  @ApiPropertyOptional({ example: ['user:update:own'] })
   @IsOptional()
   @IsArray()
   @IsPermission({ each: true })
