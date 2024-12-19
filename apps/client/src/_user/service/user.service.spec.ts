@@ -7,8 +7,8 @@ import { argon2id, hash } from 'argon2';
 import { ObjectId, WithId } from 'mongodb';
 
 import { fakeUserData } from '../../../test/helper/user';
+import { User } from '../entity/user.entity';
 import { UserRepository } from '../repository/user.repository';
-import { User } from '../schema/user.schema';
 import { UserService } from './user.service';
 
 jest.mock('../repository/user.repository');

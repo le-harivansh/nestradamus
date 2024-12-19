@@ -5,10 +5,8 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 
 import { DATABASE } from '@library/database';
 
-import {
-  PasswordReset,
-  PasswordResetSchema,
-} from '../schema/password-reset.schema';
+import { PasswordReset } from '../entity/password-reset.entity';
+import { PasswordResetSchema } from '../entity/password-reset.schema';
 import { PasswordResetRepository } from './password-reset.repository';
 
 describe(PasswordResetRepository.name, () => {

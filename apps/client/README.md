@@ -44,6 +44,14 @@ To drop the client database, run the following command:
 yarn run cli:client db drop
 ```
 
+##### Initialize
+
+To initialize (i.e.: setup the validation schema, indices, etc...) the client database, run the following command:
+
+```shell
+yarn run cli:client db init
+```
+
 #### Seed
 
 To seed the client database, run the following command:

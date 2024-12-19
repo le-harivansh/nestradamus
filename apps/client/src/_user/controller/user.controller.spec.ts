@@ -5,7 +5,8 @@ import { DATABASE } from '@library/database';
 
 import { fakeUserData } from '../../../test/helper/user';
 import { UpdateUserDto } from '../dto/update-user.dto';
-import { SerializedUser, User } from '../schema/user.schema';
+import { User } from '../entity/user.entity';
+import { SerializedUser } from '../entity/user.serialized-entity';
 import { UserService } from '../service/user.service';
 import { UserController } from './user.controller';
 

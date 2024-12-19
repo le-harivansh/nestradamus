@@ -6,7 +6,8 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import { DATABASE } from '@library/database';
 
 import { fakeUserData } from '../../../test/helper/user';
-import { User, UserSchema } from '../schema/user.schema';
+import { User } from '../entity/user.entity';
+import { UserSchema } from '../entity/user.schema';
 import { UserRepository } from './user.repository';
 
 describe(UserRepository.name, () => {

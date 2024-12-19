@@ -3,11 +3,10 @@ import { Collection, Db, ObjectId, WithId } from 'mongodb';
 
 import { DATABASE } from '@library/database';
 
-import { User, UserSchema } from '../../_user/schema/user.schema';
-import {
-  PasswordReset,
-  PasswordResetSchema,
-} from '../schema/password-reset.schema';
+import { User } from '../../_user/entity/user.entity';
+import { UserSchema } from '../../_user/entity/user.schema';
+import { PasswordReset } from '../entity/password-reset.entity';
+import { PasswordResetSchema } from '../entity/password-reset.schema';
 
 export class PasswordResetRepository {
   private readonly collection: Collection<PasswordReset>;

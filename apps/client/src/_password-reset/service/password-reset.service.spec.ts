@@ -2,8 +2,8 @@ import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ObjectId, WithId } from 'mongodb';
 
+import { PasswordReset } from '../entity/password-reset.entity';
 import { PasswordResetRepository } from '../repository/password-reset.repository';
-import { PasswordReset } from '../schema/password-reset.schema';
 import { PasswordResetService } from './password-reset.service';
 
 jest.mock('../repository/password-reset.repository');

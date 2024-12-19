@@ -7,7 +7,7 @@ import { UserCallbackService } from '@library/password-confirmation/service/user
 
 import { fakeUserData } from '../../../test/helper/user';
 import { UpdateUserDto } from '../dto/update-user.dto';
-import { User } from '../schema/user.schema';
+import { User } from '../entity/user.entity';
 import { UserService } from '../service/user.service';
 import { AuthenticatedUserController } from './authenticated-user.controller';
 

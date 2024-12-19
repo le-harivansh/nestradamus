@@ -26,7 +26,8 @@ import { RequiresPasswordConfirmation } from '@library/password-confirmation';
 import { AuthenticatedUser } from '../../_authentication/decorator/authenticated-user.decorator';
 import { RequiresPermission } from '../../_authorization/decorator/requires-permission.decorator';
 import { UpdateUserDto } from '../dto/update-user.dto';
-import { SerializedUser, User } from '../schema/user.schema';
+import { User } from '../entity/user.entity';
+import { SerializedUser } from '../entity/user.serialized-entity';
 import { UserService } from '../service/user.service';
 
 @Controller('user')

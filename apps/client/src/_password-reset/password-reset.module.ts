@@ -10,16 +10,13 @@ import { PasswordResetModule as PasswordResetLibraryModule } from '@library/pass
 
 import { ConfigurationService } from '../_configuration/service/configuration.service';
 import { PASSWORD_CONSTRAINTS } from '../_user/constant';
-import { User } from '../_user/schema/user.schema';
+import { User } from '../_user/entity/user.entity';
 import { UserService } from '../_user/service/user.service';
 import { UserModule } from '../_user/user.module';
 import { FORGOT_PASSWORD_ROUTE, RESET_PASSWORD_ROUTE } from './constant';
+import { PasswordReset } from './entity/password-reset.entity';
 import passwordResetConfiguration from './password-reset.config';
 import { PasswordResetRepository } from './repository/password-reset.repository';
-import {
-  PasswordReset,
-  PasswordResetSchema,
-} from './schema/password-reset.schema';
 import { PasswordResetService } from './service/password-reset.service';
 
 @Module({
@@ -130,11 +127,7 @@ import { PasswordResetService } from './service/password-reset.service';
       }),
     }),
   ],
-  providers: [
-    PasswordResetSchema,
-    PasswordResetRepository,
-    PasswordResetService,
-  ],
+  providers: [PasswordResetRepository, PasswordResetService],
   exports: [PasswordResetService],
 })
 export class PasswordResetModule {}

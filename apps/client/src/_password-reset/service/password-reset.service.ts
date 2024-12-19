@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ObjectId, WithId } from 'mongodb';
 
+import { PasswordReset } from '../entity/password-reset.entity';
 import { PasswordResetRepository } from '../repository/password-reset.repository';
-import { PasswordReset } from '../schema/password-reset.schema';
 
 @Injectable()
 export class PasswordResetService {

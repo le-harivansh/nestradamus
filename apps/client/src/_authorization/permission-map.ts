@@ -1,6 +1,6 @@
 import { WithId } from 'mongodb';
 
-import { User } from '../_user/schema/user.schema';
+import { User } from '../_user/entity/user.entity';
 import { PERMISSION_STRING_SEPARATOR } from './constant';
 
 export function createPermissionsMap() {

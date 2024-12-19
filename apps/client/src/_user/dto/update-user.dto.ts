@@ -12,7 +12,7 @@ import { IsPermission } from '@library/authorization';
 
 import { ShouldNotExist } from '../../_database/validator';
 import { PASSWORD_CONSTRAINTS } from '../constant';
-import { User } from '../schema/user.schema';
+import { User } from '../entity/user.entity';
 
 @ApiSchema({ description: "The user's data to update." })
 export class UpdateUserDto {

@@ -13,8 +13,8 @@ import {
   FORGOT_PASSWORD_ROUTE,
   RESET_PASSWORD_ROUTE,
 } from '../src/_password-reset/constant';
-import { PasswordReset } from '../src/_password-reset/schema/password-reset.schema';
-import { User } from '../src/_user/schema/user.schema';
+import { PasswordReset } from '../src/_password-reset/entity/password-reset.entity';
+import { User } from '../src/_user/entity/user.entity';
 import {
   setupTestApplication,
   teardownTestApplication,

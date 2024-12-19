@@ -8,7 +8,7 @@ import {
   AuthorizationModule as AuthorizationLibraryModule,
 } from '@library/authorization';
 
-import { User } from '../_user/schema/user.schema';
+import { User } from '../_user/entity/user.entity';
 import { PERMISSION_STRING_SEPARATOR } from './constant';
 import { createPermissionsMap } from './permission-map';
 

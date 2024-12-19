@@ -1,6 +1,6 @@
 import { WithId } from 'mongodb';
 
-import { User } from './src/_user/schema/user.schema';
+import { User } from './src/_user/entity/user.entity';
 
 declare global {
   namespace Express {

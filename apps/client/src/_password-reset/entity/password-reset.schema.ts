@@ -1,25 +1,13 @@
-import { Inject, Injectable, OnApplicationBootstrap } from '@nestjs/common';
-import { Db, ObjectId } from 'mongodb';
+import { Inject, Injectable } from '@nestjs/common';
+import { Db } from 'mongodb';
 
 import { DATABASE } from '@library/database';
 
 import { ConfigurationService } from '../../_configuration/service/configuration.service';
+import { PasswordReset } from './password-reset.entity';
 
-/**
- * Entity
- */
-export class PasswordReset {
-  constructor(
-    public readonly userId: ObjectId,
-    public readonly createdAt: Date,
-  ) {}
-}
-
-/**
- * Schema
- */
 @Injectable()
-export class PasswordResetSchema implements OnApplicationBootstrap {
+export class PasswordResetSchema {
   public static readonly collectionName = 'password-resets';
 
   private static readonly validator = {
@@ -46,29 +34,18 @@ export class PasswordResetSchema implements OnApplicationBootstrap {
     private readonly configurationService: ConfigurationService,
   ) {}
 
-  async onApplicationBootstrap() {
-    if (
-      (
-        await this.database
-          .listCollections(
-            { name: PasswordResetSchema.collectionName },
-            { nameOnly: true },
-          )
-          .toArray()
-      ).length === 0
-    ) {
-      const collection = await this.database.createCollection(
-        PasswordResetSchema.collectionName,
-      );
+  async initialize() {
+    const collection = await this.database.createCollection<PasswordReset>(
+      PasswordResetSchema.collectionName,
+    );
 
-      await collection.createIndex({ userId: 1 }, { unique: true });
+    await collection.createIndex({ userId: 1 }, { unique: true });
 
-      const expireAfterSeconds = this.configurationService.getOrThrow(
-        'password-reset.validForSeconds',
-      );
+    const expireAfterSeconds = this.configurationService.getOrThrow(
+      'password-reset.validForSeconds',
+    );
 
-      await collection.createIndex({ createdAt: 1 }, { expireAfterSeconds });
-    }
+    await collection.createIndex({ createdAt: 1 }, { expireAfterSeconds });
 
     await this.database.command({
       collMod: PasswordResetSchema.collectionName,

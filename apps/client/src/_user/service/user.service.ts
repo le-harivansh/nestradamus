@@ -6,8 +6,8 @@ import {
 import { argon2id, hash } from 'argon2';
 import { ObjectId } from 'mongodb';
 
+import { User } from '../entity/user.entity';
 import { UserRepository } from '../repository/user.repository';
-import { User } from '../schema/user.schema';
 
 @Injectable()
 export class UserService {

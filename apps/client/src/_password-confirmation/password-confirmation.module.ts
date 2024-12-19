@@ -5,7 +5,7 @@ import { WithId } from 'mongodb';
 
 import { PasswordConfirmationModule as PasswordConfirmationLibraryModule } from '@library/password-confirmation';
 
-import { User } from '../_user/schema/user.schema';
+import { User } from '../_user/entity/user.entity';
 import {
   PASSWORD_CONFIRMATION_COOKIE_NAME,
   PASSWORD_CONFIRMATION_ROUTE,

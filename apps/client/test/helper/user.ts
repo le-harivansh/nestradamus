@@ -10,7 +10,7 @@ import {
   REFRESH_TOKEN_COOKIE_NAME,
 } from '../../src/_authentication/constant';
 import { PASSWORD_CONFIRMATION_COOKIE_NAME } from '../../src/_password-confirmation/constant';
-import { User } from '../../src/_user/schema/user.schema';
+import { User } from '../../src/_user/entity/user.entity';
 import { UserService } from '../../src/_user/service/user.service';
 
 export function fakeUserData(defaults?: Partial<User>): User {

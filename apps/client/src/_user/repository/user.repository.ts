@@ -3,7 +3,8 @@ import { Collection, Db, ObjectId, WithId } from 'mongodb';
 
 import { DATABASE } from '@library/database';
 
-import { User, UserSchema } from '../schema/user.schema';
+import { User } from '../entity/user.entity';
+import { UserSchema } from '../entity/user.schema';
 
 export class UserRepository {
   private readonly collection: Collection<User>;
