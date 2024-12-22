@@ -115,7 +115,6 @@ docker compose up
 
 ```shell
 yarn run start:dev client # <-- to start the `client` application
-yarn run start:dev administration # <-- to start the `administration` application
 ```
 
 ## Test

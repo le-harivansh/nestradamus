@@ -15,7 +15,6 @@
     "start:dev": "nest start --watch",
     "start:dev:debug": "nest start --debug --watch",
     "prod:client": "node dist/client/apps/client/src/main.js",
-    "prod:administration": "node dist/administration/main.js",
     "test:unit": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",

@@ -11,15 +11,6 @@
     "tsConfigPath": "apps/client/tsconfig.app.json"
   },
   "projects": {
-    "administration": {
-      "type": "application",
-      "root": "apps/administration",
-      "entryFile": "main",
-      "sourceRoot": "apps/administration/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/administration/tsconfig.app.json"
-      }
-    },
     "client": {
       "type": "application",
       "root": "apps/client",
