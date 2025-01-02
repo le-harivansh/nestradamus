@@ -1,7 +1,11 @@
 import { SetMetadata } from '@nestjs/common';
 
 import { REQUIRED_PERMISSIONS } from '../constant';
-import { Permission, PermissionAndRequestParameterPair } from '../type';
+import {
+  Permission,
+  PermissionAndRequestParameterPair,
+  PermissionConditionalObject,
+} from '../type';
 
 /**
  * This function is used to set the required permissions on controllers or
@@ -12,26 +16,14 @@ import { Permission, PermissionAndRequestParameterPair } from '../type';
  *
  * e.g.:
  * ```
- * export function RequiresPermission(
- *  ...permissions: (
- *    | keyof ObjectWithOnlyValuesOfType<
- *        never,
- *        PermissionAndRequestParameterObject
- *      >
- *    | KeyValueTupleOf<
- *        ObjectWithoutValuesOfType<never, PermissionAndRequestParameterObject>
- *      >
- *  )[]
- * ): ReturnType<typeof setPermissions> {
+ * export function RequiresPermission(permissions: Permissions) {
  *  return setPermissions(permissions);
  * }
- *
- * type PermissionAndRequestParameterObject =
- *   PermissionAndRequestParameterObjectFrom<
- *     ReturnType<typeof createPermissionsMap>
- *   >;
  * ```
  */
 export const setPermissions = (
-  permissions: (Permission | PermissionAndRequestParameterPair)[],
+  permissions:
+    | Permission
+    | PermissionAndRequestParameterPair
+    | PermissionConditionalObject,
 ) => SetMetadata(REQUIRED_PERMISSIONS, permissions);

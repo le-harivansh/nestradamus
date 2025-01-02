@@ -86,7 +86,7 @@ export class TestController {
   }
 
   @Get('others')
-  @RequiresPermission('test:read:others')
+  @RequiresPermission({ and: ['test:read:own', 'test:read:others'] })
   list() {
     // implementation details...
   }
@@ -104,6 +104,14 @@ export class TestController {
   }
 }
 ```
+
+##### Conditional authorization
+
+The `RequiresPermission` decorator accepts any of the following:
+
+1. A permission string (e.g.: ``user:create'`).
+2. A tuple with a permission string and a request-parameter object (e.g.: `['user:update', { userId: 'id' }]`).
+3. A conditional authorization object (e.g. `{ and: ['user:create', { or: ['user:list', 'user:read'] }] }`). This object can contain either `'and'` or `'or'` as key, and the value should be an array of at least items; each of which can be a permission string, tuple, or conditional authorization object.
 
 ### Permissions Validator
 

@@ -12,11 +12,13 @@ import {
   AUTHORIZATION_PERMISSIONS_CONTAINER,
   REQUIRED_PERMISSIONS,
 } from '../constant';
+import { setPermissions } from '../decorator/authorization.decorator';
 import { PermissionContainer } from '../helper/permission-container';
 import { UserCallbackService } from '../service/user-callback.service';
 import {
   Permission,
   PermissionAndRequestParameterPair,
+  PermissionConditionalObject,
   RequestParameterMap,
 } from '../type';
 
@@ -31,9 +33,15 @@ export class AuthorizationGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext) {
-    const requiredPermissions = this.reflector.getAllAndMerge<
-      (Permission | PermissionAndRequestParameterPair)[]
-    >(REQUIRED_PERMISSIONS, [context.getClass(), context.getHandler()]);
+    const requiredPermissions: Parameters<typeof setPermissions>[0][] =
+      this.reflector
+        .getAll(REQUIRED_PERMISSIONS, [
+          context.getClass(),
+          context.getHandler(),
+        ])
+        .filter((permission: typeof setPermissions | undefined) =>
+          Boolean(permission),
+        );
 
     if (requiredPermissions.length === 0) {
       /**
@@ -50,39 +58,86 @@ export class AuthorizationGuard implements CanActivate {
     const userPermissions =
       await this.userCallbackService.getPermissionsFor(authenticatedUser);
 
-    for (const requiredPermissionOrPermissionTuple of requiredPermissions) {
-      const [requiredPermission, requestParameterMap = {}] =
-        typeof requiredPermissionOrPermissionTuple === 'string'
-          ? [requiredPermissionOrPermissionTuple]
-          : requiredPermissionOrPermissionTuple;
+    return (
+      await Promise.all(
+        requiredPermissions.map((permission) =>
+          this.isAllowed(
+            permission,
+            authenticatedUser,
+            userPermissions,
+            request.params,
+          ),
+        ),
+      )
+    ).every((result) => result);
+  }
 
-      if (!userPermissions.includes(requiredPermission)) {
-        return false;
-      }
+  private async isAllowed(
+    requiredPermission: Parameters<typeof setPermissions>[0],
+    authenticatedUser: unknown,
+    userPermissions: Permission[],
+    requestParameters: Request['params'],
+  ): Promise<boolean> {
+    let permission: Permission;
+    let requestParameterMap: RequestParameterMap = {};
 
-      const permissionCallback =
-        this.permissionContainer.getCallback(requiredPermission);
-      const callbackParameters =
-        AuthorizationGuard.buildCallbackParameterObjectFrom(
-          request,
-          requestParameterMap,
-        );
-
-      const permissionCallbackResult = await permissionCallback(
-        authenticatedUser,
-        callbackParameters,
-      );
-
-      if (!permissionCallbackResult) {
-        return false;
+    if (AuthorizationGuard.permissionIsString(requiredPermission)) {
+      permission = requiredPermission;
+    } else if (
+      AuthorizationGuard.permissionIsStringAndRequestParameterPair(
+        requiredPermission,
+      )
+    ) {
+      [permission, requestParameterMap] = requiredPermission;
+    } else if (
+      AuthorizationGuard.permissionIsConditionalObject(requiredPermission)
+    ) {
+      if ('and' in requiredPermission) {
+        return (
+          await Promise.all(
+            requiredPermission.and.map((permission) =>
+              this.isAllowed(
+                permission,
+                authenticatedUser,
+                userPermissions,
+                requestParameters,
+              ),
+            ),
+          )
+        ).every((result) => result);
+      } else if ('or' in requiredPermission) {
+        return (
+          await Promise.all(
+            requiredPermission.or.map((permission) =>
+              this.isAllowed(
+                permission,
+                authenticatedUser,
+                userPermissions,
+                requestParameters,
+              ),
+            ),
+          )
+        ).some((result) => result);
       }
     }
 
-    return true;
+    if (!userPermissions.includes(permission!)) {
+      return false;
+    }
+
+    const permissionCallback = this.permissionContainer.getCallback(
+      permission!,
+    );
+    const callbackParameters = AuthorizationGuard.buildCallbackParameterObject(
+      requestParameters,
+      requestParameterMap,
+    );
+
+    return await permissionCallback(authenticatedUser, callbackParameters);
   }
 
-  private static buildCallbackParameterObjectFrom(
-    { params: requestParameters }: Request,
+  private static buildCallbackParameterObject(
+    requestParameters: Request['params'],
     permissionRequestParameterMap: RequestParameterMap,
   ) {
     const callbackParameterObject: Record<string, string> = {};
@@ -101,5 +156,33 @@ export class AuthorizationGuard implements CanActivate {
     }
 
     return callbackParameterObject;
+  }
+
+  private static permissionIsString(
+    permission: Parameters<typeof setPermissions>[0],
+  ): permission is Permission {
+    return typeof permission === 'string';
+  }
+
+  private static permissionIsStringAndRequestParameterPair(
+    permission: Parameters<typeof setPermissions>[0],
+  ): permission is PermissionAndRequestParameterPair {
+    return (
+      permission instanceof Array &&
+      permission.length === 2 &&
+      typeof permission[0] === 'string' &&
+      typeof permission[1] === 'object' &&
+      permission[1] !== null
+    );
+  }
+
+  private static permissionIsConditionalObject(
+    permission: Parameters<typeof setPermissions>[0],
+  ): permission is PermissionConditionalObject {
+    return (
+      typeof permission === 'object' &&
+      permission !== null &&
+      ('and' in permission || 'or' in permission)
+    );
   }
 }

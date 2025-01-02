@@ -1,11 +1,11 @@
 import { Controller, Delete, Get, Patch, Post } from '@nestjs/common';
 
-import { RequiresPermission } from './permissions.decorator';
+import { RequiresPermission } from '../permissions.decorator';
 
-export const TEST_BASE_ROUTE = 'test';
+export const BASE_ROUTE = 'authorization';
 
-@Controller(TEST_BASE_ROUTE)
-export class TestController {
+@Controller(BASE_ROUTE)
+export class AuthorizationController {
   @Get()
   @RequiresPermission('test:read:own')
   show() {
@@ -31,7 +31,7 @@ export class TestController {
   }
 
   /**
-   * This route does not (AND should not) have the authentication middleware applied to it.
+   * This test route does not (AND should not) have the authentication middleware applied to it.
    */
   @Delete()
   @RequiresPermission('test:delete:own')

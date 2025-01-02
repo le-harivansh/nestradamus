@@ -8,6 +8,7 @@ const permissions: (keyof PermissionAndRequestParameterObjectFrom<
   typeof permissionsMap,
   typeof PERMISSION_STRING_SEPARATOR
 >)[] = [
+  `test${PERMISSION_STRING_SEPARATOR}list`,
   `test${PERMISSION_STRING_SEPARATOR}read${PERMISSION_STRING_SEPARATOR}own`,
   `test${PERMISSION_STRING_SEPARATOR}read${PERMISSION_STRING_SEPARATOR}others`,
   `test${PERMISSION_STRING_SEPARATOR}update`,
@@ -19,8 +20,6 @@ export const testUser: Readonly<TestUser> = {
   password: 'password',
   permissions,
 };
-
-export const REQUEST_PROPERTY_HOLDING_USER = 'user';
 
 export interface TestUser {
   id: string;

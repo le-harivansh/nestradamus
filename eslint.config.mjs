@@ -28,19 +28,19 @@ export default [
   // Configuration files
   {
     files: [
-      '*.js' // applies to top-level files only
+      '*.js', // applies to top-level files only
     ],
     languageOptions: {
       globals: {
         ...globals.node,
-      }
-    }
+      },
+    },
   },
 
   // Custom rules
   {
     linterOptions: {
-      reportUnusedDisableDirectives: "error"
+      reportUnusedDisableDirectives: 'error',
     },
 
     rules: {

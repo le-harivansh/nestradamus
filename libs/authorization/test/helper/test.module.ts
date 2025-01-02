@@ -12,10 +12,17 @@ import {
 } from '@library/authorization';
 
 import { authenticateUser } from './authentication.middleware';
-import { PERMISSION_STRING_SEPARATOR } from './constant';
+import {
+  PERMISSION_STRING_SEPARATOR,
+  REQUEST_PROPERTY_HOLDING_USER,
+} from './constant';
+import {
+  BASE_ROUTE as AUTHORIZATION_BASE_ROUTE,
+  AuthorizationController,
+} from './controller/authorization.controller';
+import { ConditionalAuthorizationController } from './controller/conditional-authorization.controller';
 import { permissionsMap } from './permissions-map';
-import { REQUEST_PROPERTY_HOLDING_USER, TestUser, testUser } from './test-user';
-import { TEST_BASE_ROUTE, TestController } from './test.controller';
+import { TestUser, testUser } from './test-user';
 
 @Module({
   imports: [
@@ -43,13 +50,13 @@ import { TEST_BASE_ROUTE, TestController } from './test.controller';
       useClass: AuthorizationGuard,
     },
   ],
-  controllers: [TestController],
+  controllers: [AuthorizationController, ConditionalAuthorizationController],
 })
 export class TestModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(authenticateUser(testUser, REQUEST_PROPERTY_HOLDING_USER))
-      .exclude({ path: `${TEST_BASE_ROUTE}`, method: RequestMethod.DELETE })
-      .forRoutes(TestController);
+      .exclude({ path: AUTHORIZATION_BASE_ROUTE, method: RequestMethod.DELETE })
+      .forRoutes(AuthorizationController, ConditionalAuthorizationController);
   }
 }

@@ -10,6 +10,26 @@ export type PermissionAndRequestParameterPair = [
   RequestParameterMap,
 ];
 
+export type RecursiveConditionalObject<T> =
+  | {
+      and: [
+        T | RecursiveConditionalObject<T>,
+        T | RecursiveConditionalObject<T>,
+        ...(T | RecursiveConditionalObject<T>)[],
+      ];
+    }
+  | {
+      or: [
+        T | RecursiveConditionalObject<T>,
+        T | RecursiveConditionalObject<T>,
+        ...(T | RecursiveConditionalObject<T>)[],
+      ];
+    };
+
+export type PermissionConditionalObject = RecursiveConditionalObject<
+  Permission | PermissionAndRequestParameterPair
+>;
+
 export type PermissionCallback = z.infer<typeof permissionCallbackValidator>;
 
 /**
